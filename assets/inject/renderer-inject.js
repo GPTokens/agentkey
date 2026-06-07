@@ -53,7 +53,7 @@
   const agentKeyConversationTimelineVersion = "2";
   const agentKeyConversationViewVersion = "1";
   const agentKeyThreadScrollVersion = "1";
-  const codexThreadServiceTierVersion = "1";
+  const agentKeyThreadServiceTierVersion = "1";
   const agentKeyServiceTierBadgeClass = "agentkey-service-tier-badge";
   const agentKeyServiceTierBadgeVersion = "3";
   let agentKeyVersion = window.__AGENTKEY_VERSION__ || "unknown";
@@ -61,9 +61,10 @@
   const agentKeySettingsKey = "agentKeySettings";
   const agentKeyThreadScrollKey = "agentKeyThreadScroll";
   const legacyAgentKeyThreadScrollKey = "codexThreadScroll";
-  const codexThreadServiceTierKey = "codexThreadServiceTierOverrides";
-  const codexThreadServiceTierMaxEntries = 120;
-  const codexThreadServiceTierDraftBindWindowMs = 60 * 1000;
+  const agentKeyThreadServiceTierKey = "agentKeyThreadServiceTierOverrides";
+  const legacyAgentKeyThreadServiceTierKey = "codexThreadServiceTierOverrides";
+  const agentKeyThreadServiceTierMaxEntries = 120;
+  const agentKeyThreadServiceTierDraftBindWindowMs = 60 * 1000;
   const agentKeyServiceTierRequestOverrideVersion = "2";
   const codexAppServerModelRequestPatchVersion = "1";
   const codexPluginMarketplaceUnlockVersion = "10";
@@ -985,10 +986,10 @@
     }
     if (key === "serviceTierControls") {
       if (value) {
-        void loadCodexServiceTierState();
+        void loadAgentKeyServiceTierState();
       } else {
-        removeCodexServiceTierBadges();
-        refreshCodexServiceTierControls();
+        removeAgentKeyServiceTierBadges();
+        refreshAgentKeyServiceTierControls();
       }
     }
     renderAgentKeyMenu();
@@ -1030,7 +1031,7 @@
       button.dataset.enabled = String(!!agentKeySettings()[key]);
     });
     refreshConversationViewControls();
-    refreshCodexServiceTierControls();
+    refreshAgentKeyServiceTierControls();
   }
 
   let agentKeyBackendSettings = { providerSyncEnabled: false, enhancementsEnabled: true, launchMode: "patch", codexAppVersion: "" };
@@ -1091,10 +1092,10 @@
     effectiveServiceTier: null,
     effectiveMode: "standard",
   };
-  const codexDefaultServiceTierSetting = { key: "default-service-tier", default: null };
+  const agentKeyDefaultServiceTierSetting = { key: "default-service-tier", default: null };
   const agentKeyServiceTierFallbackFastValue = "priority";
   const agentKeyServiceTierModulePromises = new Map();
-  const codexThreadServiceTierModes = new Set(["inherit", "standard", "fast"]);
+  const agentKeyThreadServiceTierModes = new Set(["inherit", "standard", "fast"]);
   const agentKeyServiceTierControlModes = new Set(["inherit", "global-standard", "global-fast", "custom"]);
 
   function codexAppAssetUrl(namePart) {
@@ -1129,14 +1130,14 @@
     return module;
   }
 
-  async function getCodexServiceTierSetting() {
+  async function getAgentKeyServiceTierSetting() {
     try {
       const settingStorage = await codexSettingStorageModule();
-      return await settingStorage.n(codexDefaultServiceTierSetting);
+      return await settingStorage.n(agentKeyDefaultServiceTierSetting);
     } catch (error) {
       if (typeof codexStateCall === "function") {
-        const result = await codexStateCall("get-setting", { params: { key: codexDefaultServiceTierSetting.key } });
-        return result && Object.prototype.hasOwnProperty.call(result, "value") ? result.value : codexDefaultServiceTierSetting.default;
+        const result = await codexStateCall("get-setting", { params: { key: agentKeyDefaultServiceTierSetting.key } });
+        return result && Object.prototype.hasOwnProperty.call(result, "value") ? result.value : agentKeyDefaultServiceTierSetting.default;
       }
       throw error;
     }
@@ -1147,12 +1148,12 @@
     return normalized === "fast" || normalized === "priority";
   }
 
-  function codexFastServiceTierValue() {
+  function agentKeyFastServiceTierValue() {
     return agentKeyServiceTierState.fastTierValue || agentKeyServiceTierFallbackFastValue;
   }
 
   function agentKeyServiceTierValueForMode(mode) {
-    if (mode === "fast") return codexFastServiceTierValue();
+    if (mode === "fast") return agentKeyFastServiceTierValue();
     if (mode === "standard") return null;
     return agentKeyServiceTierState.serviceTier || null;
   }
@@ -1161,7 +1162,7 @@
     if (controlMode === "global-fast") return "fast";
     if (controlMode === "global-standard") return "standard";
     if (controlMode === "inherit") return "inherit";
-    return normalizeCodexThreadServiceTierMode(fallback);
+    return normalizeAgentKeyThreadServiceTierMode(fallback);
   }
 
   function agentKeyServiceTierControlModeForDefaultMode(defaultMode) {
@@ -1171,13 +1172,13 @@
   }
 
   function agentKeyServiceTierEffectiveThreadMode(threadMode = "inherit", defaultMode = "inherit") {
-    const normalizedThreadMode = normalizeCodexThreadServiceTierMode(threadMode);
+    const normalizedThreadMode = normalizeAgentKeyThreadServiceTierMode(threadMode);
     if (normalizedThreadMode !== "inherit") return normalizedThreadMode;
-    return normalizeCodexThreadServiceTierMode(defaultMode);
+    return normalizeAgentKeyThreadServiceTierMode(defaultMode);
   }
 
   function agentKeyServiceTierValueForControlMode(controlMode, threadMode = "inherit", defaultMode = "inherit") {
-    if (controlMode === "global-fast") return codexFastServiceTierValue();
+    if (controlMode === "global-fast") return agentKeyFastServiceTierValue();
     if (controlMode === "global-standard") return null;
     if (controlMode === "custom") return agentKeyServiceTierValueForMode(agentKeyServiceTierEffectiveThreadMode(threadMode, defaultMode));
     return agentKeyServiceTierState.serviceTier || null;
@@ -1187,12 +1188,12 @@
     return isFastServiceTierValue(value) ? "fast" : "standard";
   }
 
-  function normalizeCodexThreadServiceTierMode(mode) {
+  function normalizeAgentKeyThreadServiceTierMode(mode) {
     const normalized = String(mode || "").trim().toLowerCase();
-    return codexThreadServiceTierModes.has(normalized) ? normalized : "inherit";
+    return agentKeyThreadServiceTierModes.has(normalized) ? normalized : "inherit";
   }
 
-  function normalizeCodexServiceTierControlMode(mode) {
+  function normalizeAgentKeyServiceTierControlMode(mode) {
     const normalized = String(mode || "").trim().toLowerCase();
     return agentKeyServiceTierControlModes.has(normalized) ? normalized : "inherit";
   }
@@ -1220,22 +1221,23 @@
 
   function readThreadServiceTierState() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(codexThreadServiceTierKey) || "{}");
-      const rawEntries = parsed?.version === codexThreadServiceTierVersion && parsed?.entries && typeof parsed.entries === "object"
+      const stored = localStorage.getItem(agentKeyThreadServiceTierKey) || localStorage.getItem(legacyAgentKeyThreadServiceTierKey) || "{}";
+      const parsed = JSON.parse(stored);
+      const rawEntries = parsed?.version === agentKeyThreadServiceTierVersion && parsed?.entries && typeof parsed.entries === "object"
         ? parsed.entries
         : {};
       const entries = Object.create(null);
       Object.entries(rawEntries).forEach(([key, value]) => {
         const safeKey = typeof validThreadScrollSessionKey === "function" ? validThreadScrollSessionKey(key) : String(key || "");
-        const mode = normalizeCodexThreadServiceTierMode(value?.mode);
+        const mode = normalizeAgentKeyThreadServiceTierMode(value?.mode);
         if (safeKey && mode !== "inherit") entries[safeKey] = { mode, at: finiteNonNegativeNumber(value?.at) || Date.now() };
       });
       const draft = normalizeThreadServiceTierDraft(parsed?.draft);
       const hasCustomState = !!draft || Object.keys(entries).length > 0;
-      const mode = parsed?.mode ? normalizeCodexServiceTierControlMode(parsed.mode) : (hasCustomState ? "custom" : "inherit");
+      const mode = parsed?.mode ? normalizeAgentKeyServiceTierControlMode(parsed.mode) : (hasCustomState ? "custom" : "inherit");
       return {
         mode,
-        defaultMode: normalizeCodexThreadServiceTierMode(parsed?.defaultMode || agentKeyServiceTierDefaultModeForControlMode(mode)),
+        defaultMode: normalizeAgentKeyThreadServiceTierMode(parsed?.defaultMode || agentKeyServiceTierDefaultModeForControlMode(mode)),
         entries,
         draft,
       };
@@ -1245,59 +1247,60 @@
   }
 
   function writeThreadServiceTierState(state) {
-    const mode = normalizeCodexServiceTierControlMode(state?.mode);
-    const defaultMode = normalizeCodexThreadServiceTierMode(state?.defaultMode || agentKeyServiceTierDefaultModeForControlMode(mode));
+    const mode = normalizeAgentKeyServiceTierControlMode(state?.mode);
+    const defaultMode = normalizeAgentKeyThreadServiceTierMode(state?.defaultMode || agentKeyServiceTierDefaultModeForControlMode(mode));
     const rawEntries = state?.entries && typeof state.entries === "object" ? state.entries : {};
     const entries = Object.create(null);
     Object.entries(rawEntries)
       .map(([key, value]) => {
         const safeKey = validThreadScrollSessionKey(key);
-        const mode = normalizeCodexThreadServiceTierMode(value?.mode);
+        const mode = normalizeAgentKeyThreadServiceTierMode(value?.mode);
         return safeKey && mode !== "inherit" ? [safeKey, { mode, at: finiteNonNegativeNumber(value?.at) || Date.now() }] : null;
       })
       .filter(Boolean)
       .sort((left, right) => right[1].at - left[1].at)
-      .slice(0, codexThreadServiceTierMaxEntries)
+      .slice(0, agentKeyThreadServiceTierMaxEntries)
       .forEach(([key, value]) => {
         entries[key] = value;
       });
     const draft = normalizeThreadServiceTierDraft(state?.draft);
     try {
-      localStorage.setItem(codexThreadServiceTierKey, JSON.stringify({
-        version: codexThreadServiceTierVersion,
+      localStorage.setItem(agentKeyThreadServiceTierKey, JSON.stringify({
+        version: agentKeyThreadServiceTierVersion,
         mode,
         defaultMode,
         entries,
         ...(draft ? { draft } : {}),
       }));
+      localStorage.removeItem(legacyAgentKeyThreadServiceTierKey);
     } catch (_) {}
   }
 
   function normalizeThreadServiceTierDraft(value) {
     if (!value || typeof value !== "object") return null;
-    const mode = normalizeCodexThreadServiceTierMode(value.mode);
+    const mode = normalizeAgentKeyThreadServiceTierMode(value.mode);
     if (mode === "inherit") return null;
     const at = finiteNonNegativeNumber(value.at) || Date.now();
     return { mode, at };
   }
 
-  function codexThreadServiceTierOverride(threadId) {
+  function agentKeyThreadServiceTierOverride(threadId) {
     const key = validThreadScrollSessionKey(threadId);
     if (!key) return null;
     const entry = readThreadServiceTierState().entries[key];
-    const mode = normalizeCodexThreadServiceTierMode(entry?.mode);
+    const mode = normalizeAgentKeyThreadServiceTierMode(entry?.mode);
     return mode === "inherit" ? null : { mode, at: finiteNonNegativeNumber(entry?.at) || 0 };
   }
 
-  function codexThreadServiceTierDraft() {
+  function agentKeyThreadServiceTierDraft() {
     const draft = readThreadServiceTierState().draft;
     if (!draft) return null;
-    if (Date.now() - draft.at > codexThreadServiceTierDraftBindWindowMs) return null;
+    if (Date.now() - draft.at > agentKeyThreadServiceTierDraftBindWindowMs) return null;
     return draft;
   }
 
-  function setCodexThreadServiceTierOverride(threadId, mode) {
-    const normalizedMode = normalizeCodexThreadServiceTierMode(mode);
+  function setAgentKeyThreadServiceTierOverride(threadId, mode) {
+    const normalizedMode = normalizeAgentKeyThreadServiceTierMode(mode);
     const state = readThreadServiceTierState();
     state.mode = "custom";
     const key = validThreadScrollSessionKey(threadId);
@@ -1317,10 +1320,10 @@
 
   function bindDraftServiceTierToThread(threadId) {
     const key = validThreadScrollSessionKey(threadId);
-    const draft = codexThreadServiceTierDraft();
+    const draft = agentKeyThreadServiceTierDraft();
     if (!key || !draft) return false;
     const state = readThreadServiceTierState();
-    if (normalizeCodexServiceTierControlMode(state.mode) !== "custom") {
+    if (normalizeAgentKeyServiceTierControlMode(state.mode) !== "custom") {
       state.draft = null;
       writeThreadServiceTierState(state);
       return false;
@@ -1331,13 +1334,13 @@
     return true;
   }
 
-  function setCodexServiceTierControlMode(mode) {
+  function setAgentKeyServiceTierControlMode(mode) {
     if (agentKeyBackendStatus.status !== "ok") {
       showToast("后端未连接，无法切换服务模式", null);
-      refreshCodexServiceTierControls();
+      refreshAgentKeyServiceTierControls();
       return;
     }
-    const normalizedMode = normalizeCodexServiceTierControlMode(mode);
+    const normalizedMode = normalizeAgentKeyServiceTierControlMode(mode);
     const state = readThreadServiceTierState();
     state.mode = normalizedMode;
     if (normalizedMode !== "custom") {
@@ -1345,10 +1348,10 @@
       state.entries = Object.create(null);
       state.draft = null;
     } else {
-      state.defaultMode = normalizeCodexThreadServiceTierMode(state.defaultMode);
+      state.defaultMode = normalizeAgentKeyThreadServiceTierMode(state.defaultMode);
     }
     writeThreadServiceTierState(state);
-    refreshCodexServiceTierControls();
+    refreshAgentKeyServiceTierControls();
     const labels = {
       inherit: "继承 config.toml",
       "global-standard": "全局 Standard",
@@ -1358,7 +1361,7 @@
     showToast(`服务模式：${labels[normalizedMode] || normalizedMode}`, null);
   }
 
-  function syncCodexServiceTierEffectiveState() {
+  function syncAgentKeyServiceTierEffectiveState() {
     if (!agentKeySettings().serviceTierControls) {
       agentKeyServiceTierState = {
         ...agentKeyServiceTierState,
@@ -1373,10 +1376,10 @@
     const activeThreadId = validThreadScrollSessionKey(currentSessionRef().session_id);
     if (activeThreadId) bindDraftServiceTierToThread(activeThreadId);
     const storedState = readThreadServiceTierState();
-    const controlMode = normalizeCodexServiceTierControlMode(storedState.mode);
-    const defaultMode = normalizeCodexThreadServiceTierMode(storedState.defaultMode);
-    const override = activeThreadId ? codexThreadServiceTierOverride(activeThreadId) : codexThreadServiceTierDraft();
-    const threadMode = normalizeCodexThreadServiceTierMode(override?.mode);
+    const controlMode = normalizeAgentKeyServiceTierControlMode(storedState.mode);
+    const defaultMode = normalizeAgentKeyThreadServiceTierMode(storedState.defaultMode);
+    const override = activeThreadId ? agentKeyThreadServiceTierOverride(activeThreadId) : agentKeyThreadServiceTierDraft();
+    const threadMode = normalizeAgentKeyThreadServiceTierMode(override?.mode);
     const effectiveServiceTier = agentKeyServiceTierValueForControlMode(controlMode, threadMode, defaultMode);
     const effectiveMode = agentKeyServiceTierEffectiveMode(effectiveServiceTier);
     agentKeyServiceTierState = {
@@ -1409,7 +1412,7 @@
     return { tier: "standard", label: "standard", title };
   }
 
-  function refreshCodexServiceTierBadges() {
+  function refreshAgentKeyServiceTierBadges() {
     const state = agentKeyServiceTierBadgeState();
     document.querySelectorAll(`[data-agentkey-service-tier-badge="true"]`).forEach((node) => {
       node.dataset.tier = state.tier;
@@ -1420,8 +1423,8 @@
     });
   }
 
-  function refreshCodexServiceTierControls() {
-    syncCodexServiceTierEffectiveState();
+  function refreshAgentKeyServiceTierControls() {
+    syncAgentKeyServiceTierEffectiveState();
     const featureEnabled = !!agentKeySettings().serviceTierControls;
     const backendConnected = agentKeyBackendStatus.status === "ok";
     const backendChecking = agentKeyBackendStatus.status === "checking";
@@ -1463,19 +1466,19 @@
       button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
       button.dataset.active = String(agentKeyServiceTierState.controlMode === "custom" && agentKeyServiceTierState.threadMode === "fast");
     });
-    refreshCodexServiceTierBadges();
+    refreshAgentKeyServiceTierBadges();
   }
 
-  async function loadCodexServiceTierState() {
+  async function loadAgentKeyServiceTierState() {
     if (!agentKeySettings().serviceTierControls) {
       agentKeyServiceTierState = { ...agentKeyServiceTierState, status: "idle", message: "未启用" };
-      refreshCodexServiceTierControls();
+      refreshAgentKeyServiceTierControls();
       return;
     }
     agentKeyServiceTierState = { ...agentKeyServiceTierState, status: "loading", message: "正在读取…" };
-    refreshCodexServiceTierControls();
+    refreshAgentKeyServiceTierControls();
     try {
-      const serviceTier = await getCodexServiceTierSetting();
+      const serviceTier = await getAgentKeyServiceTierSetting();
       agentKeyServiceTierState = {
         ...agentKeyServiceTierState,
         status: "ok",
@@ -1493,32 +1496,32 @@
         errorMessage: error?.message || String(error),
       });
     } finally {
-      refreshCodexServiceTierControls();
+      refreshAgentKeyServiceTierControls();
     }
   }
 
-  function setCodexThreadServiceTierMode(mode) {
+  function setAgentKeyThreadServiceTierMode(mode) {
     if (agentKeyBackendStatus.status !== "ok") {
       showToast("后端未连接，无法切换服务模式", null);
-      refreshCodexServiceTierControls();
+      refreshAgentKeyServiceTierControls();
       return;
     }
-    const normalizedMode = normalizeCodexThreadServiceTierMode(mode);
+    const normalizedMode = normalizeAgentKeyThreadServiceTierMode(mode);
     const threadId = validThreadScrollSessionKey(currentSessionRef().session_id);
-    setCodexThreadServiceTierOverride(threadId, normalizedMode);
-    refreshCodexServiceTierControls();
+    setAgentKeyThreadServiceTierOverride(threadId, normalizedMode);
+    refreshAgentKeyServiceTierControls();
     const target = threadId ? "当前 thread" : "新 thread 草稿";
     showToast(`${target}服务模式：${normalizedMode === "inherit" ? "继承" : normalizedMode}`, null);
   }
 
-  function toggleCodexServiceTierFromBadge() {
+  function toggleAgentKeyServiceTierFromBadge() {
     if (agentKeyBackendStatus.status !== "ok") {
       showToast("后端未连接，无法切换服务模式", null);
-      refreshCodexServiceTierControls();
+      refreshAgentKeyServiceTierControls();
       return;
     }
-    syncCodexServiceTierEffectiveState();
-    setCodexThreadServiceTierMode(agentKeyServiceTierState.effectiveMode === "fast" ? "standard" : "fast");
+    syncAgentKeyServiceTierEffectiveState();
+    setAgentKeyThreadServiceTierMode(agentKeyServiceTierState.effectiveMode === "fast" ? "standard" : "fast");
   }
 
   function agentKeyServiceTierRequestMethods() {
@@ -1529,30 +1532,30 @@
     if (!agentKeySettings().serviceTierControls) return null;
     if (!agentKeyServiceTierRequestMethods().has(method) || !params || typeof params !== "object") return null;
     const state = readThreadServiceTierState();
-    const controlMode = normalizeCodexServiceTierControlMode(state.mode);
-    const defaultMode = normalizeCodexThreadServiceTierMode(state.defaultMode);
+    const controlMode = normalizeAgentKeyServiceTierControlMode(state.mode);
+    const defaultMode = normalizeAgentKeyThreadServiceTierMode(state.defaultMode);
     if (controlMode === "inherit") return null;
     if (controlMode === "global-standard" || controlMode === "global-fast") {
       return {
         threadId: validThreadScrollSessionKey(params.threadId || params.conversationId || threadIdHint || currentSessionRef().session_id),
         mode: controlMode,
-        serviceTier: controlMode === "global-fast" ? codexFastServiceTierValue() : null,
+        serviceTier: controlMode === "global-fast" ? agentKeyFastServiceTierValue() : null,
       };
     }
     const threadId = method === "thread/start"
       ? validThreadScrollSessionKey(params.threadId || threadIdHint)
       : validThreadScrollSessionKey(params.threadId || params.conversationId || threadIdHint || currentSessionRef().session_id);
-    const override = threadId ? codexThreadServiceTierOverride(threadId) : codexThreadServiceTierDraft();
+    const override = threadId ? agentKeyThreadServiceTierOverride(threadId) : agentKeyThreadServiceTierDraft();
     const mode = agentKeyServiceTierEffectiveThreadMode(override?.mode, defaultMode);
     if (mode === "inherit") return null;
     return {
       threadId,
       mode,
-      serviceTier: mode === "fast" ? codexFastServiceTierValue() : null,
+      serviceTier: mode === "fast" ? agentKeyFastServiceTierValue() : null,
     };
   }
 
-  function applyCodexServiceTierRequestOverride(method, params, threadIdHint = "") {
+  function applyAgentKeyServiceTierRequestOverride(method, params, threadIdHint = "") {
     const override = agentKeyServiceTierOverrideForRequest(method, params, threadIdHint);
     if (!override) return params;
     const nextParams = { ...(params || {}), serviceTier: override.serviceTier };
@@ -1570,53 +1573,53 @@
     if (!message || typeof message !== "object") return message;
     if (message.type === "send-cli-request-for-host") {
       const method = String(message.method || "");
-      const params = applyCodexServiceTierRequestOverride(method, message.params);
+      const params = applyAgentKeyServiceTierRequestOverride(method, message.params);
       return params === message.params ? message : { ...message, params };
     }
     if (message.type === "mcp-request" && message.request && typeof message.request === "object") {
       const method = String(message.request.method || "");
-      const params = applyCodexServiceTierRequestOverride(method, message.request.params);
+      const params = applyAgentKeyServiceTierRequestOverride(method, message.request.params);
       if (params === message.request.params) return message;
       return { ...message, request: { ...message.request, params } };
     }
     if (message.type === "worker-request" && message.request && typeof message.request === "object") {
       const method = String(message.request.method || "");
-      const params = applyCodexServiceTierRequestOverride(method, message.request.params);
+      const params = applyAgentKeyServiceTierRequestOverride(method, message.request.params);
       if (params === message.request.params) return message;
       return { ...message, request: { ...message.request, params } };
     }
     if (message.type === "thread-prewarm-start" && message.request && typeof message.request === "object") {
-      const params = applyCodexServiceTierRequestOverride("thread/start", message.request.params);
+      const params = applyAgentKeyServiceTierRequestOverride("thread/start", message.request.params);
       if (params === message.request.params) return message;
       return { ...message, request: { ...message.request, params } };
     }
     if (message.type === "start-conversation") {
       const state = readThreadServiceTierState();
-      const controlMode = normalizeCodexServiceTierControlMode(state.mode);
+      const controlMode = normalizeAgentKeyServiceTierControlMode(state.mode);
       if (controlMode === "global-standard") return { ...message, serviceTier: null };
-      if (controlMode === "global-fast") return { ...message, serviceTier: codexFastServiceTierValue() };
+      if (controlMode === "global-fast") return { ...message, serviceTier: agentKeyFastServiceTierValue() };
       if (controlMode === "inherit") return message;
-      const draft = codexThreadServiceTierDraft();
+      const draft = agentKeyThreadServiceTierDraft();
       const mode = agentKeyServiceTierEffectiveThreadMode(draft?.mode, state.defaultMode);
       if (mode === "inherit") return message;
-      return { ...message, serviceTier: mode === "fast" ? codexFastServiceTierValue() : null };
+      return { ...message, serviceTier: mode === "fast" ? agentKeyFastServiceTierValue() : null };
     }
     if (message.type === "prewarm-thread-start-for-host" && message.params && typeof message.params === "object") {
-      const params = applyCodexServiceTierRequestOverride("thread/start", message.params);
+      const params = applyAgentKeyServiceTierRequestOverride("thread/start", message.params);
       return params === message.params ? message : { ...message, params };
     }
     if (message.type === "start-thread-for-host") {
-      const params = applyCodexServiceTierRequestOverride("thread/start", message);
+      const params = applyAgentKeyServiceTierRequestOverride("thread/start", message);
       return params === message ? message : params;
     }
     if (message.type === "start-turn-for-host" && message.params && typeof message.params === "object") {
-      const params = applyCodexServiceTierRequestOverride("turn/start", message.params, message.conversationId);
+      const params = applyAgentKeyServiceTierRequestOverride("turn/start", message.params, message.conversationId);
       return params === message.params ? message : { ...message, params };
     }
     return message;
   }
 
-  function installCodexServiceTierDispatcherPatch() {
+  function installAgentKeyServiceTierDispatcherPatch() {
     if (window.__agentKeyServiceTierRequestOverrideInstalled === agentKeyServiceTierRequestOverrideVersion) return;
     const patch = async () => {
       try {
@@ -1735,7 +1738,7 @@
     });
     const repair = document.querySelector("[data-codex-backend-repair]");
     if (repair) repair.hidden = status === "ok" || status === "checking";
-    refreshCodexServiceTierControls();
+    refreshAgentKeyServiceTierControls();
   }
 
   function withBackendTimeout(request) {
@@ -2153,31 +2156,31 @@
         return;
       }
       if (target?.closest("[data-agentkey-service-tier-inherit]")) {
-        setCodexServiceTierControlMode("inherit");
+        setAgentKeyServiceTierControlMode("inherit");
         return;
       }
       if (target?.closest("[data-agentkey-service-tier-standard]")) {
-        setCodexServiceTierControlMode("global-standard");
+        setAgentKeyServiceTierControlMode("global-standard");
         return;
       }
       if (target?.closest("[data-agentkey-service-tier-fast]")) {
-        setCodexServiceTierControlMode("global-fast");
+        setAgentKeyServiceTierControlMode("global-fast");
         return;
       }
       if (target?.closest("[data-agentkey-service-tier-custom]")) {
-        setCodexServiceTierControlMode("custom");
+        setAgentKeyServiceTierControlMode("custom");
         return;
       }
       if (target?.closest("[data-agentkey-service-tier-thread-inherit]")) {
-        setCodexThreadServiceTierMode("inherit");
+        setAgentKeyThreadServiceTierMode("inherit");
         return;
       }
       if (target?.closest("[data-agentkey-service-tier-thread-standard]")) {
-        setCodexThreadServiceTierMode("standard");
+        setAgentKeyThreadServiceTierMode("standard");
         return;
       }
       if (target?.closest("[data-agentkey-service-tier-thread-fast]")) {
-        setCodexThreadServiceTierMode("fast");
+        setAgentKeyThreadServiceTierMode("fast");
         return;
       }
       const userScriptToggle = target?.closest("[data-codex-user-script-key]");
@@ -2217,7 +2220,7 @@
     renderAgentKeyMenu();
     refreshAgentKeyBackendToggles();
     renderBackendStatus();
-    void loadCodexServiceTierState();
+    void loadAgentKeyServiceTierState();
     loadUserScripts();
   }
 
@@ -6867,7 +6870,7 @@
     return null;
   }
 
-  function wireCodexServiceTierBadge(badge) {
+  function wireAgentKeyServiceTierBadge(badge) {
     if (!badge || badge.dataset.agentKeyServiceTierBadgeWired === agentKeyServiceTierBadgeVersion) return;
     badge.dataset.agentKeyServiceTierBadgeWired = agentKeyServiceTierBadgeVersion;
     badge.setAttribute("role", "button");
@@ -6876,20 +6879,20 @@
       event.preventDefault();
       event.stopPropagation();
       if (agentKeyServiceTierState.status === "loading") return;
-      toggleCodexServiceTierFromBadge();
+      toggleAgentKeyServiceTierFromBadge();
     });
     badge.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
       event.stopPropagation();
       if (agentKeyServiceTierState.status === "loading") return;
-      toggleCodexServiceTierFromBadge();
+      toggleAgentKeyServiceTierFromBadge();
     });
   }
 
-  function installCodexServiceTierBadge() {
+  function installAgentKeyServiceTierBadge() {
     if (!agentKeySettings().serviceTierControls) {
-      removeCodexServiceTierBadges();
+      removeAgentKeyServiceTierBadges();
       return;
     }
     const composer = agentKeyServiceTierFindComposerEl();
@@ -6910,15 +6913,15 @@
       badge.dataset.agentKeyServiceTierBadge = "true";
       badge.dataset.agentKeyServiceTierBadgeVersion = agentKeyServiceTierBadgeVersion;
     }
-    wireCodexServiceTierBadge(badge);
+    wireAgentKeyServiceTierBadge(badge);
     const before = placement.before?.parentElement === placement.parent ? placement.before : null;
     if (badge.parentElement !== placement.parent || badge.nextSibling !== before) {
       placement.parent.insertBefore(badge, before);
     }
-    refreshCodexServiceTierBadges();
+    refreshAgentKeyServiceTierBadges();
   }
 
-  function removeCodexServiceTierBadges() {
+  function removeAgentKeyServiceTierBadges() {
     document.querySelectorAll(`[data-agentkey-service-tier-badge="true"]`).forEach((badge) => badge.remove());
   }
 
@@ -7116,7 +7119,7 @@
 
   function scanLightweight() {
     installStyle();
-    installCodexServiceTierDispatcherPatch();
+    installAgentKeyServiceTierDispatcherPatch();
     installAgentKeyMenu();
     scheduleBackendHeartbeat();
     installDeleteButtonEventDelegation();
@@ -7126,7 +7129,7 @@
     installThreadScrollUserIntentCapture();
     installThreadScrollRouteHooks();
     scheduleThreadScrollSync(true);
-    refreshCodexServiceTierControls();
+    refreshAgentKeyServiceTierControls();
   }
 
   let zedRemoteStatusPromise = null;
@@ -7731,7 +7734,7 @@
     archivedPageRows().forEach(attachArchivedPageDeleteButton);
     refreshConversationTimeline();
     refreshConversationView();
-    installCodexServiceTierBadge();
+    installAgentKeyServiceTierBadge();
     scheduleThreadScrollSync();
     patchCodexModelWhitelist();
   }
@@ -7826,7 +7829,7 @@
   }
 
   void loadBackendSettingsForStartup();
-  void loadCodexServiceTierState();
+  void loadAgentKeyServiceTierState();
   installUpstreamBranchDropdownAdapter();
   installUpstreamWorktreeNativeAdapter();
   scan();
