@@ -69,7 +69,7 @@
   const agentKeyThreadServiceTierDraftBindWindowMs = 60 * 1000;
   const agentKeyServiceTierRequestOverrideVersion = "2";
   const codexAppServerModelRequestPatchVersion = "1";
-  const codexPluginMarketplaceUnlockVersion = "10";
+  const agentKeyPluginMarketplaceUnlockVersion = "10";
   const agentKeyThreadScrollMaxEntries = 120;
   const agentKeyThreadScrollSaveThrottleMs = 120;
   const agentKeyThreadScrollRestoreWindowMs = 3200;
@@ -79,7 +79,7 @@
   const agentKeyThreadScrollRouteHooksVersion = "dispatcher:2";
   const agentKeyThreadScrollListenerVersion = "4";
   const agentKeyThreadScrollUserIntentVersion = "dispatcher:2";
-  const codexForcePluginInstallRefreshIntervalMs = 1000;
+  const agentKeyForcePluginInstallRefreshIntervalMs = 1000;
   window.__agentKeyProjectMoveRuntimeId = (window.__agentKeyProjectMoveRuntimeId || 0) + 1;
   const agentKeyProjectMoveRuntimeId = window.__agentKeyProjectMoveRuntimeId;
   clearTimeout(window.__agentKeyProjectMoveProjectionTimer);
@@ -233,7 +233,7 @@
         background: #dbeafe;
         color: #1d4ed8;
       }
-      .codex-force-install-unlocked {
+      .agentkey-force-install-unlocked {
         border-color: #ef4444 !important;
         background: #fee2e2 !important;
         color: #991b1b !important;
@@ -1037,7 +1037,7 @@
   }
 
   let agentKeyBackendSettings = { providerSyncEnabled: false, enhancementsEnabled: true, launchMode: "patch", codexAppVersion: "" };
-  const codexPluginLegacyEntryUnlockBeforeVersion = "26.601.2237";
+  const agentKeyPluginLegacyEntryUnlockBeforeVersion = "26.601.2237";
 
   function parseCodexVersionParts(version) {
     const raw = String(version || "").trim();
@@ -1062,9 +1062,9 @@
     return 0;
   }
 
-  function codexPluginUnlockStrategy() {
+  function agentKeyPluginUnlockStrategy() {
     const version = String(agentKeyBackendSettings.codexAppVersion || "").trim();
-    const comparison = compareCodexVersions(version, codexPluginLegacyEntryUnlockBeforeVersion);
+    const comparison = compareCodexVersions(version, agentKeyPluginLegacyEntryUnlockBeforeVersion);
     if (comparison == null) return "unknown";
     return comparison < 0 ? "legacy" : "modern";
   }
@@ -1072,12 +1072,12 @@
   function logCodexPluginUnlockStrategy(strategy) {
     const codexAppVersion = String(agentKeyBackendSettings.codexAppVersion || "").trim();
     const signature = `${strategy}:${codexAppVersion || "unknown"}`;
-    if (window.__codexPluginUnlockStrategyLogged === signature) return;
-    window.__codexPluginUnlockStrategyLogged = signature;
+    if (window.__agentKeyPluginUnlockStrategyLogged === signature) return;
+    window.__agentKeyPluginUnlockStrategyLogged = signature;
     sendAgentKeyDiagnostic("plugin_unlock_strategy_selected", {
       strategy,
       codexAppVersion,
-      cutoff: codexPluginLegacyEntryUnlockBeforeVersion,
+      cutoff: agentKeyPluginLegacyEntryUnlockBeforeVersion,
     });
   }
 
@@ -2440,12 +2440,12 @@
     return name;
   }
 
-  function codexPluginOfficialMarketplaceName(name) {
+  function agentKeyPluginOfficialMarketplaceName(name) {
     const restored = restorePluginMarketplaceName(name);
     return restored === "openai-bundled" || restored === "openai-curated" || restored === "openai-primary-runtime";
   }
 
-  function isCodexPluginBuildFlavorFilter(callback, sample) {
+  function isAgentKeyPluginBuildFlavorFilter(callback, sample) {
     if (!Array.isArray(sample) || sample.length === 0 || typeof callback !== "function") return false;
     let source = "";
     try {
@@ -2454,11 +2454,11 @@
       return false;
     }
     if (!source.includes("!u(e.marketplaceName)||e.marketplaceName===r")) return false;
-    if (!sample.some((plugin) => codexPluginOfficialMarketplaceName(plugin?.marketplaceName))) return false;
-    return sample.some((plugin) => codexPluginOfficialMarketplaceName(plugin?.marketplaceName) && !callback(plugin));
+    if (!sample.some((plugin) => agentKeyPluginOfficialMarketplaceName(plugin?.marketplaceName))) return false;
+    return sample.some((plugin) => agentKeyPluginOfficialMarketplaceName(plugin?.marketplaceName) && !callback(plugin));
   }
 
-  function isCodexPluginMarketplaceHiddenFilter(callback, sample) {
+  function isAgentKeyPluginMarketplaceHiddenFilter(callback, sample) {
     if (!Array.isArray(sample) || sample.length === 0 || typeof callback !== "function") return false;
     let source = "";
     try {
@@ -2467,40 +2467,40 @@
       return false;
     }
     if (!source.includes("!t.includes(e.name)")) return false;
-    if (!sample.some((marketplace) => codexPluginOfficialMarketplaceName(marketplace?.name))) return false;
-    return sample.some((marketplace) => codexPluginOfficialMarketplaceName(marketplace?.name) && !callback(marketplace));
+    if (!sample.some((marketplace) => agentKeyPluginOfficialMarketplaceName(marketplace?.name))) return false;
+    return sample.some((marketplace) => agentKeyPluginOfficialMarketplaceName(marketplace?.name) && !callback(marketplace));
   }
 
   function installPluginBuildFlavorFilterPatch() {
-    if (window.__codexPluginBuildFlavorFilterPatch === codexPluginMarketplaceUnlockVersion) return;
+    if (window.__agentKeyPluginBuildFlavorFilterPatch === agentKeyPluginMarketplaceUnlockVersion) return;
     if (pluginPatchDisabledInRelayMode()) return;
     if (!agentKeySettings().pluginMarketplaceUnlock) return;
-    const originalFilter = Array.prototype.__codexPluginBuildFlavorOriginalFilter || Array.prototype.filter;
-    if (!Array.prototype.__codexPluginBuildFlavorOriginalFilter) {
-      Object.defineProperty(Array.prototype, "__codexPluginBuildFlavorOriginalFilter", {
+    const originalFilter = Array.prototype.__agentKeyPluginBuildFlavorOriginalFilter || Array.prototype.filter;
+    if (!Array.prototype.__agentKeyPluginBuildFlavorOriginalFilter) {
+      Object.defineProperty(Array.prototype, "__agentKeyPluginBuildFlavorOriginalFilter", {
         value: originalFilter,
         configurable: true,
         writable: true,
       });
     }
-    if (Array.prototype.filter.__codexPluginBuildFlavorPatched === codexPluginMarketplaceUnlockVersion) {
-      window.__codexPluginBuildFlavorFilterPatch = codexPluginMarketplaceUnlockVersion;
+    if (Array.prototype.filter.__agentKeyPluginBuildFlavorPatched === agentKeyPluginMarketplaceUnlockVersion) {
+      window.__agentKeyPluginBuildFlavorFilterPatch = agentKeyPluginMarketplaceUnlockVersion;
       return;
     }
-    const patchedFilter = function codexPluginBuildFlavorFilterPatch(callback, thisArg) {
-      if (isCodexPluginBuildFlavorFilter(callback, this)) {
+    const patchedFilter = function agentKeyPluginBuildFlavorFilterPatch(callback, thisArg) {
+      if (isAgentKeyPluginBuildFlavorFilter(callback, this)) {
         sendAgentKeyDiagnostic("plugin_build_flavor_filter_bypassed", { pluginCount: this.length });
         return Array.from(this);
       }
-      if (isCodexPluginMarketplaceHiddenFilter(callback, this)) {
+      if (isAgentKeyPluginMarketplaceHiddenFilter(callback, this)) {
         sendAgentKeyDiagnostic("plugin_marketplace_hidden_filter_bypassed", { marketplaceCount: this.length });
         return Array.from(this);
       }
       return originalFilter.call(this, callback, thisArg);
     };
-    patchedFilter.__codexPluginBuildFlavorPatched = codexPluginMarketplaceUnlockVersion;
+    patchedFilter.__agentKeyPluginBuildFlavorPatched = agentKeyPluginMarketplaceUnlockVersion;
     Array.prototype.filter = patchedFilter;
-    window.__codexPluginBuildFlavorFilterPatch = codexPluginMarketplaceUnlockVersion;
+    window.__agentKeyPluginBuildFlavorFilterPatch = agentKeyPluginMarketplaceUnlockVersion;
     sendAgentKeyDiagnostic("plugin_build_flavor_filter_patch_installed", {});
   }
 
@@ -2566,10 +2566,10 @@
 
   function patchPluginMarketplaceRequestClient(client) {
     if (!client || typeof client.sendRequest !== "function") return false;
-    if (client.__codexPluginMarketplaceUnlockPatch === codexPluginMarketplaceUnlockVersion) return true;
-    const originalSendRequest = client.__codexPluginMarketplaceOriginalSendRequest || client.sendRequest.bind(client);
-    client.__codexPluginMarketplaceOriginalSendRequest = originalSendRequest;
-    client.sendRequest = async function codexPluginMarketplacePatchedSendRequest(method, params, options) {
+    if (client.__agentKeyPluginMarketplaceUnlockPatch === agentKeyPluginMarketplaceUnlockVersion) return true;
+    const originalSendRequest = client.__agentKeyPluginMarketplaceOriginalSendRequest || client.sendRequest.bind(client);
+    client.__agentKeyPluginMarketplaceOriginalSendRequest = originalSendRequest;
+    client.sendRequest = async function agentKeyPluginMarketplacePatchedSendRequest(method, params, options) {
       const requestMethod = appServerModelRequestMethod(String(method || ""), params);
       const requestParams = patchPluginMarketplaceRequestParams(requestMethod, restorePluginMarketplaceRequestParams(params, requestMethod));
       if (requestMethod === "install-plugin") {
@@ -2602,12 +2602,12 @@
         throw error;
       }
     };
-    client.__codexPluginMarketplaceUnlockPatch = codexPluginMarketplaceUnlockVersion;
+    client.__agentKeyPluginMarketplaceUnlockPatch = agentKeyPluginMarketplaceUnlockVersion;
     return true;
   }
 
   function installPluginMarketplaceRequestPatch() {
-    if (window.__codexPluginMarketplaceUnlockInstalled === codexPluginMarketplaceUnlockVersion) return;
+    if (window.__agentKeyPluginMarketplaceUnlockInstalled === agentKeyPluginMarketplaceUnlockVersion) return;
     if (pluginPatchDisabledInRelayMode()) return;
     if (!agentKeySettings().pluginMarketplaceUnlock) return;
     const patch = async () => {
@@ -2625,7 +2625,7 @@
           }
         }
         if (patchedCount > 0) {
-          window.__codexPluginMarketplaceUnlockInstalled = codexPluginMarketplaceUnlockVersion;
+          window.__agentKeyPluginMarketplaceUnlockInstalled = agentKeyPluginMarketplaceUnlockVersion;
           sendAgentKeyDiagnostic("plugin_marketplace_request_patch_installed", {
             candidateCount: candidates.length,
             patchedCount,
@@ -2710,8 +2710,8 @@
     if (reactPropsKey) {
       pluginButton[reactPropsKey].disabled = false;
     }
-    if (pluginButton.dataset.codexPluginEnabled !== "true") {
-      pluginButton.dataset.codexPluginEnabled = "true";
+    if (pluginButton.dataset.agentKeyPluginEnabled !== "true") {
+      pluginButton.dataset.agentKeyPluginEnabled = "true";
       pluginButton.addEventListener("click", () => {
         spoofChatGPTAuthMethod(pluginButton);
       }, true);
@@ -2756,7 +2756,7 @@
     element.removeAttribute("data-disabled");
     element.removeAttribute("inert");
     element.classList.remove("disabled", "opacity-50", "cursor-not-allowed", "pointer-events-none");
-    element.classList.add("codex-force-install-unlocked");
+    element.classList.add("agentkey-force-install-unlocked");
     element.style.pointerEvents = "auto";
     element.style.opacity = "";
     element.style.cursor = "pointer";
@@ -2778,8 +2778,8 @@
   }
 
   function installForcedInstallGuard(button) {
-    if (button.dataset.codexForceInstallUnlocked === "true") return;
-    button.dataset.codexForceInstallUnlocked = "true";
+    if (button.dataset.agentKeyForceInstallUnlocked === "true") return;
+    button.dataset.agentKeyForceInstallUnlocked = "true";
     const keepUnlocked = () => installButtonUnlockNodes(button).forEach(clearDisabledState);
     ["pointerdown", "mousedown", "mouseup", "click", "focus"].forEach((eventName) => {
       button.addEventListener(eventName, keepUnlocked, true);
@@ -2818,7 +2818,7 @@
   function clearPluginPatchArtifacts() {
     const pluginButton = pluginEntryButton();
     if (pluginButton) {
-      delete pluginButton.dataset.codexPluginEnabled;
+      delete pluginButton.dataset.agentKeyPluginEnabled;
       clearPluginEntryUnlockLabel(pluginButton);
     }
     pluginInstallCandidates().forEach(clearForcedInstallButtonLabel);
@@ -2838,19 +2838,19 @@
   function refreshForcePluginInstallUnlockLoop() {
     const shouldRun = !pluginPatchDisabledInRelayMode() && agentKeySettings().forcePluginInstall;
     if (!shouldRun) {
-      clearInterval(window.__codexForcePluginInstallRefreshTimer);
-      window.__codexForcePluginInstallRefreshTimer = null;
+      clearInterval(window.__agentKeyForcePluginInstallRefreshTimer);
+      window.__agentKeyForcePluginInstallRefreshTimer = null;
       return;
     }
-    if (window.__codexForcePluginInstallRefreshTimer) return;
-    window.__codexForcePluginInstallRefreshTimer = setInterval(() => {
+    if (window.__agentKeyForcePluginInstallRefreshTimer) return;
+    window.__agentKeyForcePluginInstallRefreshTimer = setInterval(() => {
       if (!agentKeySettings().forcePluginInstall || pluginPatchDisabledInRelayMode()) {
-        clearInterval(window.__codexForcePluginInstallRefreshTimer);
-        window.__codexForcePluginInstallRefreshTimer = null;
+        clearInterval(window.__agentKeyForcePluginInstallRefreshTimer);
+        window.__agentKeyForcePluginInstallRefreshTimer = null;
         return;
       }
       unblockPluginInstallButtons();
-    }, codexForcePluginInstallRefreshIntervalMs);
+    }, agentKeyForcePluginInstallRefreshIntervalMs);
   }
 
   let cachedSessionRows = [];
@@ -7720,7 +7720,7 @@
       clearPluginPatchArtifacts();
       refreshForcePluginInstallUnlockLoop();
     } else {
-      const pluginUnlockStrategy = codexPluginUnlockStrategy();
+      const pluginUnlockStrategy = agentKeyPluginUnlockStrategy();
       const settings = agentKeySettings();
       logCodexPluginUnlockStrategy(pluginUnlockStrategy);
       if ((pluginUnlockStrategy === "legacy" || pluginUnlockStrategy === "unknown") && settings.pluginEntryUnlock) {

@@ -116,11 +116,11 @@ fn injection_script_skips_plugin_patch_work_in_relay_mode() {
 fn injection_script_defines_version_gated_plugin_unlock_strategy() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("codexPluginLegacyEntryUnlockBeforeVersion = \"26.601.2237\""));
+    assert!(script.contains("agentKeyPluginLegacyEntryUnlockBeforeVersion = \"26.601.2237\""));
     assert!(script.contains("function parseCodexVersionParts(version)"));
     assert!(script.contains("function compareCodexVersions(left, right)"));
-    assert!(script.contains("function codexPluginUnlockStrategy()"));
-    assert!(script.contains("const comparison = compareCodexVersions(version, codexPluginLegacyEntryUnlockBeforeVersion)"));
+    assert!(script.contains("function agentKeyPluginUnlockStrategy()"));
+    assert!(script.contains("const comparison = compareCodexVersions(version, agentKeyPluginLegacyEntryUnlockBeforeVersion)"));
     assert!(script.contains("return comparison < 0 ? \"legacy\" : \"modern\""));
 }
 
@@ -128,11 +128,11 @@ fn injection_script_defines_version_gated_plugin_unlock_strategy() {
 fn injection_script_gates_legacy_and_modern_plugin_unlock_by_codex_version() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("const pluginUnlockStrategy = codexPluginUnlockStrategy()"));
+    assert!(script.contains("const pluginUnlockStrategy = agentKeyPluginUnlockStrategy()"));
     assert!(script.contains("if ((pluginUnlockStrategy === \"legacy\" || pluginUnlockStrategy === \"unknown\") && settings.pluginEntryUnlock)"));
     assert!(script.contains("if ((pluginUnlockStrategy === \"modern\" || pluginUnlockStrategy === \"unknown\") && settings.pluginMarketplaceUnlock)"));
     assert!(script.contains("plugin_unlock_strategy_selected"));
-    assert!(script.contains("window.__codexPluginUnlockStrategyLogged"));
+    assert!(script.contains("window.__agentKeyPluginUnlockStrategyLogged"));
 }
 
 #[test]
@@ -175,14 +175,14 @@ fn injection_script_unlocks_nested_disabled_plugin_install_buttons() {
     assert!(script.contains("patchReactDisabledProps"));
     assert!(script.contains("props[\"data-disabled\"] = undefined"));
     assert!(script.contains("button.querySelectorAll?.(\"button, [role='button'], [disabled], [aria-disabled], [data-disabled]"));
-    assert!(script.contains("button.dataset.codexForceInstallUnlocked"));
+    assert!(script.contains("button.dataset.agentKeyForceInstallUnlocked"));
 }
 
 #[test]
 fn injection_script_keeps_bundled_marketplace_name_for_default_filter() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("codexPluginMarketplaceUnlockVersion = \"10\""));
+    assert!(script.contains("agentKeyPluginMarketplaceUnlockVersion = \"10\""));
     assert!(script.contains("if (name === \"openai-bundled\") return \"\""));
     assert!(!script.contains("if (name === \"openai-bundled\") return \"agentkey-openai-bundled\""));
     assert!(script.contains("if (name === \"openai-bundled\" || name === \"agentkey-openai-bundled\") return \"OpenAI插件1(AgentKey)\""));
@@ -192,8 +192,8 @@ fn injection_script_keeps_bundled_marketplace_name_for_default_filter() {
 fn injection_script_does_not_bypass_plugin_marketplace_search_filters() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("codexPluginMarketplaceUnlockVersion = \"10\""));
-    assert!(script.contains("isCodexPluginBuildFlavorFilter"));
+    assert!(script.contains("agentKeyPluginMarketplaceUnlockVersion = \"10\""));
+    assert!(script.contains("isAgentKeyPluginBuildFlavorFilter"));
     assert!(script.contains("source.includes(\"!u(e.marketplaceName)||e.marketplaceName===r\")"));
     assert!(script.contains("source.includes(\"!t.includes(e.name)\")"));
     assert!(!script.contains("if (!source.includes(\"marketplaceName\")) return false"));
@@ -204,15 +204,15 @@ fn injection_script_does_not_bypass_plugin_marketplace_search_filters() {
 fn injection_script_expands_api_key_plugin_marketplace_requests() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("codexPluginMarketplaceUnlockVersion = \"10\""));
+    assert!(script.contains("agentKeyPluginMarketplaceUnlockVersion = \"10\""));
     assert!(script.contains("installPluginMarketplaceRequestPatch"));
     assert!(script.contains("installPluginBuildFlavorFilterPatch"));
     assert!(script.contains("Array.prototype.filter"));
-    assert!(script.contains("codexPluginBuildFlavorFilterPatch"));
-    assert!(script.contains("isCodexPluginBuildFlavorFilter"));
-    assert!(script.contains("codexPluginOfficialMarketplaceName(plugin?.marketplaceName) && !callback(plugin)"));
-    assert!(script.contains("isCodexPluginMarketplaceHiddenFilter"));
-    assert!(script.contains("codexPluginOfficialMarketplaceName(marketplace?.name) && !callback(marketplace)"));
+    assert!(script.contains("agentKeyPluginBuildFlavorFilterPatch"));
+    assert!(script.contains("isAgentKeyPluginBuildFlavorFilter"));
+    assert!(script.contains("agentKeyPluginOfficialMarketplaceName(plugin?.marketplaceName) && !callback(plugin)"));
+    assert!(script.contains("isAgentKeyPluginMarketplaceHiddenFilter"));
+    assert!(script.contains("agentKeyPluginOfficialMarketplaceName(marketplace?.name) && !callback(marketplace)"));
     assert!(script.contains("plugin_marketplace_hidden_filter_bypassed"));
     assert!(script.contains("method === \"list-plugins\""));
     assert!(script.contains("delete next.marketplaceKinds"));
@@ -233,8 +233,8 @@ fn injection_script_expands_api_key_plugin_marketplace_requests() {
     assert!(script.contains("plugin_install_request_debug"));
     assert!(script.contains("plugin_install_request_failed"));
     assert!(!script.contains("marketplace.path ="));
-    assert!(!script.contains("codexPluginMarketplacePathAliasForName"));
-    assert!(!script.contains("spoofAnyCodexAuthContext"));
+    assert!(!script.contains("agentKeyPluginMarketplacePathAliasForName"));
+    assert!(!script.contains("spoofAnyAgentKeyAuthContext"));
 }
 
 #[test]
@@ -243,8 +243,8 @@ fn injection_script_deletes_marketplace_kinds_to_request_default_catalog() {
 
     assert!(script.contains("delete next.marketplaceKinds"));
     assert!(script.contains("plugin_marketplace_request_expanded"));
-    assert!(!script.contains("codexPluginAllowedMarketplaceKinds"));
-    assert!(!script.contains("codexPluginExpandedMarketplaceKinds"));
+    assert!(!script.contains("agentKeyPluginAllowedMarketplaceKinds"));
+    assert!(!script.contains("agentKeyPluginExpandedMarketplaceKinds"));
     assert!(!script.contains("next.marketplaceKinds = Array.from(new Set"));
 }
 
@@ -262,8 +262,8 @@ fn injection_script_logs_marketplace_grouping_diagnostics() {
 fn injection_script_keeps_force_install_unlock_visual_state_sticky() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("codex-force-install-unlocked"));
-    assert!(script.contains("codexForcePluginInstallRefreshIntervalMs"));
+    assert!(script.contains("agentkey-force-install-unlocked"));
+    assert!(script.contains("agentKeyForcePluginInstallRefreshIntervalMs"));
     assert!(script.contains("refreshForcePluginInstallUnlockLoop"));
     assert!(script.contains("setInterval(() => {"));
 }
