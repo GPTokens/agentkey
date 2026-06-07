@@ -2001,7 +2001,7 @@ pub fn clear_relay_injection() -> CommandResult<RelayPayload> {
                 }),
             );
             ok(
-                "已清除 custom 中转 API 模式，并切换到官方 ChatGPT 登录模式。",
+                "已清除 custom 中转 API 模式，并切换到账号兼容模式。",
                 relay_payload(status, result.backup_path),
             )
         }
