@@ -7,6 +7,7 @@ use crate::settings::BackendSettings;
 
 pub const WRAPPER_EXE: &str = "agentkey-cli-wrapper.exe";
 pub const WRAPPER_SOURCE: &str = "agentkey-cli-wrapper.cs";
+pub const WRAPPER_CONFIG: &str = "agentkey-cli-wrapper.env";
 const LEGACY_WRAPPER_EXE: &str = "codex-wrapper.exe";
 const LEGACY_WRAPPER_SOURCE: &str = "codex-wrapper.cs";
 const CLI_HOME_DIR: &str = ".agentkey-cli";
@@ -15,6 +16,7 @@ const CLI_HOME_DIR: &str = ".agentkey-cli";
 pub struct WrapperInstall {
     pub wrapper_path: PathBuf,
     pub source_path: PathBuf,
+    pub config_path: PathBuf,
     pub real_codex: PathBuf,
     pub codex_home: PathBuf,
 }
@@ -46,16 +48,53 @@ pub fn wrapper_settings_for_refresh(
         return settings.clone();
     }
 
-    read_wrapper_source_for_refresh(wrapper_dir)
+    read_wrapper_config_for_refresh(wrapper_dir)
         .ok()
-        .and_then(|source| parse_wrapper_source_settings(&source))
+        .and_then(|source| parse_wrapper_config_settings(&source))
+        .or_else(|| {
+            read_wrapper_source_for_refresh(wrapper_dir)
+                .ok()
+                .and_then(|source| parse_wrapper_source_settings(&source))
+        })
         .unwrap_or_else(|| settings.clone())
+}
+
+fn read_wrapper_config_for_refresh(wrapper_dir: &Path) -> anyhow::Result<String> {
+    std::fs::read_to_string(wrapper_dir.join(WRAPPER_CONFIG))
+        .with_context(|| format!("failed to read wrapper config in {}", wrapper_dir.display()))
 }
 
 fn read_wrapper_source_for_refresh(wrapper_dir: &Path) -> anyhow::Result<String> {
     std::fs::read_to_string(wrapper_dir.join(WRAPPER_SOURCE))
         .or_else(|_| std::fs::read_to_string(wrapper_dir.join(LEGACY_WRAPPER_SOURCE)))
         .with_context(|| format!("failed to read wrapper source in {}", wrapper_dir.display()))
+}
+
+pub fn parse_wrapper_config_settings(source: &str) -> Option<BackendSettings> {
+    let mut settings = BackendSettings::default();
+    for line in source.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        let Some((key, value)) = trimmed.split_once('=') else {
+            continue;
+        };
+        match key.trim() {
+            "apiKeyEnv" => settings.cli_wrapper_api_key_env = value.trim().to_string(),
+            "baseUrl" => settings.cli_wrapper_base_url = value.trim().to_string(),
+            "apiKey" => settings.cli_wrapper_api_key = value.trim().to_string(),
+            _ => {}
+        }
+    }
+    if settings.cli_wrapper_api_key_env.trim().is_empty() {
+        settings.cli_wrapper_api_key_env = crate::settings::default_api_key_env();
+    }
+    if settings.cli_wrapper_base_url.is_empty() && settings.cli_wrapper_api_key.is_empty() {
+        None
+    } else {
+        Some(settings)
+    }
 }
 
 pub fn parse_wrapper_source_settings(source: &str) -> Option<BackendSettings> {
@@ -73,6 +112,38 @@ pub fn parse_wrapper_source_settings(source: &str) -> Option<BackendSettings> {
     } else {
         Some(settings)
     }
+}
+
+fn validate_wrapper_config_value(label: &str, value: &str) -> anyhow::Result<()> {
+    if value.contains('\0') || value.contains('\n') || value.contains('\r') {
+        anyhow::bail!("{label} 不能包含换行或 NUL 字符");
+    }
+    Ok(())
+}
+
+pub fn build_wrapper_config(settings: &BackendSettings) -> anyhow::Result<String> {
+    let api_key_env = settings.cli_wrapper_api_key_env.trim();
+    let api_key_env = if api_key_env.is_empty() {
+        crate::settings::default_api_key_env()
+    } else {
+        api_key_env.to_string()
+    };
+    validate_wrapper_config_value("Codex CLI Wrapper API Key Env", &api_key_env)?;
+    let api_key = settings.cli_wrapper_api_key.trim();
+    validate_wrapper_config_value("Codex CLI Wrapper API Key", api_key)?;
+    let base_url = crate::url_policy::validate_optional_api_base_url(
+        "Codex CLI Wrapper Base URL",
+        &settings.cli_wrapper_base_url,
+    )?
+    .unwrap_or_default();
+    Ok(format!(
+        "apiKeyEnv={api_key_env}\nbaseUrl={base_url}\napiKey={api_key}\n"
+    ))
+}
+
+fn write_wrapper_config_to(path: &Path, settings: &BackendSettings) -> anyhow::Result<()> {
+    let config = build_wrapper_config(settings)?;
+    std::fs::write(path, config).with_context(|| format!("failed to write {}", path.display()))
 }
 
 pub fn install_cli_wrapper_to(
@@ -94,14 +165,17 @@ pub fn install_cli_wrapper_to(
 
     let source_path = wrapper_dir.join(WRAPPER_SOURCE);
     let wrapper_path = wrapper_dir.join(WRAPPER_EXE);
+    let config_path = wrapper_dir.join(WRAPPER_CONFIG);
     let source = build_wrapper_source(real_codex, codex_home, settings);
     std::fs::write(&source_path, source)
         .with_context(|| format!("failed to write {}", source_path.display()))?;
+    write_wrapper_config_to(&config_path, settings)?;
 
     compile_wrapper(&source_path, &wrapper_path)?;
     Ok(WrapperInstall {
         wrapper_path,
         source_path,
+        config_path,
         real_codex: real_codex.to_path_buf(),
         codex_home: codex_home.to_path_buf(),
     })
@@ -183,33 +257,8 @@ pub fn cli_home_dir() -> PathBuf {
 pub fn build_wrapper_source(
     real_codex: &Path,
     codex_home: &Path,
-    settings: &BackendSettings,
+    _settings: &BackendSettings,
 ) -> String {
-    let base_url_line =
-        match crate::url_policy::validate_optional_api_base_url(
-            "Codex CLI Wrapper Base URL",
-            &settings.cli_wrapper_base_url,
-        ) {
-            Ok(Some(base_url)) => format!(
-                r#"        startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = @{};"#,
-                cs_string_literal(&base_url)
-            ),
-            Ok(None) | Err(_) => String::new(),
-        };
-    let api_key_line = if settings.cli_wrapper_api_key.trim().is_empty() {
-        String::new()
-    } else {
-        format!(
-            r#"        startInfo.EnvironmentVariables[apiKeyEnv] = @{};"#,
-            cs_string_literal(settings.cli_wrapper_api_key.trim())
-        )
-    };
-    let api_key_present = if settings.cli_wrapper_api_key.trim().is_empty() {
-        "false"
-    } else {
-        "true"
-    };
-
     format!(
         r#"using System;
 using System.Diagnostics;
@@ -222,21 +271,23 @@ class AgentKeyCliBridge
     {{
         string realCodex = @{real_codex};
         string codexHome = @{codex_home};
-        string apiKeyEnv = @{api_key_env};
+        string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agentkey-cli-wrapper.env");
+        WrapperConfig config = ReadConfig(configPath);
+        string apiKeyEnv = String.IsNullOrWhiteSpace(config.ApiKeyEnv) ? "CUSTOM_OPENAI_API_KEY" : config.ApiKeyEnv.Trim();
         Directory.CreateDirectory(codexHome);
         string logPath = Path.Combine(codexHome, "agentkey-cli-wrapper.log");
         AppendLog(logPath, "agentkey-cli-wrapper start args=" + RedactArguments(args));
         AppendLog(logPath, "target_cli=" + realCodex);
         AppendLog(logPath, "CODEX_HOME=" + codexHome);
-        AppendLog(logPath, "api_key_env=" + apiKeyEnv + " api_key_present={api_key_present}");
+        AppendLog(logPath, "api_key_env=" + apiKeyEnv + " api_key_present=" + (!String.IsNullOrWhiteSpace(config.ApiKey)).ToString().ToLowerInvariant());
         var startInfo = new ProcessStartInfo(realCodex);
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = false;
         startInfo.RedirectStandardOutput = false;
         startInfo.RedirectStandardError = false;
         startInfo.EnvironmentVariables["CODEX_HOME"] = codexHome;
-{base_url_line}
-{api_key_line}
+        if (!String.IsNullOrWhiteSpace(config.BaseUrl)) startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = config.BaseUrl.Trim();
+        if (!String.IsNullOrWhiteSpace(config.ApiKey)) startInfo.EnvironmentVariables[apiKeyEnv] = config.ApiKey.Trim();
         foreach (string arg in args) startInfo.Arguments += QuoteArgument(arg) + " ";
         using (var process = Process.Start(startInfo))
         {{
@@ -249,6 +300,25 @@ class AgentKeyCliBridge
     static void AppendLog(string path, string message)
     {{
         File.AppendAllText(path, "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] " + message + Environment.NewLine, Encoding.UTF8);
+    }}
+
+    static WrapperConfig ReadConfig(string path)
+    {{
+        WrapperConfig config = new WrapperConfig();
+        if (!File.Exists(path)) return config;
+        foreach (string rawLine in File.ReadAllLines(path, Encoding.UTF8))
+        {{
+            string line = (rawLine ?? "").Trim();
+            if (line.Length == 0 || line.StartsWith("#")) continue;
+            int equalsIndex = line.IndexOf('=');
+            if (equalsIndex < 0) continue;
+            string key = line.Substring(0, equalsIndex).Trim();
+            string value = line.Substring(equalsIndex + 1).Trim();
+            if (key == "apiKeyEnv") config.ApiKeyEnv = value;
+            else if (key == "baseUrl") config.BaseUrl = value;
+            else if (key == "apiKey") config.ApiKey = value;
+        }}
+        return config;
     }}
 
     static string RedactArguments(string[] args)
@@ -300,11 +370,17 @@ class AgentKeyCliBridge
         if (value.IndexOfAny(new char[] {{ ' ', '\t', '\n', '\r', '\"' }}) < 0) return value;
         return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
     }}
+
+    class WrapperConfig
+    {{
+        public string ApiKeyEnv = "";
+        public string BaseUrl = "";
+        public string ApiKey = "";
+    }}
 }}
 "#,
         real_codex = cs_string_literal(&real_codex.to_string_lossy()),
         codex_home = cs_string_literal(&codex_home.to_string_lossy()),
-        api_key_env = cs_string_literal(settings.cli_wrapper_api_key_env.trim()),
     )
 }
 

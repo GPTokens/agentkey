@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use agentkey_core::cli_wrapper::{
-    build_wrapper_source, install_cli_wrapper_to, parse_wrapper_source_settings,
+    build_wrapper_config, build_wrapper_source, install_cli_wrapper_to,
+    parse_wrapper_config_settings, parse_wrapper_source_settings,
     resolve_real_codex_from_candidates, should_refresh_cli_wrapper, wrapper_dir_from_roaming,
     wrapper_settings_for_refresh,
 };
@@ -26,11 +27,12 @@ fn wrapper_source_embeds_absolute_real_codex_path() {
     assert!(!source.contains(r#"class CodexWrapper"#));
     assert!(source.contains(r#"string realCodex = @"C:\AgentKey\Runtime\codex.exe";"#));
     assert!(!source.contains(r#"string realCodex = @"codex";"#));
-    assert!(source.contains(r#"string apiKeyEnv = @"CUSTOM_KEY";"#));
-    assert!(source.contains(
-        r#"startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = @"https://proxy.example/v1";"#
-    ));
-    assert!(source.contains(r#"startInfo.EnvironmentVariables[apiKeyEnv] = @"sk-test";"#));
+    assert!(source.contains("ReadConfig(configPath)"));
+    assert!(source.contains("agentkey-cli-wrapper.env"));
+    assert!(source.contains(r#"startInfo.EnvironmentVariables["OPENAI_BASE_URL"]"#));
+    assert!(!source.contains("https://proxy.example/v1"));
+    assert!(!source.contains("sk-test"));
+    assert!(!source.contains("CUSTOM_KEY"));
 }
 
 #[test]
@@ -61,8 +63,26 @@ fn wrapper_source_omits_remote_http_base_url() {
         &settings,
     );
 
-    assert!(!source.contains("OPENAI_BASE_URL"));
-    assert!(source.contains(r#"startInfo.EnvironmentVariables[apiKeyEnv] = @"sk-test";"#));
+    assert!(source.contains("OPENAI_BASE_URL"));
+    assert!(!source.contains("http://gateway.example.test/v1"));
+    assert!(!source.contains("sk-test"));
+}
+
+#[test]
+fn wrapper_config_contains_api_settings_outside_generated_source() {
+    let settings = BackendSettings {
+        cli_wrapper_enabled: true,
+        cli_wrapper_base_url: "https://proxy.example/v1/".to_string(),
+        cli_wrapper_api_key: "sk-test".to_string(),
+        cli_wrapper_api_key_env: "CUSTOM_KEY".to_string(),
+        ..BackendSettings::default()
+    };
+    let config = build_wrapper_config(&settings).unwrap();
+    let parsed = parse_wrapper_config_settings(&config).unwrap();
+
+    assert_eq!(parsed.cli_wrapper_api_key_env, "CUSTOM_KEY");
+    assert_eq!(parsed.cli_wrapper_base_url, "https://proxy.example/v1");
+    assert_eq!(parsed.cli_wrapper_api_key, "sk-test");
 }
 
 #[test]
@@ -203,6 +223,31 @@ fn repair_preserves_existing_wrapper_api_settings_when_global_setting_is_disable
         settings.cli_wrapper_base_url,
         "https://old.example/v1".to_string()
     );
+}
+
+#[test]
+fn repair_reads_new_wrapper_config_before_legacy_source() {
+    let temp = tempfile::tempdir().unwrap();
+    let wrapper_dir = temp.path().join("AgentKey");
+    std::fs::create_dir_all(&wrapper_dir).unwrap();
+    std::fs::write(
+        wrapper_dir.join("agentkey-cli-wrapper.env"),
+        "apiKeyEnv=CONFIG_KEY\nbaseUrl=https://config.example/v1\napiKey=sk-config\n",
+    )
+    .unwrap();
+    std::fs::write(
+        wrapper_dir.join("codex-wrapper.cs"),
+        r#"string apiKeyEnv = @"LEGACY_KEY";
+startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = @"https://legacy.example/v1";
+startInfo.EnvironmentVariables[apiKeyEnv] = @"sk-legacy";"#,
+    )
+    .unwrap();
+
+    let settings = wrapper_settings_for_refresh(&BackendSettings::default(), &wrapper_dir);
+
+    assert_eq!(settings.cli_wrapper_api_key_env, "CONFIG_KEY");
+    assert_eq!(settings.cli_wrapper_base_url, "https://config.example/v1");
+    assert_eq!(settings.cli_wrapper_api_key, "sk-config");
 }
 
 #[test]
