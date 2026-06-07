@@ -1,10 +1,10 @@
-use std::io::Write;
+use std::io::{Error, Write};
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 static TEST_LOG_PATH: OnceLock<Mutex<Option<PathBuf>>> = OnceLock::new();
 
@@ -48,7 +48,8 @@ pub fn append_diagnostic_log(event: &str, detail: impl Serialize) -> std::io::Re
     let mut file = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(path)?;
+        .open(&path)?;
+    crate::harden_sensitive_file(&path).map_err(|error| Error::other(error.to_string()))?;
     writeln!(file, "{line}")?;
     Ok(())
 }
@@ -403,5 +404,39 @@ mod tests {
         assert!(!location.contains("oauth-code"));
         assert!(!location.contains("access-secret"));
         assert!(!message.contains("query-secret"));
+    }
+
+    #[test]
+    fn append_diagnostic_log_writes_redacted_hardened_file() {
+        let temp = tempfile::tempdir().unwrap();
+        let log_path = temp.path().join("agentkey.log");
+        set_diagnostic_log_path_for_tests(Some(log_path.clone()));
+
+        append_diagnostic_log(
+            "test.event",
+            json!({
+                "apiKey": "sk-real-secret",
+                "safe": "visible"
+            }),
+        )
+        .unwrap();
+
+        let contents = std::fs::read_to_string(&log_path).unwrap();
+        assert!(contents.contains("test.event"));
+        assert!(contents.contains("visible"));
+        assert!(contents.contains("[REDACTED]"));
+        assert!(!contents.contains("sk-real-secret"));
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+
+            let file_mode = std::fs::metadata(&log_path).unwrap().permissions().mode() & 0o777;
+            let dir_mode = std::fs::metadata(temp.path()).unwrap().permissions().mode() & 0o777;
+            assert_eq!(file_mode, 0o600);
+            assert_eq!(dir_mode, 0o700);
+        }
+
+        set_diagnostic_log_path_for_tests(None);
     }
 }
