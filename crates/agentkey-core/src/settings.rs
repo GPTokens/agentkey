@@ -98,7 +98,7 @@ impl Default for RelayProfile {
         Self {
             id: "default".to_string(),
             linked_provider_source_id: String::new(),
-            name: "默认中转".to_string(),
+            name: "默认 API 供应商".to_string(),
             model: String::new(),
             base_url: default_relay_base_url(),
             upstream_base_url: String::new(),
@@ -380,7 +380,7 @@ impl BackendSettings {
             return RelayProfile {
                 id: default_active_relay_id(),
                 linked_provider_source_id: String::new(),
-                name: "默认中转".to_string(),
+                name: "默认 API 供应商".to_string(),
                 model: String::new(),
                 base_url: if self.relay_base_url.is_empty() {
                     default_relay_base_url()
@@ -425,7 +425,7 @@ impl BackendSettings {
                 self.active_relay_id.clone()
             },
             linked_provider_source_id: String::new(),
-            name: "默认中转".to_string(),
+            name: "默认 API 供应商".to_string(),
             model: String::new(),
             base_url: if self.relay_base_url.is_empty() {
                 default_relay_base_url()
@@ -2076,7 +2076,7 @@ experimental_bearer_token = "sk-existing""#
         let active = settings.active_relay_profile();
 
         assert_eq!(active.id, "default");
-        assert_eq!(active.name, "默认中转");
+        assert_eq!(active.name, "默认 API 供应商");
         assert_eq!(active.base_url, "https://legacy.example/v1");
         assert_eq!(active.api_key, "sk-legacy");
         assert_eq!(active.relay_mode, RelayMode::MixedApi);
