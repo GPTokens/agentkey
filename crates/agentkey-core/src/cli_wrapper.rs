@@ -143,28 +143,7 @@ pub fn build_wrapper_config(settings: &BackendSettings) -> anyhow::Result<String
 fn write_wrapper_config_to(path: &Path, settings: &BackendSettings) -> anyhow::Result<()> {
     let config = build_wrapper_config(settings)?;
     std::fs::write(path, config).with_context(|| format!("failed to write {}", path.display()))?;
-    harden_wrapper_config_file(path)?;
-    Ok(())
-}
-
-fn harden_wrapper_config_file(path: &Path) -> anyhow::Result<()> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let permissions = std::fs::Permissions::from_mode(0o600);
-        std::fs::set_permissions(path, permissions)
-            .with_context(|| format!("failed to restrict {}", path.display()))?;
-    }
-    #[cfg(windows)]
-    {
-        crate::windows_integration::hide_file(path)
-            .with_context(|| format!("failed to hide {}", path.display()))?;
-    }
-    #[cfg(not(any(unix, windows)))]
-    {
-        let _ = path;
-    }
-    Ok(())
+    crate::harden_sensitive_file(path)
 }
 
 pub fn install_cli_wrapper_to(
@@ -477,4 +456,40 @@ fn parse_csharp_verbatim_string(rest: &str) -> Option<String> {
         value.push(ch);
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn wrapper_config_write_restricts_file_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = tempfile::tempdir().unwrap();
+        let wrapper_dir = temp.path().join("AgentKey");
+        std::fs::create_dir_all(&wrapper_dir).unwrap();
+        let path = wrapper_dir.join(WRAPPER_CONFIG);
+        let settings = BackendSettings {
+            cli_wrapper_api_key: "sk-test".to_string(),
+            cli_wrapper_base_url: "https://proxy.example/v1".to_string(),
+            ..BackendSettings::default()
+        };
+
+        write_wrapper_config_to(&path, &settings).unwrap();
+
+        assert_eq!(
+            std::fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        assert_eq!(
+            std::fs::metadata(&wrapper_dir)
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o777,
+            0o700
+        );
+    }
 }
