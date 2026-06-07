@@ -400,6 +400,36 @@ async fn default_helper_rejects_backend_status_without_token() {
 }
 
 #[tokio::test]
+async fn default_helper_rejects_untrusted_origin_even_with_token() {
+    let hooks = DefaultLaunchHooks::default();
+    let listener = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let port = listener.local_addr().unwrap().port();
+    drop(listener);
+
+    let helper_token = "test-token";
+    hooks
+        .start_helper(port, helper_token.to_string())
+        .await
+        .unwrap();
+    let response = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .post(format!("http://127.0.0.1:{port}/backend/status"))
+        .header("Origin", "https://evil.example")
+        .header("X-AgentKey-Token", helper_token)
+        .json(&serde_json::json!({}))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), reqwest::StatusCode::FORBIDDEN);
+    assert!(response.headers().get("Access-Control-Allow-Origin").is_none());
+
+    hooks.shutdown_helper(port).await;
+}
+
+#[tokio::test]
 async fn default_helper_accepts_diagnostic_log_events_over_http() {
     let temp = tempfile::tempdir().unwrap();
     let log_path = temp.path().join("agentkey.log");

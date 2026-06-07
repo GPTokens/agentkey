@@ -712,6 +712,23 @@ async fn handle_helper_connection(
         return Ok(());
     }
 
+    if request_origin.is_some() && cors_origin.is_none() {
+        let body = serde_json::to_vec(&serde_json::json!({
+            "status": "failed",
+            "message": "Forbidden helper origin"
+        }))?;
+        write_http_response(
+            &mut stream,
+            "403 Forbidden",
+            "application/json; charset=utf-8",
+            &body,
+            None,
+        )
+        .await?;
+        stream.shutdown().await?;
+        return Ok(());
+    }
+
     if !helper_request_authorized(&request, helper_token.as_ref().as_str(), proxy_path) {
         let body = serde_json::to_vec(&serde_json::json!({
             "status": "failed",
