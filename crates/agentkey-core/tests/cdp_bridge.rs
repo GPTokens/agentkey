@@ -281,11 +281,12 @@ fn injection_script_loads_backend_settings_before_initial_scan() {
         .find("scan();")
         .expect("script should perform an initial scan");
     let footer_marker = footer
-        .find("window.__codexProjectMoveApplyProjection")
+        .find("window.__agentKeyProjectMoveApplyProjection")
         .expect("script should continue bootstrapping after the initial scan");
 
     assert!(initial_scan < footer_marker);
     assert!(script.contains("if (attempt < 60)"));
+    assert!(!script.contains("window.__codexProjectMoveApplyProjection"));
 }
 
 #[test]
@@ -393,6 +394,9 @@ fn injection_script_exposes_fast_service_tier_control() {
     assert!(script.contains("desktopClientAssetUrl"));
     assert!(script.contains("agentKeyThreadServiceTierOverrides"));
     assert!(script.contains("codexThreadServiceTierOverrides"));
+    assert!(script.contains("localStorage.setItem(agentKeyThreadServiceTierKey"));
+    assert!(script.contains("localStorage.removeItem(legacyAgentKeyThreadServiceTierKey"));
+    assert!(!script.contains("localStorage.setItem(legacyAgentKeyThreadServiceTierKey"));
     assert!(script.contains("setAgentKeyThreadServiceTierMode"));
     assert!(script.contains("agentKeyServiceTierRequestOverride"));
     assert!(script.contains("serviceTierControls: false"));
@@ -451,6 +455,9 @@ fn injection_script_restores_thread_scroll_positions() {
 
     assert!(script.contains("threadScrollRestore"));
     assert!(script.contains("codexThreadScroll"));
+    assert!(script.contains("localStorage.setItem(agentKeyThreadScrollKey"));
+    assert!(script.contains("localStorage.removeItem(legacyAgentKeyThreadScrollKey"));
+    assert!(!script.contains("localStorage.setItem(legacyAgentKeyThreadScrollKey"));
     assert!(script.contains("installThreadScrollRouteHooks"));
     assert!(script.contains("scheduleThreadScrollSync"));
 }
@@ -464,6 +471,9 @@ fn injection_script_installs_upstream_branch_dropdown_adapter() {
     assert!(script.contains("data-agentkey-upstream-branch-option"));
     assert!(script.contains("agentKeyUpstreamBranchSelection"));
     assert!(script.contains("codexUpstreamBranchSelection"));
+    assert!(script.contains("sessionStorage.setItem(upstreamBranchSelectionKey"));
+    assert!(script.contains("sessionStorage.removeItem(legacyAgentKeyUpstreamBranchSelectionKey"));
+    assert!(!script.contains("sessionStorage.setItem(legacyAgentKeyUpstreamBranchSelectionKey"));
     assert!(script.contains("/upstream-worktree/defaults"));
     assert!(script.contains("/upstream-worktree/prepare"));
     assert!(script.contains("injectUpstreamBranchOptions"));
@@ -479,6 +489,9 @@ fn injection_script_installs_upstream_branch_dropdown_adapter() {
     assert!(script.contains("Start new chat in"));
     assert!(script.contains("agentKeyUpstreamProjectContext"));
     assert!(script.contains("codexUpstreamProjectContext"));
+    assert!(script.contains("sessionStorage.setItem(upstreamProjectContextKey"));
+    assert!(script.contains("sessionStorage.removeItem(legacyAgentKeyUpstreamProjectContextKey"));
+    assert!(!script.contains("sessionStorage.setItem(legacyAgentKeyUpstreamProjectContextKey"));
     assert!(script.contains("rememberStartNewChatProjectContext"));
     assert!(script.contains("currentProjectContextForBranchMenu"));
     assert!(script.contains("remoteProjectContextFromGlobalState"));
