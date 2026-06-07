@@ -341,7 +341,10 @@ async fn default_helper_serves_backend_status_over_http() {
     drop(listener);
 
     let helper_token = "test-token";
-    hooks.start_helper(port, helper_token.to_string()).await.unwrap();
+    hooks
+        .start_helper(port, helper_token.to_string())
+        .await
+        .unwrap();
     let client = reqwest::Client::builder().no_proxy().build().unwrap();
     let response = client
         .post(format!("http://127.0.0.1:{port}/backend/status"))
@@ -407,7 +410,10 @@ async fn default_helper_accepts_diagnostic_log_events_over_http() {
     drop(listener);
 
     let helper_token = "test-token";
-    hooks.start_helper(port, helper_token.to_string()).await.unwrap();
+    hooks
+        .start_helper(port, helper_token.to_string())
+        .await
+        .unwrap();
     let response = reqwest::Client::builder()
         .no_proxy()
         .build()
@@ -803,7 +809,7 @@ async fn launch_starts_helper_when_chat_protocol_proxy_is_enabled() {
         enhancements_enabled: false,
         relay_profiles: vec![RelayProfile {
             id: "relay-chat".to_string(),
-            linked_ccs_provider_id: String::new(),
+            linked_provider_source_id: String::new(),
             name: "Chat".to_string(),
             model: String::new(),
             base_url: "https://chat-only.example.test/v1".to_string(),

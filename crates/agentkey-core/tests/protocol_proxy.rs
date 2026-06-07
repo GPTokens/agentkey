@@ -62,7 +62,7 @@ fn responses_request_converts_to_chat_completions() {
 }
 
 #[test]
-fn responses_request_matches_ccs_reasoning_and_tool_choice_edges() {
+fn responses_request_matches_provider_reasoning_and_tool_choice_edges() {
     let non_reasoning = responses_to_chat_completions(json!({
         "model": "gpt-4o",
         "reasoning": { "effort": "high" },
@@ -1058,7 +1058,7 @@ data: [DONE]
 }
 
 #[test]
-fn chat_sse_converts_reasoning_inline_think_tools_and_errors_like_ccs() {
+fn chat_sse_converts_reasoning_inline_think_tools_and_errors() {
     let reasoning = chat_sse_to_responses_sse(
         r#"data: {"id":"chatcmpl_reason","created":123,"model":"deepseek-reasoner","choices":[{"delta":{"reasoning_content":"Need context. "}}]}
 

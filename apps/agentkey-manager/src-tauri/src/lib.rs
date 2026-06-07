@@ -39,8 +39,8 @@ pub fn run() {
             commands::save_settings,
             commands::list_local_sessions,
             commands::delete_local_session,
-            commands::load_ccs_providers,
-            commands::import_ccs_providers,
+            commands::load_provider_links,
+            commands::import_provider_links,
             commands::load_provider_sync_targets,
             commands::sync_providers_now,
             commands::load_ads,
@@ -159,9 +159,7 @@ fn acquire_single_instance_guard() -> Option<agentkey_core::ports::LoopbackPortG
                 }),
             );
             match std::net::TcpListener::bind(("127.0.0.1", 0)) {
-                Ok(listener) => Some(agentkey_core::ports::LoopbackPortGuard::listener(
-                    listener,
-                )),
+                Ok(listener) => Some(agentkey_core::ports::LoopbackPortGuard::listener(listener)),
                 Err(fallback_error) => {
                     let _ = agentkey_core::diagnostic_log::append_diagnostic_log(
                         "manager.guard_fallback_failed",

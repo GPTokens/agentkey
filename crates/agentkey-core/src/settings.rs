@@ -40,8 +40,12 @@ impl Default for RelayContextSelection {
 #[serde(rename_all = "camelCase")]
 pub struct RelayProfile {
     pub id: String,
-    #[serde(rename = "linkedCcsProviderId", default)]
-    pub linked_ccs_provider_id: String,
+    #[serde(
+        rename = "linkedProviderSourceId",
+        alias = "linkedCcsProviderId",
+        default
+    )]
+    pub linked_provider_source_id: String,
     pub name: String,
     #[serde(default, skip_serializing)]
     pub model: String,
@@ -49,7 +53,11 @@ pub struct RelayProfile {
     pub base_url: String,
     #[serde(rename = "upstreamBaseUrl", default)]
     pub upstream_base_url: String,
-    #[serde(default, skip_serializing, deserialize_with = "deserialize_profile_api_key")]
+    #[serde(
+        default,
+        skip_serializing,
+        deserialize_with = "deserialize_profile_api_key"
+    )]
     pub api_key: String,
     #[serde(default)]
     pub protocol: RelayProtocol,
@@ -89,7 +97,7 @@ impl Default for RelayProfile {
     fn default() -> Self {
         Self {
             id: "default".to_string(),
-            linked_ccs_provider_id: String::new(),
+            linked_provider_source_id: String::new(),
             name: "默认中转".to_string(),
             model: String::new(),
             base_url: default_relay_base_url(),
@@ -162,8 +170,8 @@ pub struct BackendSettings {
     pub provider_sync_last_selected_provider: String,
     #[serde(rename = "relayProfilesEnabled", default = "default_true")]
     pub relay_profiles_enabled: bool,
-    #[serde(rename = "ccsLinkEnabled", default)]
-    pub ccs_link_enabled: bool,
+    #[serde(rename = "providerLinkEnabled", alias = "ccsLinkEnabled", default)]
+    pub provider_link_enabled: bool,
     #[serde(rename = "enhancementsEnabled", default = "default_true")]
     pub enhancements_enabled: bool,
     #[serde(
@@ -300,7 +308,10 @@ pub struct BackendSettings {
     pub claude_code_model: String,
     #[serde(rename = "claudeCodeSmallFastModel", default)]
     pub claude_code_small_fast_model: String,
-    #[serde(rename = "claudeCodeDisableNonessentialTraffic", default = "default_true")]
+    #[serde(
+        rename = "claudeCodeDisableNonessentialTraffic",
+        default = "default_true"
+    )]
     pub claude_code_disable_nonessential_traffic: bool,
     #[serde(rename = "claudeCodeExtraEnv", default)]
     pub claude_code_extra_env: String,
@@ -316,7 +327,7 @@ impl Default for BackendSettings {
             provider_sync_manual_providers: Vec::new(),
             provider_sync_last_selected_provider: String::new(),
             relay_profiles_enabled: true,
-            ccs_link_enabled: false,
+            provider_link_enabled: false,
             enhancements_enabled: true,
             codex_app_plugin_entry_unlock: true,
             codex_app_plugin_marketplace_unlock: true,
@@ -368,7 +379,7 @@ impl BackendSettings {
         {
             return RelayProfile {
                 id: default_active_relay_id(),
-                linked_ccs_provider_id: String::new(),
+                linked_provider_source_id: String::new(),
                 name: "默认中转".to_string(),
                 model: String::new(),
                 base_url: if self.relay_base_url.is_empty() {
@@ -413,7 +424,7 @@ impl BackendSettings {
             } else {
                 self.active_relay_id.clone()
             },
-            linked_ccs_provider_id: String::new(),
+            linked_provider_source_id: String::new(),
             name: "默认中转".to_string(),
             model: String::new(),
             base_url: if self.relay_base_url.is_empty() {
@@ -546,6 +557,7 @@ impl SettingsStore {
 
         let mut raw = self.load_raw_object()?;
         merge_known_setting_fields(&mut raw, &payload);
+        canonicalize_relay_profile_provider_link_keys(&mut raw);
         let settings = normalize_settings_config_sections(
             serde_json::from_value(Value::Object(raw.clone())).unwrap_or_default(),
         );
@@ -591,9 +603,7 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
     if let Some(value) = source.get("relayProfilesEnabled").and_then(Value::as_bool) {
         target.insert("relayProfilesEnabled".to_string(), Value::Bool(value));
     }
-    if let Some(value) = source.get("ccsLinkEnabled").and_then(Value::as_bool) {
-        target.insert("ccsLinkEnabled".to_string(), Value::Bool(value));
-    }
+    merge_bool_setting_alias(target, source, "providerLinkEnabled", "ccsLinkEnabled");
     if let Some(value) = source.get("enhancementsEnabled").and_then(Value::as_bool) {
         target.insert("enhancementsEnabled".to_string(), Value::Bool(value));
     }
@@ -858,6 +868,26 @@ fn merge_bool_setting_alias(
     }
 }
 
+fn canonicalize_relay_profile_provider_link_keys(target: &mut Map<String, Value>) {
+    let Some(profiles) = target
+        .get_mut("relayProfiles")
+        .and_then(Value::as_array_mut)
+    else {
+        return;
+    };
+    for profile in profiles {
+        let Some(profile) = profile.as_object_mut() else {
+            continue;
+        };
+        let legacy = profile.remove("linkedCcsProviderId");
+        if !profile.contains_key("linkedProviderSourceId") {
+            if let Some(value) = legacy {
+                profile.insert("linkedProviderSourceId".to_string(), value);
+            }
+        }
+    }
+}
+
 fn merge_string_setting_alias(
     target: &mut Map<String, Value>,
     source: &Map<String, Value>,
@@ -1114,7 +1144,7 @@ mod tests {
         let settings = BackendSettings::default();
         assert!(!settings.provider_sync_enabled);
         assert!(settings.relay_profiles_enabled);
-        assert!(!settings.ccs_link_enabled);
+        assert!(!settings.provider_link_enabled);
         assert!(settings.enhancements_enabled);
         assert!(settings.codex_app_plugin_entry_unlock);
         assert!(settings.codex_app_plugin_marketplace_unlock);
@@ -1157,9 +1187,15 @@ mod tests {
             settings.claude_code_command,
             "claude --permission-mode acceptEdits"
         );
-        assert_eq!(settings.claude_code_base_url, "https://litellm.example.test");
+        assert_eq!(
+            settings.claude_code_base_url,
+            "https://litellm.example.test"
+        );
         assert_eq!(settings.claude_code_api_key, "sk-claude");
-        assert_eq!(settings.claude_code_auth_mode, ClaudeCodeAuthMode::AuthToken);
+        assert_eq!(
+            settings.claude_code_auth_mode,
+            ClaudeCodeAuthMode::AuthToken
+        );
         assert_eq!(settings.claude_code_model, "claude-sonnet-4-5");
     }
 
@@ -1227,10 +1263,8 @@ mod tests {
 
     #[test]
     fn settings_deserialize_accepts_legacy_extra_args_key() {
-        let settings: BackendSettings = serde_json::from_str(
-            r#"{"codexExtraArgs":["--force_high_performance_gpu"]}"#,
-        )
-        .unwrap();
+        let settings: BackendSettings =
+            serde_json::from_str(r#"{"codexExtraArgs":["--force_high_performance_gpu"]}"#).unwrap();
 
         assert_eq!(
             settings.codex_extra_args,
@@ -1449,22 +1483,28 @@ experimental_bearer_token = "sk-mix"
         assert!(profile.official_mix_api_key);
         assert_eq!(profile.api_key, "sk-mix");
         assert!(!profile.auth_contents.contains("OPENAI_API_KEY"));
-        assert!(profile
-            .config_contents
-            .contains(r#"experimental_bearer_token = "sk-mix""#));
+        assert!(
+            profile
+                .config_contents
+                .contains(r#"experimental_bearer_token = "sk-mix""#)
+        );
 
         let saved: Value =
             serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
                 .unwrap();
         assert!(saved["relayProfiles"][0].get("apiKey").is_none());
-        assert!(!saved["relayProfiles"][0]["authContents"]
-            .as_str()
-            .unwrap()
-            .contains("OPENAI_API_KEY"));
-        assert!(saved["relayProfiles"][0]["configContents"]
-            .as_str()
-            .unwrap()
-            .contains(r#"experimental_bearer_token = "sk-mix""#));
+        assert!(
+            !saved["relayProfiles"][0]["authContents"]
+                .as_str()
+                .unwrap()
+                .contains("OPENAI_API_KEY")
+        );
+        assert!(
+            saved["relayProfiles"][0]["configContents"]
+                .as_str()
+                .unwrap()
+                .contains(r#"experimental_bearer_token = "sk-mix""#)
+        );
     }
 
     #[test]
@@ -1513,11 +1553,11 @@ experimental_bearer_token = "sk-existing"
         let profile = &updated.relay_profiles[0];
         assert_eq!(profile.api_key, "sk-existing");
         assert!(!profile.config_contents.contains("sk-other"));
-        assert!(profile
-            .config_contents
-            .contains(r#"[model_providers.custom]
+        assert!(profile.config_contents.contains(
+            r#"[model_providers.custom]
 base_url = "https://relay.example/v1"
-experimental_bearer_token = "sk-existing""#));
+experimental_bearer_token = "sk-existing""#
+        ));
     }
 
     #[test]
@@ -1543,9 +1583,11 @@ experimental_bearer_token = "sk-existing""#));
 
         let profile = &updated.relay_profiles[0];
         assert_eq!(profile.api_key, "sk-new");
-        assert!(profile
-            .config_contents
-            .contains(r#"experimental_bearer_token = "sk-new""#));
+        assert!(
+            profile
+                .config_contents
+                .contains(r#"experimental_bearer_token = "sk-new""#)
+        );
         assert!(!profile.auth_contents.contains("OPENAI_API_KEY"));
     }
 
@@ -1572,9 +1614,11 @@ experimental_bearer_token = "sk-existing""#));
         assert_eq!(profile.relay_mode, RelayMode::Official);
         assert!(profile.official_mix_api_key);
         assert_eq!(profile.api_key, "22222222222222222222222222222222222");
-        assert!(profile
-            .config_contents
-            .contains(r#"experimental_bearer_token = "22222222222222222222222222222222222""#));
+        assert!(
+            profile
+                .config_contents
+                .contains(r#"experimental_bearer_token = "22222222222222222222222222222222222""#)
+        );
         assert!(!profile.auth_contents.contains("OPENAI_API_KEY"));
     }
 
@@ -1737,7 +1781,10 @@ experimental_bearer_token = "sk-existing""#));
                 .unwrap();
         assert_eq!(saved["desktopClientPluginEntryUnlock"], json!(false));
         assert_eq!(saved["desktopClientServiceTierControls"], json!(true));
-        assert_eq!(saved["desktopClientPath"], json!(r"C:\Portable\Client\Client.exe"));
+        assert_eq!(
+            saved["desktopClientPath"],
+            json!(r"C:\Portable\Client\Client.exe")
+        );
         assert_eq!(saved["desktopClientGoalsEnabled"], json!(true));
         assert!(saved.get("codexAppPath").is_none());
         assert!(saved.get("codexAppPluginEntryUnlock").is_none());
@@ -1814,6 +1861,38 @@ experimental_bearer_token = "sk-existing""#));
         assert_eq!(saved["desktopClientServiceTierControls"], json!(true));
         assert!(saved.get("codexAppPluginEntryUnlock").is_none());
         assert!(saved.get("codexAppServiceTierControls").is_none());
+    }
+
+    #[test]
+    fn settings_store_update_canonicalizes_provider_link_keys() {
+        let dir = temp_dir();
+        let path = dir.join("settings.json");
+        std::fs::write(
+            &path,
+            r#"{"ccsLinkEnabled":true,"relayProfiles":[{"id":"linked","linkedCcsProviderId":"provider-one","name":"Linked"}]}"#,
+        )
+        .unwrap();
+        let store = SettingsStore::new(path.clone());
+
+        let updated = store.update(json!({})).unwrap();
+        let saved: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+
+        assert!(updated.provider_link_enabled);
+        assert_eq!(
+            updated.relay_profiles[0].linked_provider_source_id,
+            "provider-one"
+        );
+        assert_eq!(saved["providerLinkEnabled"], json!(true));
+        assert_eq!(
+            saved["relayProfiles"][0]["linkedProviderSourceId"],
+            json!("provider-one")
+        );
+        assert!(saved.get("ccsLinkEnabled").is_none());
+        assert!(
+            saved["relayProfiles"][0]
+                .get("linkedCcsProviderId")
+                .is_none()
+        );
     }
 
     #[test]

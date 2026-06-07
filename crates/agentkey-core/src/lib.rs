@@ -2,7 +2,6 @@ pub mod ads;
 pub mod app_paths;
 pub mod assets;
 pub mod bridge;
-pub mod ccs_import;
 pub mod cdp;
 pub mod claude_code;
 pub mod cli_wrapper;
@@ -15,6 +14,7 @@ pub mod models;
 pub mod paths;
 pub mod ports;
 pub mod protocol_proxy;
+pub mod provider_link;
 pub mod proxy;
 pub mod relay_config;
 pub mod routes;
@@ -40,7 +40,10 @@ pub fn harden_sensitive_file(path: &std::path::Path) -> anyhow::Result<()> {
 
         if let Some(parent) = path.parent() {
             fs::set_permissions(parent, fs::Permissions::from_mode(0o700)).with_context(|| {
-                format!("failed to restrict sensitive directory {}", parent.display())
+                format!(
+                    "failed to restrict sensitive directory {}",
+                    parent.display()
+                )
             })?;
         }
         fs::set_permissions(path, fs::Permissions::from_mode(0o600))

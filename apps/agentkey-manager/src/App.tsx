@@ -107,7 +107,7 @@ type BackendSettings = {
   providerSyncManualProviders: string[];
   providerSyncLastSelectedProvider: string;
   relayProfilesEnabled: boolean;
-  ccsLinkEnabled: boolean;
+  providerLinkEnabled: boolean;
   enhancementsEnabled: boolean;
   desktopClientPluginEntryUnlock: boolean;
   desktopClientPluginMarketplaceUnlock: boolean;
@@ -154,7 +154,7 @@ type ClaudeCodeAuthMode = "apiKey" | "authToken";
 
 type RelayProfile = {
   id: string;
-  linkedCcsProviderId: string;
+  linkedProviderSourceId: string;
   name: string;
   model: string;
   baseUrl: string;
@@ -314,7 +314,7 @@ type ClaudeCodeLaunchResult = CommandResult<{
   nonessentialTrafficDisabled: boolean;
 }>;
 
-type CcsProviderImport = {
+type ProviderImport = {
   sourceId: string;
   name: string;
   baseUrl: string;
@@ -521,7 +521,7 @@ const defaultSettings: BackendSettings = {
   providerSyncManualProviders: [],
   providerSyncLastSelectedProvider: "",
   relayProfilesEnabled: true,
-  ccsLinkEnabled: false,
+  providerLinkEnabled: false,
   enhancementsEnabled: true,
   desktopClientPluginEntryUnlock: true,
   desktopClientPluginMarketplaceUnlock: true,
@@ -544,7 +544,7 @@ const defaultSettings: BackendSettings = {
   relayProfiles: [
     {
       id: "default",
-      linkedCcsProviderId: "",
+      linkedProviderSourceId: "",
       name: "默认中转",
       model: "",
       baseUrl: "",
@@ -939,18 +939,18 @@ export function App() {
 
   const settingsForSave = async (next: BackendSettings, preserveLinkedProfiles: boolean) => {
     const normalized = normalizeSettings(next);
-    if (!normalized.ccsLinkEnabled || preserveLinkedProfiles) return normalized;
+    if (!normalized.providerLinkEnabled || preserveLinkedProfiles) return normalized;
     const refreshed = await refreshSettings(true);
     if (!refreshed) return normalized;
     return mergeLiveLinkedRelayProfiles(normalized, normalizeSettings(refreshed));
   };
 
-  const importCcsProviders = async () => {
-    const result = await run(() => call<SettingsResult>("import_ccs_providers"));
+  const importProviderLinks = async () => {
+    const result = await run(() => call<SettingsResult>("import_provider_links"));
     if (result) {
       setSettings(result);
       setSettingsForm(normalizeSettings(result.settings));
-      showResultNotice("联动 cc-switch", result);
+      showResultNotice("联动外部供应商数据库", result);
     }
   };
 
@@ -1210,13 +1210,13 @@ export function App() {
 
   const switchRelayProfile = async (next: BackendSettings, previousActiveRelayId = settingsForm.activeRelayId) => {
     let switchSettings = normalizeSettings(next);
-    if (switchSettings.ccsLinkEnabled) {
+    if (switchSettings.providerLinkEnabled) {
       const targetRelayId = switchSettings.activeRelayId;
       const refreshed = await refreshSettings(true);
       if (!refreshed) return;
       const latest = normalizeSettings(refreshed);
       if (!latest.relayProfiles.some((profile) => profile.id === targetRelayId)) {
-        showNotice("供应商切换", "目标供应商已不在 cc-switch 或本地配置中，请刷新供应商列表后重试。", "failed");
+        showNotice("供应商切换", "目标供应商已不在外部供应商数据库或本地配置中，请刷新供应商列表后重试。", "failed");
         return;
       }
       switchSettings = syncLegacyRelayFields({ ...latest, activeRelayId: targetRelayId });
@@ -1231,7 +1231,7 @@ export function App() {
       targetRelayId: switchSettings.activeRelayId,
       targetRelayName: targetBeforeSnapshot.name,
       targetRelayMode: targetBeforeSnapshot.relayMode,
-      ccsLinkEnabled: switchSettings.ccsLinkEnabled,
+      providerLinkEnabled: switchSettings.providerLinkEnabled,
     });
     const nextWithSnapshot = await snapshotActiveRelayFilesBeforeSwitch(switchSettings, previousActiveRelayId);
     if (!nextWithSnapshot) {
@@ -1508,7 +1508,7 @@ export function App() {
       refreshRelayFiles,
       refreshLiveContextEntries,
       syncLiveContextEntries,
-      importCcsProviders,
+      importProviderLinks,
       refreshAds,
       refreshScriptMarket,
       installMarketScript,
@@ -1724,7 +1724,7 @@ type Actions = {
   refreshRelayFiles: () => Promise<RelayFilesResult | null>;
   refreshLiveContextEntries: () => Promise<LiveContextEntriesResult | null>;
   syncLiveContextEntries: (settings: BackendSettings, silent?: boolean) => Promise<LiveContextEntriesResult | null>;
-  importCcsProviders: () => Promise<void>;
+  importProviderLinks: () => Promise<void>;
   refreshAds: () => Promise<void>;
   refreshScriptMarket: () => Promise<void>;
   installMarketScript: (id: string) => Promise<void>;
@@ -1858,7 +1858,7 @@ function RelayScreen({
   const editRelayProfile = async (profileId: string) => {
     let nextSettings = normalized;
     const profile = normalized.relayProfiles.find((item) => item.id === profileId);
-    if (profile?.linkedCcsProviderId && normalized.ccsLinkEnabled) {
+    if (profile?.linkedProviderSourceId && normalized.providerLinkEnabled) {
       const refreshed = await actions.refreshSettings(true);
       if (refreshed) nextSettings = normalizeSettings(refreshed);
     }
@@ -1920,20 +1920,20 @@ function RelayScreen({
           </label>
           <label className="switch-row relay-link-switch">
             <input
-              checked={normalized.ccsLinkEnabled}
+              checked={normalized.providerLinkEnabled}
               onChange={(event) => {
                 if (event.currentTarget.checked) {
-                  void actions.importCcsProviders();
+                  void actions.importProviderLinks();
                   return;
                 }
-                const next = { ...normalized, ccsLinkEnabled: false };
+                const next = { ...normalized, providerLinkEnabled: false };
                 void saveRelaySettings(next);
               }}
               type="checkbox"
             />
             <span>
-              <strong>联动 cc-switch</strong>
-              <small>开启后读取 cc-switch Codex 供应商并保存时回写；同时使用多个管理工具可能导致 config.toml / auth.json 被反复覆盖。</small>
+              <strong>联动外部供应商数据库</strong>
+              <small>开启后读取外部供应商数据库并在保存时回写；同时使用多个管理工具可能导致 config.toml / auth.json 被反复覆盖。</small>
             </span>
           </label>
           <div className="relay-add-row">
@@ -2948,7 +2948,7 @@ function RelayProfileDetail({
     const next = isNew
       ? addRelayProfile(form, normalizedDraft)
       : updateRelayProfile(form, profile.id, normalizedDraft);
-    await onFormChange(next, !!normalizedDraft.linkedCcsProviderId);
+    await onFormChange(next, !!normalizedDraft.linkedProviderSourceId);
     if (isActive) {
       await actions.saveRelayFile(
         "config",
@@ -3238,11 +3238,11 @@ function RelayProfileEditor({
         <ShieldCheck className="h-4 w-4" />
         <span>{relayProfileModeHelp(profile)}</span>
       </div>
-      {profile.linkedCcsProviderId ? (
+      {profile.linkedProviderSourceId ? (
         <div className="hint-line relay-protocol-hint">
           <Link2 className="h-4 w-4" />
           <span>
-            此供应商联动自 cc-switch：{profile.linkedCcsProviderId}。开启“保存时回写 cc-switch”后，本页保存会同步修改 cc-switch 数据库中的同一供应商。
+            此供应商联动自外部供应商数据库：{profile.linkedProviderSourceId}。开启“保存时回写”后，本页保存会同步修改外部供应商数据库中的同一供应商。
           </span>
         </div>
       ) : null}
@@ -4432,14 +4432,14 @@ function contextSelectionForAllEntries(settings: BackendSettings): RelayContextS
 }
 
 function relayProfileSourceLabel(profile: RelayProfile) {
-  return profile.linkedCcsProviderId ? "cc-switch 联动" : "本地";
+  return profile.linkedProviderSourceId ? "外部供应商联动" : "本地";
 }
 
 function relayProfileEditorStatus(profile: RelayProfile, form: BackendSettings, isNew: boolean) {
   if (isNew) return "新建供应商需要先保存到列表";
   if (!form.relayProfilesEnabled) return "供应商配置总开关已关闭；当前只保存配置，不写入 Codex live 文件";
-  if (profile.linkedCcsProviderId && form.ccsLinkEnabled) return "联动 cc-switch；保存后会回写外部供应商数据库";
-  if (profile.linkedCcsProviderId) return "联动 cc-switch；当前未开启保存回写";
+  if (profile.linkedProviderSourceId && form.providerLinkEnabled) return "联动外部供应商数据库；保存后会回写外部供应商数据库";
+  if (profile.linkedProviderSourceId) return "联动外部供应商数据库；当前未开启保存回写";
   return profile.id === form.activeRelayId ? "当前正在使用" : "编辑后保存列表，再切换模式时会使用新配置";
 }
 
@@ -4542,7 +4542,7 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
       : [
           {
             id: settings.activeRelayId || "default",
-            linkedCcsProviderId: "",
+            linkedProviderSourceId: "",
             name: "默认中转",
             model: "",
             baseUrl: settings.relayBaseUrl || defaultSettings.relayBaseUrl,
@@ -4573,7 +4573,7 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
     desktopClientExtraArgs: settings.desktopClientExtraArgs || legacyDesktopClientExtraArgs || [],
     desktopClientGoalsEnabled: settings.desktopClientGoalsEnabled ?? legacyDesktopClientGoalsEnabled ?? false,
     relayProfilesEnabled: settings.relayProfilesEnabled !== false,
-    ccsLinkEnabled: settings.ccsLinkEnabled === true,
+    providerLinkEnabled: settings.providerLinkEnabled === true,
     relayCommonConfigContents,
     relayContextConfigContents,
     relayProfiles: profiles,
@@ -4603,7 +4603,7 @@ function normalizeRelayProfile(profile: RelayProfile, defaultContextSelection = 
   const legacyMixedApi = profile.relayMode === "mixedApi";
   let normalized: RelayProfile = {
     ...profile,
-    linkedCcsProviderId: profile.linkedCcsProviderId || "",
+    linkedProviderSourceId: profile.linkedProviderSourceId || "",
     model: profile.model || "",
     baseUrl: profile.baseUrl || defaultSettings.relayBaseUrl,
     upstreamBaseUrl: profile.upstreamBaseUrl || profile.baseUrl || "",
@@ -5099,14 +5099,14 @@ function syncLegacyRelayFields(settings: BackendSettings): BackendSettings {
 function mergeLiveLinkedRelayProfiles(settings: BackendSettings, liveSettings: BackendSettings): BackendSettings {
   const liveLinkedById = new Map(
     liveSettings.relayProfiles
-      .filter((profile) => profile.linkedCcsProviderId.trim())
+      .filter((profile) => profile.linkedProviderSourceId.trim())
       .map((profile) => [profile.id, profile]),
   );
   if (!liveLinkedById.size) return settings;
   const existingIds = new Set(settings.relayProfiles.map((profile) => profile.id));
   const relayProfiles = [
     ...settings.relayProfiles.map((profile) => liveLinkedById.get(profile.id) ?? profile),
-    ...liveSettings.relayProfiles.filter((profile) => profile.linkedCcsProviderId.trim() && !existingIds.has(profile.id)),
+    ...liveSettings.relayProfiles.filter((profile) => profile.linkedProviderSourceId.trim() && !existingIds.has(profile.id)),
   ];
   return syncLegacyRelayFields({
     ...settings,
@@ -5132,7 +5132,7 @@ function createRelayProfile(settings: BackendSettings): RelayProfile {
   const contextSelection = contextSelectionForAllEntries(settings);
   const next = {
     id,
-    linkedCcsProviderId: "",
+    linkedProviderSourceId: "",
     name: `供应商 ${settings.relayProfiles.length + 1}`,
     model: "",
     baseUrl: defaultSettings.relayBaseUrl,
@@ -5176,7 +5176,7 @@ function duplicateRelayProfile(settings: BackendSettings, id: string): BackendSe
   const next = {
     ...source,
     id: nextId,
-    linkedCcsProviderId: "",
+    linkedProviderSourceId: "",
     name: `${source.name || "未命名供应商"} 副本`,
   };
   const relayProfiles = [...settings.relayProfiles];

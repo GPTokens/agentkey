@@ -73,9 +73,9 @@ pub struct DeleteLocalSessionRequest {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CcsProvidersPayload {
+pub struct ProviderLinksPayload {
     pub db_path: String,
-    pub providers: Vec<agentkey_core::ccs_import::CcsProviderImport>,
+    pub providers: Vec<agentkey_core::provider_link::ProviderLinkImport>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -458,8 +458,8 @@ pub fn save_settings(settings: BackendSettings) -> CommandResult<SettingsPayload
         };
         return failed(&format!("保存设置失败：{error}"), payload);
     }
-    if settings.ccs_link_enabled {
-        if let Err(error) = agentkey_core::ccs_import::write_linked_profiles_to_default_db(
+    if settings.provider_link_enabled {
+        if let Err(error) = agentkey_core::provider_link::write_linked_profiles_to_default_db(
             &settings.relay_profiles,
         ) {
             let payload = SettingsPayload {
@@ -469,13 +469,13 @@ pub fn save_settings(settings: BackendSettings) -> CommandResult<SettingsPayload
                     .to_string(),
                 user_scripts: user_script_inventory(),
             };
-            return failed(&format!("写回 cc-switch 供应商配置失败：{error}"), payload);
+            return failed(&format!("写回外部供应商配置失败：{error}"), payload);
         }
         let active = settings.active_relay_profile();
-        if !active.linked_ccs_provider_id.trim().is_empty() {
+        if !active.linked_provider_source_id.trim().is_empty() {
             if let Err(error) =
-                agentkey_core::ccs_import::set_current_codex_provider_in_default_db(
-                    &active.linked_ccs_provider_id,
+                agentkey_core::provider_link::set_current_codex_provider_in_default_db(
+                    &active.linked_provider_source_id,
                 )
             {
                 let payload = SettingsPayload {
@@ -485,11 +485,11 @@ pub fn save_settings(settings: BackendSettings) -> CommandResult<SettingsPayload
                         .to_string(),
                     user_scripts: user_script_inventory(),
                 };
-                return failed(&format!("同步 cc-switch 当前供应商失败：{error}"), payload);
+                return failed(&format!("同步外部当前供应商失败：{error}"), payload);
             }
         }
     }
-    remove_linked_ccs_profiles_for_local_storage(&mut settings);
+    remove_linked_provider_profiles_for_local_storage(&mut settings);
     match SettingsStore::default().save(&settings) {
         Ok(()) => {
             let wrapper_message = refresh_cli_wrapper_after_settings_save(&settings);
@@ -512,19 +512,19 @@ pub fn save_settings(settings: BackendSettings) -> CommandResult<SettingsPayload
 }
 
 #[tauri::command]
-pub fn load_ccs_providers() -> CommandResult<CcsProvidersPayload> {
-    let db_path = agentkey_core::ccs_import::default_ccs_db_path();
-    match agentkey_core::ccs_import::list_codex_providers_from_db(&db_path) {
+pub fn load_provider_links() -> CommandResult<ProviderLinksPayload> {
+    let db_path = agentkey_core::provider_link::default_provider_link_db_path();
+    match agentkey_core::provider_link::list_codex_providers_from_db(&db_path) {
         Ok(providers) => ok(
             &format!("已读取外部 Codex 供应商配置：{} 个。", providers.len()),
-            CcsProvidersPayload {
+            ProviderLinksPayload {
                 db_path: db_path.to_string_lossy().to_string(),
                 providers,
             },
         ),
         Err(error) => failed(
             &format!("读取外部供应商配置失败：{error}"),
-            CcsProvidersPayload {
+            ProviderLinksPayload {
                 db_path: db_path.to_string_lossy().to_string(),
                 providers: Vec::new(),
             },
@@ -533,10 +533,10 @@ pub fn load_ccs_providers() -> CommandResult<CcsProvidersPayload> {
 }
 
 #[tauri::command]
-pub fn import_ccs_providers() -> CommandResult<SettingsPayload> {
+pub fn import_provider_links() -> CommandResult<SettingsPayload> {
     let store = SettingsStore::default();
     let mut settings = store.load().unwrap_or_default();
-    let synced = match agentkey_core::ccs_import::list_codex_providers_from_default_db() {
+    let synced = match agentkey_core::provider_link::list_codex_providers_from_default_db() {
         Ok(providers) => providers.len(),
         Err(error) => {
             let payload = settings_payload_value()
@@ -545,16 +545,16 @@ pub fn import_ccs_providers() -> CommandResult<SettingsPayload> {
             return failed(&format!("读取外部供应商配置失败：{error}"), payload);
         }
     };
-    settings.ccs_link_enabled = true;
-    remove_linked_ccs_profiles_for_local_storage(&mut settings);
+    settings.provider_link_enabled = true;
+    remove_linked_provider_profiles_for_local_storage(&mut settings);
 
     if synced == 0 {
-        return settings_payload("没有可联动的 cc-switch Codex 供应商配置。", "设置读取失败");
+        return settings_payload("没有可联动的外部 Codex 供应商配置。", "设置读取失败");
     }
 
     match store.save(&settings) {
         Ok(()) => settings_payload(
-            &format!("已开启 cc-switch 联动：{synced} 个供应商将直接从 cc-switch 读取。"),
+            &format!("已开启外部供应商联动：{synced} 个供应商将直接从外部供应商数据库读取。"),
             "联动供应商配置后重新读取设置失败",
         ),
         Err(error) => failed(
@@ -692,8 +692,10 @@ fn normalize_settings_before_save(mut settings: BackendSettings) -> BackendSetti
         normalize_provider_sync_provider_list(settings.provider_sync_saved_providers);
     settings.provider_sync_manual_providers =
         normalize_provider_sync_provider_list(settings.provider_sync_manual_providers);
-    settings.provider_sync_last_selected_provider =
-        settings.provider_sync_last_selected_provider.trim().to_string();
+    settings.provider_sync_last_selected_provider = settings
+        .provider_sync_last_selected_provider
+        .trim()
+        .to_string();
     settings.claude_code_command = if settings.claude_code_command.trim().is_empty() {
         agentkey_core::settings::default_claude_code_command()
     } else {
@@ -749,33 +751,31 @@ fn validate_settings_before_save(settings: &BackendSettings) -> anyhow::Result<(
         )?;
     }
     agentkey_core::claude_code::validate_claude_code_command(&settings.claude_code_command)?;
-    agentkey_core::claude_code::validate_claude_code_extra_env(
-        &settings.claude_code_extra_env,
-    )?;
+    agentkey_core::claude_code::validate_claude_code_extra_env(&settings.claude_code_extra_env)?;
     Ok(())
 }
 
-fn settings_with_live_ccs_profiles(mut settings: BackendSettings) -> BackendSettings {
-    if !settings.ccs_link_enabled {
+fn settings_with_live_provider_links(mut settings: BackendSettings) -> BackendSettings {
+    if !settings.provider_link_enabled {
         return settings;
     }
-    remove_linked_ccs_profiles_for_local_storage(&mut settings);
-    if let Err(error) = agentkey_core::ccs_import::sync_linked_profiles_from_default_db(
+    remove_linked_provider_profiles_for_local_storage(&mut settings);
+    if let Err(error) = agentkey_core::provider_link::sync_linked_profiles_from_default_db(
         &mut settings.relay_profiles,
     ) {
         log_manager_event(
-            "manager.settings_with_live_ccs_profiles.failed",
+            "manager.settings_with_live_provider_links.failed",
             json!({ "error": error.to_string() }),
         );
     }
     settings
 }
 
-fn remove_linked_ccs_profiles_for_local_storage(settings: &mut BackendSettings) {
+fn remove_linked_provider_profiles_for_local_storage(settings: &mut BackendSettings) {
     settings
         .relay_profiles
-        .retain(|profile| profile.linked_ccs_provider_id.trim().is_empty());
-    if !settings.ccs_link_enabled
+        .retain(|profile| profile.linked_provider_source_id.trim().is_empty());
+    if !settings.provider_link_enabled
         && !settings
             .relay_profiles
             .iter()
@@ -805,10 +805,7 @@ fn relay_join_config_sections(sections: &[&str]) -> String {
     if sections.is_empty() {
         String::new()
     } else {
-        agentkey_core::relay_config::normalize_config_text(&format!(
-            "{}\n",
-            sections.join("\n\n")
-        ))
+        agentkey_core::relay_config::normalize_config_text(&format!("{}\n", sections.join("\n\n")))
     }
 }
 
@@ -923,11 +920,10 @@ fn ensure_text_newline(value: &str) -> String {
 #[tauri::command]
 pub async fn load_provider_sync_targets() -> CommandResult<Value> {
     let settings = SettingsStore::default().load().unwrap_or_default();
-    let result = tauri::async_runtime::spawn_blocking(|| {
-        agentkey_data::load_provider_sync_targets(None)
-    })
-    .await
-    .map_err(|error| anyhow::anyhow!("provider target discovery task failed: {error}"));
+    let result =
+        tauri::async_runtime::spawn_blocking(|| agentkey_data::load_provider_sync_targets(None))
+            .await
+            .map_err(|error| anyhow::anyhow!("provider target discovery task failed: {error}"));
     match result {
         Ok(mut targets) => {
             let manual = settings
@@ -1006,7 +1002,9 @@ pub async fn sync_providers_now(target_provider: Option<String>) -> CommandResul
         Ok(sync) => {
             if is_success_sync_status(&sync.status) {
                 persist_provider_sync_selection(
-                    target_for_settings.as_deref().unwrap_or(&sync.target_provider),
+                    target_for_settings
+                        .as_deref()
+                        .unwrap_or(&sync.target_provider),
                 );
             }
             ok(
@@ -1207,7 +1205,7 @@ pub async fn repair_shortcuts() -> InstallActionResult {
 #[tauri::command]
 pub fn repair_backend() -> CommandResult<SettingsPayload> {
     let settings =
-        settings_with_live_ccs_profiles(SettingsStore::default().load().unwrap_or_default());
+        settings_with_live_provider_links(SettingsStore::default().load().unwrap_or_default());
     let message = match agentkey_core::cli_wrapper::ensure_cli_wrapper(&settings) {
         Ok(Some(install)) => format!(
             "后端已修复，桌面 CLI 桥接已指向 {}。",
@@ -1697,7 +1695,7 @@ pub async fn test_relay_profile(profile: RelayProfile) -> CommandResult<RelayPro
         profile.name.trim()
     };
     let settings =
-        settings_with_live_ccs_profiles(SettingsStore::default().load().unwrap_or_default());
+        settings_with_live_provider_links(SettingsStore::default().load().unwrap_or_default());
     let test_model = if profile.test_model.trim().is_empty() {
         settings.relay_test_model.trim()
     } else {
@@ -1768,7 +1766,7 @@ pub async fn fetch_relay_profile_models(
 pub fn apply_relay_injection() -> CommandResult<RelayPayload> {
     let home = agentkey_core::relay_config::default_codex_home_dir();
     let settings =
-        settings_with_live_ccs_profiles(SettingsStore::default().load().unwrap_or_default());
+        settings_with_live_provider_links(SettingsStore::default().load().unwrap_or_default());
     if !settings.relay_profiles_enabled {
         let status = agentkey_core::relay_config::relay_status_from_home(&home);
         return failed(
@@ -1873,7 +1871,7 @@ pub fn apply_relay_injection() -> CommandResult<RelayPayload> {
 pub fn apply_pure_api_injection() -> CommandResult<RelayPayload> {
     let home = agentkey_core::relay_config::default_codex_home_dir();
     let settings =
-        settings_with_live_ccs_profiles(SettingsStore::default().load().unwrap_or_default());
+        settings_with_live_provider_links(SettingsStore::default().load().unwrap_or_default());
     if !settings.relay_profiles_enabled {
         let status = agentkey_core::relay_config::relay_status_from_home(&home);
         return failed(
@@ -1974,15 +1972,14 @@ pub fn apply_pure_api_injection() -> CommandResult<RelayPayload> {
 pub fn clear_relay_injection() -> CommandResult<RelayPayload> {
     let home = agentkey_core::relay_config::default_codex_home_dir();
     let settings =
-        settings_with_live_ccs_profiles(SettingsStore::default().load().unwrap_or_default());
+        settings_with_live_provider_links(SettingsStore::default().load().unwrap_or_default());
     let relay = settings.active_relay_profile();
     log_manager_event("manager.clear_relay_injection.start", json!({}));
     let auth_contents = (relay.relay_mode == agentkey_core::settings::RelayMode::Official
         && !relay.official_mix_api_key
         && !relay.auth_contents.trim().is_empty())
     .then_some(relay.auth_contents.as_str());
-    match agentkey_core::relay_config::clear_relay_config_to_home_with_auth(&home, auth_contents)
-    {
+    match agentkey_core::relay_config::clear_relay_config_to_home_with_auth(&home, auth_contents) {
         Ok(result) => {
             let status = agentkey_core::relay_config::relay_status_from_home(&home);
             log_manager_event(
@@ -2204,7 +2201,7 @@ fn settings_payload_value() -> Result<SettingsPayload, (anyhow::Error, SettingsP
         .to_string();
     match store.load() {
         Ok(settings) => Ok(SettingsPayload {
-            settings: settings_with_live_ccs_profiles(settings),
+            settings: settings_with_live_provider_links(settings),
             settings_path,
             user_scripts: user_script_inventory(),
         }),
@@ -2221,7 +2218,7 @@ fn settings_payload_value() -> Result<SettingsPayload, (anyhow::Error, SettingsP
 
 fn fallback_settings_payload() -> SettingsPayload {
     SettingsPayload {
-        settings: settings_with_live_ccs_profiles(
+        settings: settings_with_live_provider_links(
             SettingsStore::default().load().unwrap_or_default(),
         ),
         settings_path: agentkey_core::paths::default_settings_path()
@@ -2395,7 +2392,7 @@ fn diagnostics_report() -> String {
         }
     }));
     serde_json::to_string_pretty(&report)
-    .unwrap_or_else(|error| format!("诊断报告序列化失败：{error}"))
+        .unwrap_or_else(|error| format!("诊断报告序列化失败：{error}"))
 }
 
 fn external_url_allowed(url: &str) -> bool {
@@ -2808,10 +2805,10 @@ mod tests {
     }
 
     #[test]
-    fn remove_linked_ccs_profiles_for_local_storage_drops_external_profiles() {
+    fn remove_linked_provider_profiles_for_local_storage_drops_external_profiles() {
         let mut settings = BackendSettings {
-            ccs_link_enabled: true,
-            active_relay_id: "ccs-one".to_string(),
+            provider_link_enabled: true,
+            active_relay_id: "provider-one".to_string(),
             relay_profiles: vec![
                 RelayProfile {
                     id: "local".to_string(),
@@ -2819,8 +2816,8 @@ mod tests {
                     ..RelayProfile::default()
                 },
                 RelayProfile {
-                    id: "ccs-one".to_string(),
-                    linked_ccs_provider_id: "provider-one".to_string(),
+                    id: "provider-one".to_string(),
+                    linked_provider_source_id: "provider-one".to_string(),
                     name: "External".to_string(),
                     ..RelayProfile::default()
                 },
@@ -2828,11 +2825,11 @@ mod tests {
             ..BackendSettings::default()
         };
 
-        remove_linked_ccs_profiles_for_local_storage(&mut settings);
+        remove_linked_provider_profiles_for_local_storage(&mut settings);
 
         assert_eq!(settings.relay_profiles.len(), 1);
         assert_eq!(settings.relay_profiles[0].id, "local");
-        assert_eq!(settings.active_relay_id, "ccs-one");
+        assert_eq!(settings.active_relay_id, "provider-one");
     }
 
     #[test]

@@ -256,7 +256,9 @@ where
             helper_port = crate::protocol_proxy::DEFAULT_PROTOCOL_PROXY_PORT;
         }
         if settings.enhancements_enabled || protocol_proxy_enabled {
-            hooks.start_helper(helper_port, helper_token.clone()).await?;
+            hooks
+                .start_helper(helper_port, helper_token.clone())
+                .await?;
             helper_started = true;
         }
 
@@ -393,7 +395,7 @@ impl LaunchHooks for DefaultLaunchHooks {
 
     async fn load_settings(&self) -> anyhow::Result<BackendSettings> {
         let mut settings = SettingsStore::default().load()?;
-        hydrate_live_ccs_profiles(&mut settings);
+        hydrate_live_provider_links(&mut settings);
         Ok(settings)
     }
 
@@ -652,14 +654,15 @@ impl LaunchHooks for DefaultLaunchHooks {
     }
 }
 
-fn hydrate_live_ccs_profiles(settings: &mut BackendSettings) {
-    if !settings.ccs_link_enabled {
+fn hydrate_live_provider_links(settings: &mut BackendSettings) {
+    if !settings.provider_link_enabled {
         return;
     }
     settings
         .relay_profiles
-        .retain(|profile| profile.linked_ccs_provider_id.trim().is_empty());
-    let _ = crate::ccs_import::sync_linked_profiles_from_default_db(&mut settings.relay_profiles);
+        .retain(|profile| profile.linked_provider_source_id.trim().is_empty());
+    let _ =
+        crate::provider_link::sync_linked_profiles_from_default_db(&mut settings.relay_profiles);
 }
 
 async fn handle_helper_connection(
@@ -1235,8 +1238,8 @@ fn http_header_value(request: &str, header_name: &str) -> Option<String> {
 }
 
 fn helper_request_authorized(request: &str, helper_token: &str, allow_relay_token: bool) -> bool {
-    let header_token = http_header_value(request, "X-AgentKey-Token")
-        .filter(|value| !value.trim().is_empty());
+    let header_token =
+        http_header_value(request, "X-AgentKey-Token").filter(|value| !value.trim().is_empty());
     if header_token.as_deref() == Some(helper_token) {
         return true;
     }
@@ -1433,13 +1436,10 @@ mod helper_security_tests {
 
     #[test]
     fn helper_auth_does_not_allow_relay_bearer_on_local_routes() {
-        let request = "POST /backend/status HTTP/1.1\r\nAuthorization: Bearer relay-token\r\n\r\n{}";
+        let request =
+            "POST /backend/status HTTP/1.1\r\nAuthorization: Bearer relay-token\r\n\r\n{}";
 
-        assert!(!helper_request_authorized(
-            request,
-            "session-token",
-            false
-        ));
+        assert!(!helper_request_authorized(request, "session-token", false));
     }
 
     #[test]

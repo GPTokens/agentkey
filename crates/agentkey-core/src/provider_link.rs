@@ -9,7 +9,7 @@ use crate::settings::{RelayMode, RelayProfile, RelayProtocol};
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CcsProviderImport {
+pub struct ProviderLinkImport {
     pub source_id: String,
     pub name: String,
     pub base_url: String,
@@ -19,26 +19,26 @@ pub struct CcsProviderImport {
     pub auth_contents: String,
 }
 
-pub fn default_ccs_db_path() -> PathBuf {
+pub fn default_provider_link_db_path() -> PathBuf {
     home_dir()
         .join(format!(".{}-{}", "cc", "switch"))
         .join(format!("{}-{}.db", "cc", "switch"))
 }
 
-pub fn default_ccs_settings_path() -> PathBuf {
+pub fn default_provider_link_settings_path() -> PathBuf {
     home_dir()
         .join(format!(".{}-{}", "cc", "switch"))
         .join("settings.json")
 }
 
-pub fn list_codex_providers_from_default_db() -> anyhow::Result<Vec<CcsProviderImport>> {
-    list_codex_providers_from_db(&default_ccs_db_path())
+pub fn list_codex_providers_from_default_db() -> anyhow::Result<Vec<ProviderLinkImport>> {
+    list_codex_providers_from_db(&default_provider_link_db_path())
 }
 
 pub fn sync_linked_profiles_from_default_db(
     profiles: &mut Vec<RelayProfile>,
 ) -> anyhow::Result<usize> {
-    sync_linked_profiles_from_db(&default_ccs_db_path(), profiles)
+    sync_linked_profiles_from_db(&default_provider_link_db_path(), profiles)
 }
 
 pub fn sync_linked_profiles_from_db(
@@ -55,16 +55,16 @@ pub fn sync_linked_profiles_from_db(
     for provider in providers {
         if let Some(profile) = profiles
             .iter_mut()
-            .find(|profile| profile.linked_ccs_provider_id == provider.source_id)
+            .find(|profile| profile.linked_provider_source_id == provider.source_id)
         {
-            apply_ccs_provider_to_profile(profile, &provider);
+            apply_provider_link_to_profile(profile, &provider);
             changed += 1;
             continue;
         }
 
-        let mut profile = relay_profile_from_ccs(&provider, &existing_ids);
+        let mut profile = relay_profile_from_provider_link(&provider, &existing_ids);
         existing_ids.push(profile.id.clone());
-        apply_ccs_provider_to_profile(&mut profile, &provider);
+        apply_provider_link_to_profile(&mut profile, &provider);
         profiles.push(profile);
         changed += 1;
     }
@@ -73,13 +73,13 @@ pub fn sync_linked_profiles_from_db(
 }
 
 pub fn write_linked_profiles_to_default_db(profiles: &[RelayProfile]) -> anyhow::Result<usize> {
-    write_linked_profiles_to_db(&default_ccs_db_path(), profiles)
+    write_linked_profiles_to_db(&default_provider_link_db_path(), profiles)
 }
 
 pub fn set_current_codex_provider_in_default_db(source_id: &str) -> anyhow::Result<bool> {
     set_current_codex_provider(
-        &default_ccs_db_path(),
-        &default_ccs_settings_path(),
+        &default_provider_link_db_path(),
+        &default_provider_link_settings_path(),
         source_id,
     )
 }
@@ -117,7 +117,7 @@ pub fn set_current_codex_provider(
 fn set_current_codex_provider_in_settings(path: &Path, source_id: &str) -> anyhow::Result<()> {
     let mut settings = if path.exists() {
         let text = fs::read_to_string(path)
-            .with_context(|| format!("failed to read cc-switch settings {}", path.display()))?;
+            .with_context(|| format!("failed to read provider link settings {}", path.display()))?;
         serde_json::from_str::<Value>(&text).unwrap_or_else(|_| json!({}))
     } else {
         json!({})
@@ -133,7 +133,7 @@ fn set_current_codex_provider_in_settings(path: &Path, source_id: &str) -> anyho
         path,
         format!("{}\n", serde_json::to_string_pretty(&settings)?),
     )
-    .with_context(|| format!("failed to write cc-switch settings {}", path.display()))?;
+    .with_context(|| format!("failed to write provider link settings {}", path.display()))?;
     Ok(())
 }
 
@@ -146,7 +146,7 @@ pub fn write_linked_profiles_to_db(
     }
     let linked_profiles = profiles
         .iter()
-        .filter(|profile| !profile.linked_ccs_provider_id.trim().is_empty())
+        .filter(|profile| !profile.linked_provider_source_id.trim().is_empty())
         .collect::<Vec<_>>();
     if linked_profiles.is_empty() {
         return Ok(0);
@@ -156,8 +156,8 @@ pub fn write_linked_profiles_to_db(
         .with_context(|| format!("failed to open provider database {}", path.display()))?;
     let mut written = 0usize;
     for profile in linked_profiles {
-        let source_id = profile.linked_ccs_provider_id.trim();
-        let settings_config = profile_to_ccs_settings_config(profile)?;
+        let source_id = profile.linked_provider_source_id.trim();
+        let settings_config = profile_to_provider_link_settings_config(profile)?;
         let affected = conn.execute(
             "UPDATE providers
              SET name = ?1, settings_config = ?2
@@ -171,7 +171,7 @@ pub fn write_linked_profiles_to_db(
     Ok(written)
 }
 
-pub fn list_codex_providers_from_db(path: &Path) -> anyhow::Result<Vec<CcsProviderImport>> {
+pub fn list_codex_providers_from_db(path: &Path) -> anyhow::Result<Vec<ProviderLinkImport>> {
     if !path.exists() {
         return Ok(Vec::new());
     }
@@ -196,31 +196,31 @@ pub fn list_codex_providers_from_db(path: &Path) -> anyhow::Result<Vec<CcsProvid
         let Ok(config) = serde_json::from_str::<Value>(&settings_config) else {
             continue;
         };
-        if let Some(provider) = import_from_ccs_value(&source_id, &name, &config) {
+        if let Some(provider) = import_from_provider_link_value(&source_id, &name, &config) {
             providers.push(provider);
         }
     }
     Ok(providers)
 }
 
-pub fn relay_profile_from_ccs(
-    provider: &CcsProviderImport,
+pub fn relay_profile_from_provider_link(
+    provider: &ProviderLinkImport,
     existing_ids: &[String],
 ) -> RelayProfile {
     let id = unique_profile_id(
-        &format!("ccs-{}", sanitize_id(&provider.source_id)),
+        &format!("provider-{}", sanitize_id(&provider.source_id)),
         existing_ids,
     );
     RelayProfile {
         id,
-        linked_ccs_provider_id: provider.source_id.clone(),
+        linked_provider_source_id: provider.source_id.clone(),
         name: provider.name.clone(),
         model: String::new(),
         base_url: provider.base_url.clone(),
         upstream_base_url: provider.base_url.clone(),
         api_key: provider.api_key.clone(),
         protocol: provider.protocol,
-        relay_mode: relay_mode_from_ccs_provider(provider),
+        relay_mode: relay_mode_from_provider_link(provider),
         official_mix_api_key: false,
         test_model: String::new(),
         config_contents: provider.config_contents.clone(),
@@ -236,19 +236,19 @@ pub fn relay_profile_from_ccs(
     }
 }
 
-fn apply_ccs_provider_to_profile(profile: &mut RelayProfile, provider: &CcsProviderImport) {
-    profile.linked_ccs_provider_id = provider.source_id.clone();
+fn apply_provider_link_to_profile(profile: &mut RelayProfile, provider: &ProviderLinkImport) {
+    profile.linked_provider_source_id = provider.source_id.clone();
     profile.name = provider.name.clone();
     profile.base_url = provider.base_url.clone();
     profile.upstream_base_url = provider.base_url.clone();
     profile.api_key = provider.api_key.clone();
     profile.protocol = provider.protocol;
-    profile.relay_mode = relay_mode_from_ccs_provider(provider);
+    profile.relay_mode = relay_mode_from_provider_link(provider);
     profile.config_contents = provider.config_contents.clone();
     profile.auth_contents = provider.auth_contents.clone();
 }
 
-fn relay_mode_from_ccs_provider(provider: &CcsProviderImport) -> RelayMode {
+fn relay_mode_from_provider_link(provider: &ProviderLinkImport) -> RelayMode {
     if provider.base_url.trim().is_empty() && provider.api_key.trim().is_empty() {
         RelayMode::Official
     } else {
@@ -256,7 +256,7 @@ fn relay_mode_from_ccs_provider(provider: &CcsProviderImport) -> RelayMode {
     }
 }
 
-fn profile_to_ccs_settings_config(profile: &RelayProfile) -> anyhow::Result<Value> {
+fn profile_to_provider_link_settings_config(profile: &RelayProfile) -> anyhow::Result<Value> {
     let auth = if profile.auth_contents.trim().is_empty() {
         json!({})
     } else {
@@ -269,16 +269,24 @@ fn profile_to_ccs_settings_config(profile: &RelayProfile) -> anyhow::Result<Valu
     }))
 }
 
-fn import_from_ccs_value(source_id: &str, name: &str, config: &Value) -> Option<CcsProviderImport> {
+fn import_from_provider_link_value(
+    source_id: &str,
+    name: &str,
+    config: &Value,
+) -> Option<ProviderLinkImport> {
     let base_url = extract_base_url(config).unwrap_or_default();
     let api_key = extract_api_key(config).unwrap_or_default();
     let protocol = extract_protocol(config);
-    let config_from_ccs = extract_config_contents(config).filter(|value| !value.trim().is_empty());
-    if config_from_ccs.is_none() && base_url.trim().is_empty() && api_key.trim().is_empty() {
+    let config_from_provider_link =
+        extract_config_contents(config).filter(|value| !value.trim().is_empty());
+    if config_from_provider_link.is_none()
+        && base_url.trim().is_empty()
+        && api_key.trim().is_empty()
+    {
         return None;
     }
-    let config_contents =
-        config_from_ccs.unwrap_or_else(|| build_config_toml(&base_url, &api_key, protocol));
+    let config_contents = config_from_provider_link
+        .unwrap_or_else(|| build_config_toml(&base_url, &api_key, protocol));
     let auth_contents = extract_auth_contents(config)
         .filter(|value| !value.trim().is_empty())
         .unwrap_or_else(|| {
@@ -291,7 +299,7 @@ fn import_from_ccs_value(source_id: &str, name: &str, config: &Value) -> Option<
     if config_contents.trim().is_empty() && auth_contents.trim().is_empty() {
         return None;
     }
-    Some(CcsProviderImport {
+    Some(ProviderLinkImport {
         source_id: source_id.to_string(),
         name: name.to_string(),
         base_url,
@@ -505,7 +513,7 @@ mod tests {
     use rusqlite::params;
     use serde_json::json;
 
-    fn create_ccs_db(path: &Path) {
+    fn create_provider_link_db(path: &Path) {
         let conn = Connection::open(path).unwrap();
         conn.execute(
             "CREATE TABLE providers (
@@ -537,7 +545,7 @@ mod tests {
     fn imports_direct_base_url_and_api_key_provider() {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
-        create_ccs_db(&db);
+        create_provider_link_db(&db);
         insert_provider(
             &db,
             "openai",
@@ -568,7 +576,7 @@ mod tests {
     fn imports_auth_and_config_object_provider_as_chat_protocol() {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
-        create_ccs_db(&db);
+        create_provider_link_db(&db);
         insert_provider(
             &db,
             "chat",
@@ -598,7 +606,7 @@ mod tests {
     fn imports_toml_config_provider_and_preserves_config_text() {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
-        create_ccs_db(&db);
+        create_provider_link_db(&db);
         let toml = r#"
 model_provider = "Foo"
 
@@ -618,12 +626,15 @@ base_url = "https://toml.example/v1"
         );
 
         let providers = list_codex_providers_from_db(&db).unwrap();
-        let profile = relay_profile_from_ccs(&providers[0], &["ccs-toml-provider".to_string()]);
+        let profile = relay_profile_from_provider_link(
+            &providers[0],
+            &["provider-toml-provider".to_string()],
+        );
 
         assert_eq!(providers[0].base_url, "https://toml.example/v1");
         assert_eq!(providers[0].protocol, RelayProtocol::ChatCompletions);
         assert_eq!(providers[0].config_contents, toml);
-        assert_eq!(profile.id, "ccs-toml-provider-2");
+        assert_eq!(profile.id, "provider-toml-provider-2");
         assert_eq!(profile.relay_mode, RelayMode::PureApi);
     }
 
@@ -631,7 +642,7 @@ base_url = "https://toml.example/v1"
     fn imports_codex_config_snapshot_without_base_url_as_official_profile() {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
-        create_ccs_db(&db);
+        create_provider_link_db(&db);
         insert_provider(
             &db,
             "blue-eagle",
@@ -648,7 +659,7 @@ base_url = "https://toml.example/v1"
         assert_eq!(providers.len(), 1);
         assert_eq!(providers[0].name, "蓝鹰AI");
         assert_eq!(providers[0].base_url, "");
-        let profile = relay_profile_from_ccs(&providers[0], &[]);
+        let profile = relay_profile_from_provider_link(&providers[0], &[]);
         assert_eq!(profile.relay_mode, RelayMode::Official);
         assert!(profile.config_contents.contains("gpt-image-2"));
     }
@@ -657,7 +668,7 @@ base_url = "https://toml.example/v1"
     fn sync_linked_profiles_updates_existing_and_adds_new_profiles() {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
-        create_ccs_db(&db);
+        create_provider_link_db(&db);
         insert_provider(
             &db,
             "linked-one",
@@ -681,7 +692,7 @@ base_url = "https://toml.example/v1"
 
         let mut profiles = vec![RelayProfile {
             id: "local-linked".to_string(),
-            linked_ccs_provider_id: "linked-one".to_string(),
+            linked_provider_source_id: "linked-one".to_string(),
             name: "Old".to_string(),
             ..RelayProfile::default()
         }];
@@ -692,15 +703,15 @@ base_url = "https://toml.example/v1"
         assert_eq!(profiles.len(), 2);
         assert_eq!(profiles[0].name, "Linked One");
         assert_eq!(profiles[0].api_key, "sk-linked");
-        assert_eq!(profiles[1].linked_ccs_provider_id, "linked-two");
+        assert_eq!(profiles[1].linked_provider_source_id, "linked-two");
         assert_eq!(profiles[1].base_url, "https://two.example/v1");
     }
 
     #[test]
-    fn write_linked_profiles_updates_cc_switch_provider_config() {
+    fn write_linked_profiles_updates_provider_database_config() {
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
-        create_ccs_db(&db);
+        create_provider_link_db(&db);
         insert_provider(
             &db,
             "linked-one",
@@ -712,7 +723,7 @@ base_url = "https://toml.example/v1"
             0,
         );
         let profiles = vec![RelayProfile {
-            linked_ccs_provider_id: "linked-one".to_string(),
+            linked_provider_source_id: "linked-one".to_string(),
             name: "After".to_string(),
             config_contents: "model_provider = \"custom\"\n".to_string(),
             auth_contents: "{\"OPENAI_API_KEY\":\"sk-after\"}\n".to_string(),
@@ -741,7 +752,7 @@ base_url = "https://toml.example/v1"
         let dir = tempfile::tempdir().unwrap();
         let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
         let settings = dir.path().join("settings.json");
-        create_ccs_db(&db);
+        create_provider_link_db(&db);
         insert_provider(&db, "old", "Old", json!({ "config": "old" }), 0);
         insert_provider(&db, "new", "New", json!({ "config": "new" }), 1);
         Connection::open(&db)
