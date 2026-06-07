@@ -303,7 +303,7 @@ fn injection_script_exposes_conversation_view_width_control() {
 fn injection_script_keeps_session_action_buttons_in_pr_style() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("actionButtonClass = \"codex-session-action-button\""));
+    assert!(script.contains("actionButtonClass = \"agentkey-session-action-button\""));
     assert!(script.contains("background: transparent;"));
     assert!(script.contains("background: #363839;"));
     assert!(script.contains("cursor: default;"));
@@ -313,8 +313,8 @@ fn injection_script_keeps_session_action_buttons_in_pr_style() {
 fn injection_script_moves_export_and_project_move_into_more_menu() {
     let script = assets::injection_script(57321, "test-token").replace("\r\n", "\n");
 
-    assert!(script.contains("moreButtonClass = \"codex-session-more-button\""));
-    assert!(script.contains("moreMenuClass = \"codex-session-more-menu\""));
+    assert!(script.contains("moreButtonClass = \"agentkey-session-more-button\""));
+    assert!(script.contains("moreMenuClass = \"agentkey-session-more-menu\""));
     assert!(script.contains("configureActionButton(moreButton, \"更多操作\", \"…\")"));
     assert!(script.contains("createSessionMoreMenuItem(\"导出\""));
     assert!(script.contains("createSessionMoreMenuItem(\"移动\""));
@@ -325,15 +325,15 @@ fn injection_script_moves_export_and_project_move_into_more_menu() {
     assert!(script.contains("positionSessionMoreMenu(moreButton, moreMenu)"));
     assert!(script.contains("document.body.appendChild(moreMenu)"));
     assert!(script.contains("position: fixed;"));
-    assert!(script.contains("codex-session-more-menu-open-up"));
+    assert!(script.contains("agentkey-session-more-menu-open-up"));
     assert!(script.contains("transform: translateY(calc(-100% - 34px));"));
     assert!(script.contains("positionSessionMoreMenu(moreButton, moreMenu);"));
-    assert!(script.contains("row.classList.toggle(\"codex-session-more-open\""));
+    assert!(script.contains("row.classList.toggle(\"agentkey-session-more-open\""));
     assert!(script.contains(".${actionGroupClass} {"));
     assert!(script.contains("position: absolute;"));
     assert!(script.contains("pointer-events: none;"));
-    assert!(script.contains("[data-codex-delete-row=\"true\"]:hover .${actionGroupClass} {\n        opacity: 1;\n        pointer-events: auto;\n      }"));
-    assert!(script.contains("[data-codex-delete-row=\"true\"].codex-session-more-open .${actionGroupClass} {\n        opacity: 1;\n        pointer-events: auto;\n        z-index: 2147483201;"));
+    assert!(script.contains("[data-agentkey-delete-row=\"true\"]:hover .${actionGroupClass} {\n        opacity: 1;\n        pointer-events: auto;\n      }"));
+    assert!(script.contains("[data-agentkey-delete-row=\"true\"].agentkey-session-more-open .${actionGroupClass} {\n        opacity: 1;\n        pointer-events: auto;\n        z-index: 2147483201;"));
     assert!(!script.contains("installActionButtonEvents(row, moreButton, openMoreMenu)"));
     assert!(!script.contains("group.appendChild(exportButton)"));
     assert!(!script.contains("group.appendChild(moveButton)"));
@@ -344,9 +344,9 @@ fn injection_script_does_not_add_delete_controls_on_archived_page() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("attachArchivedPageDeleteButton"));
-    assert!(script.contains("data-codex-archive-row-action"));
-    assert!(script.contains("dataset.codexArchiveRowAction = \"export\""));
-    assert!(!script.contains("dataset.codexArchiveRowAction = \"delete\""));
+    assert!(script.contains("data-agentkey-archive-row-action"));
+    assert!(script.contains("dataset.agentKeyArchiveRowAction = \"export\""));
+    assert!(!script.contains("dataset.agentKeyArchiveRowAction = \"delete\""));
     assert!(!script.contains("installArchivedDeleteAllButton"));
     assert!(!script.contains("删除全部归档"));
 }
