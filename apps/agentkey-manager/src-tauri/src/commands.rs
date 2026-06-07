@@ -1398,9 +1398,9 @@ pub fn relay_status() -> CommandResult<RelayPayload> {
 
 fn relay_status_message(authenticated: bool) -> &'static str {
     if authenticated {
-        "已检测到官方账号登录状态。"
+        "已检测到账户兼容凭据。"
     } else {
-        "未检测到官方账号登录状态；纯 API 供应商可直接使用，官方登录模式才需要账号。"
+        "未检测到账户兼容凭据；纯 API 供应商可直接使用，账号兼容模式才需要凭据。"
     }
 }
 
@@ -1825,10 +1825,10 @@ pub fn apply_relay_injection() -> CommandResult<RelayPayload> {
             &relay,
             &status,
             None,
-            Some("未检测到官方账号登录状态".to_string()),
+            Some("未检测到账户兼容凭据".to_string()),
         );
         return failed(
-            "未检测到官方账号登录状态，已停止写入官方混入 API 配置。",
+            "未检测到账户兼容凭据，已停止写入账号兼容混入 API 配置。",
             relay_payload(status, None),
         );
     }

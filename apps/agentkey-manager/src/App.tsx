@@ -1126,7 +1126,7 @@ export function App() {
     if (result) {
       setRelay(result);
       await refreshRelayFiles(true);
-      if (!silent || !isSuccessStatus(result.status)) showNotice("官方登录模式", result.message, result.status);
+      if (!silent || !isSuccessStatus(result.status)) showNotice("账号兼容模式", result.message, result.status);
     }
     return !!result && isSuccessStatus(result.status) && !result.configured;
   };
@@ -1203,7 +1203,7 @@ export function App() {
     const switched = await clearRelayInjection(true);
     if (!switched) return;
     const result = await saveLaunchMode("relay", true);
-    if (result) showNotice("官方登录模式", "已切回官方登录；页面增强已设为兼容增强。", result.status);
+    if (result) showNotice("账号兼容模式", "已切回账号兼容模式；页面增强已设为兼容增强。", result.status);
   };
 
   const switchPureApiMode = async () => {
@@ -1227,7 +1227,7 @@ export function App() {
       switchSettings = syncLegacyRelayFields({ ...latest, activeRelayId: targetRelayId });
     }
     if (!switchSettings.relayProfilesEnabled) {
-      showNotice("供应商配置已关闭", "当前不会写入 Codex config.toml / auth.json。打开供应商配置总开关后再切换。", "failed");
+      showNotice("供应商配置已关闭", "当前不会写入桌面客户端 config.toml / auth.json。打开供应商配置总开关后再切换。", "failed");
       return;
     }
     const targetBeforeSnapshot = activeRelayProfile(switchSettings);
@@ -3095,7 +3095,7 @@ function RelayProfileEditor({
               updateDraft(relayMode === "official" ? { relayMode, officialMixApiKey: false } : { relayMode });
             }}
           >
-            <option value="official">官方登录</option>
+            <option value="official">账号兼容</option>
             <option value="pureApi">纯 API</option>
           </select>
         </Field>
@@ -3106,7 +3106,7 @@ function RelayProfileEditor({
             placeholder="写入 config.toml 的 model 字段，例如 gpt-5"
           />
         </Field>
-        <Field className="relay-field-goals" label="Codex 目标">
+        <Field className="relay-field-goals" label="桌面客户端目标">
           <label className="inline-check">
             <input
               checked={configHasCodexGoalsFeature(profile.configContents)}
@@ -3602,7 +3602,7 @@ function ModeSelector({ launchMode, actions }: { launchMode: LaunchMode; actions
         type="button"
       >
         <strong>兼容增强</strong>
-        <span>适合官方登录或官方混入 API Key；保留会话删除、导出、项目移动、Timeline 和用户脚本，关闭插件入口相关增强。</span>
+        <span>适合账号兼容或账号兼容混入 API Key；保留会话删除、导出、项目移动、Timeline 和用户脚本，关闭插件入口相关增强。</span>
       </button>
       <button
         className={`mode-option ${launchMode === "patch" ? "active" : ""}`}
@@ -4680,7 +4680,7 @@ function normalizeContextSelection(
 
 function relayModeLabel(mode: RelayMode): string {
   if (mode === "pureApi") return "纯 API";
-  return "官方登录";
+  return "账号兼容";
 }
 
 function relayProfileConfigBrief(profile: RelayProfile): string {
@@ -4691,28 +4691,28 @@ function relayProfileConfigBrief(profile: RelayProfile): string {
 function relayProfileModeHelp(profile: RelayProfile): string {
   if (profile.relayMode === "official") {
     if (profile.officialMixApiKey) {
-      return "此供应商会保留官方登录模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
+      return "此供应商会保留账号兼容模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
     }
-    return "此供应商会切回官方登录模式，使用 ChatGPT 官方账号，不写入 API Key。";
+    return "此供应商会切回账号兼容模式，不写入 API Key。";
   }
   if (profile.relayMode === "pureApi") {
     return "此供应商会同时写入 config.toml 和 auth.json；API Key 也会注入到 provider bearer token。";
   }
-  return "此供应商会保留官方登录模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
+  return "此供应商会保留账号兼容模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
 }
 
 function relayProfileReadinessText(profile: RelayProfile, relay: RelayResult | null): string {
   if (profile.relayMode === "official") {
     if (profile.officialMixApiKey) {
       const hasApiFields = profile.baseUrl.trim() && profile.apiKey.trim();
-      if (!relay?.authenticated && !hasApiFields) return "当前未登录官方账号，也未配置混入 API 的 Base URL / Key。";
-      if (!relay?.authenticated) return "当前未登录官方账号；官方登录混入 API Key 需要先登录官方账号。";
+      if (!relay?.authenticated && !hasApiFields) return "当前没有账号兼容凭据，也未配置混入 API 的 Base URL / Key。";
+      if (!relay?.authenticated) return "当前没有账号兼容凭据；账号兼容混入 API Key 需要先准备凭据。";
       if (!hasApiFields) return "当前还没有填写混入 API 的 Base URL / Key。";
-      return `官方登录已就绪：${relay.accountLabel || "已登录"}，会混入当前 API Key。`;
+      return `账号兼容已就绪：${relay.accountLabel || "已检测"}，会混入当前 API Key。`;
     }
     return relay?.authenticated
-      ? `官方账号已登录：${relay.accountLabel || relay.authSource || "已检测"}。`
-      : "当前未登录官方账号；切到官方登录模式后需要先完成官方账号登录。";
+      ? `账号兼容凭据已检测：${relay.accountLabel || relay.authSource || "已检测"}。`
+      : "当前没有账号兼容凭据；切到账号兼容模式后需要先准备凭据。";
   }
   const hasFiles = profile.configContents.trim() && profile.authContents.trim();
   if (!hasFiles) return "当前供应商还没有完整 config.toml / API Key 存档。";
@@ -4730,8 +4730,8 @@ function relayProfileSwitchCommand(profile: RelayProfile): "clear_relay_injectio
 
 function relayProfileModeSwitchedText(profile: RelayProfile): string {
   if (profile.relayMode === "pureApi") return "已按此供应商切换到纯 API；页面增强已设为完整增强。";
-  if (profile.officialMixApiKey) return "已按此供应商使用官方登录，并混入 API Key；页面增强已设为兼容增强。";
-  return "已按此供应商切回官方登录；页面增强已设为兼容增强。";
+  if (profile.officialMixApiKey) return "已按此供应商使用账号兼容模式，并混入 API Key；页面增强已设为兼容增强。";
+  return "已按此供应商切回账号兼容模式；页面增强已设为兼容增强。";
 }
 
 function withGeneratedRelayFiles(profile: RelayProfile): RelayProfile {

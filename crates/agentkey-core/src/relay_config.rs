@@ -182,7 +182,7 @@ pub fn chatgpt_auth_status_from_home(home: &Path) -> ChatGptAuthStatus {
             authenticated: true,
             source: auth_path.to_string_lossy().to_string(),
             account_label,
-            message: "已通过 auth.json 和 config.toml 检测到 ChatGPT 登录。".to_string(),
+            message: "已检测到账户兼容凭据。".to_string(),
         };
     }
 
@@ -190,7 +190,7 @@ pub fn chatgpt_auth_status_from_home(home: &Path) -> ChatGptAuthStatus {
         authenticated: false,
         source: String::new(),
         account_label: None,
-        message: "未检测到 ChatGPT 登录账号。".to_string(),
+        message: "未检测到账户兼容凭据。".to_string(),
     }
 }
 
