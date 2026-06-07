@@ -141,6 +141,19 @@ pub struct RelayProfileModelsPayload {
     pub endpoint: String,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClaudeCodeLaunchPayload {
+    pub pid: u32,
+    pub command: String,
+    pub working_directory: String,
+    pub auth_env: String,
+    pub base_url_configured: bool,
+    pub model_configured: bool,
+    pub small_fast_model_configured: bool,
+    pub nonessential_traffic_disabled: bool,
+}
+
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SaveRelayFileRequest {
@@ -328,6 +341,49 @@ pub fn restart_agentkey(request: LaunchRequest) -> CommandResult<Value> {
     agentkey_core::watcher::stop_launcher_processes();
     agentkey_core::watcher::stop_codex_processes();
     spawn_agentkey_launch(request, "Codex 已请求重启，启动任务正在后台运行。")
+}
+
+#[tauri::command]
+pub fn launch_claude_code(settings: BackendSettings) -> CommandResult<ClaudeCodeLaunchPayload> {
+    let settings = normalize_settings_before_save(settings);
+    match agentkey_core::claude_code::launch_claude_code(&settings) {
+        Ok(result) => ok(
+            "Claude Code 已在新终端启动。",
+            ClaudeCodeLaunchPayload {
+                pid: result.pid,
+                command: result.command,
+                working_directory: result.working_directory,
+                auth_env: result.auth_env,
+                base_url_configured: result.base_url_configured,
+                model_configured: result.model_configured,
+                small_fast_model_configured: result.small_fast_model_configured,
+                nonessential_traffic_disabled: result.nonessential_traffic_disabled,
+            },
+        ),
+        Err(error) => failed(
+            &format!("启动 Claude Code 失败：{error}"),
+            ClaudeCodeLaunchPayload {
+                pid: 0,
+                command: settings.claude_code_command,
+                working_directory: settings.claude_code_working_directory,
+                auth_env: match settings.claude_code_auth_mode {
+                    agentkey_core::settings::ClaudeCodeAuthMode::ApiKey => {
+                        "ANTHROPIC_API_KEY".to_string()
+                    }
+                    agentkey_core::settings::ClaudeCodeAuthMode::AuthToken => {
+                        "ANTHROPIC_AUTH_TOKEN".to_string()
+                    }
+                },
+                base_url_configured: !settings.claude_code_base_url.trim().is_empty(),
+                model_configured: !settings.claude_code_model.trim().is_empty(),
+                small_fast_model_configured: !settings
+                    .claude_code_small_fast_model
+                    .trim()
+                    .is_empty(),
+                nonessential_traffic_disabled: settings.claude_code_disable_nonessential_traffic,
+            },
+        ),
+    }
 }
 
 fn spawn_agentkey_launch(request: LaunchRequest, accepted_message: &str) -> CommandResult<Value> {
@@ -626,6 +682,19 @@ fn normalize_settings_before_save(mut settings: BackendSettings) -> BackendSetti
         normalize_provider_sync_provider_list(settings.provider_sync_manual_providers);
     settings.provider_sync_last_selected_provider =
         settings.provider_sync_last_selected_provider.trim().to_string();
+    settings.claude_code_command = if settings.claude_code_command.trim().is_empty() {
+        agentkey_core::settings::default_claude_code_command()
+    } else {
+        settings.claude_code_command.trim().to_string()
+    };
+    settings.claude_code_working_directory =
+        settings.claude_code_working_directory.trim().to_string();
+    settings.claude_code_base_url = settings.claude_code_base_url.trim().to_string();
+    settings.claude_code_api_key = settings.claude_code_api_key.trim().to_string();
+    settings.claude_code_model = settings.claude_code_model.trim().to_string();
+    settings.claude_code_small_fast_model =
+        settings.claude_code_small_fast_model.trim().to_string();
+    settings.claude_code_extra_env = settings.claude_code_extra_env.trim().to_string();
     settings
 }
 

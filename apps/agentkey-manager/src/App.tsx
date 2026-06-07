@@ -128,9 +128,20 @@ type BackendSettings = {
   cliWrapperBaseUrl: string;
   cliWrapperApiKey: string;
   cliWrapperApiKeyEnv: string;
+  claudeCodeEnabled: boolean;
+  claudeCodeCommand: string;
+  claudeCodeWorkingDirectory: string;
+  claudeCodeBaseUrl: string;
+  claudeCodeApiKey: string;
+  claudeCodeAuthMode: ClaudeCodeAuthMode;
+  claudeCodeModel: string;
+  claudeCodeSmallFastModel: string;
+  claudeCodeDisableNonessentialTraffic: boolean;
+  claudeCodeExtraEnv: string;
 };
 
 type LaunchMode = "patch" | "relay";
+type ClaudeCodeAuthMode = "apiKey" | "authToken";
 
 type RelayProfile = {
   id: string;
@@ -281,6 +292,17 @@ type RelayProfileTestResult = CommandResult<{
 type RelayProfileModelsResult = CommandResult<{
   models: string[];
   endpoint: string;
+}>;
+
+type ClaudeCodeLaunchResult = CommandResult<{
+  pid: number;
+  command: string;
+  workingDirectory: string;
+  authEnv: string;
+  baseUrlConfigured: boolean;
+  modelConfigured: boolean;
+  smallFastModelConfigured: boolean;
+  nonessentialTrafficDisabled: boolean;
 }>;
 
 type CcsProviderImport = {
@@ -453,12 +475,24 @@ type StartupResult = CommandResult<{
   showUpdate: boolean;
 }>;
 
-type Route = "overview" | "relay" | "sessions" | "context" | "enhance" | "userScripts" | "recommendations" | "maintenance" | "about" | "settings";
+type Route =
+  | "overview"
+  | "relay"
+  | "claude"
+  | "sessions"
+  | "context"
+  | "enhance"
+  | "userScripts"
+  | "recommendations"
+  | "maintenance"
+  | "about"
+  | "settings";
 type Theme = "dark" | "light";
 
 const routes: Array<{ id: Route; label: string; icon: LucideIcon }> = [
   { id: "overview", label: "概览", icon: LayoutDashboard },
   { id: "relay", label: "供应商配置", icon: KeyRound },
+  { id: "claude", label: "Claude Code", icon: Rocket },
   { id: "sessions", label: "会话管理", icon: MessageCircle },
   { id: "context", label: "工具与插件", icon: Network },
   { id: "enhance", label: "页面增强", icon: Hammer },
@@ -529,6 +563,16 @@ const defaultSettings: BackendSettings = {
   cliWrapperBaseUrl: "",
   cliWrapperApiKey: "",
   cliWrapperApiKeyEnv: "CUSTOM_OPENAI_API_KEY",
+  claudeCodeEnabled: false,
+  claudeCodeCommand: "claude",
+  claudeCodeWorkingDirectory: "",
+  claudeCodeBaseUrl: "",
+  claudeCodeApiKey: "",
+  claudeCodeAuthMode: "apiKey",
+  claudeCodeModel: "",
+  claudeCodeSmallFastModel: "",
+  claudeCodeDisableNonessentialTraffic: true,
+  claudeCodeExtraEnv: "",
 };
 
 export function App() {
@@ -896,6 +940,25 @@ export function App() {
       setSettings(result);
       setSettingsForm(normalizeSettings(result.settings));
       showResultNotice("联动 cc-switch", result);
+    }
+  };
+
+  const launchClaudeCode = async () => {
+    const next = await settingsForSave(settingsForm, false);
+    const saved = await run(() => call<SettingsResult>("save_settings", { settings: next }));
+    if (!saved) return;
+    if (saved && !isSuccessStatus(saved.status)) {
+      setSettings(saved);
+      setSettingsForm(normalizeSettings(saved.settings));
+      showNotice("Claude Code", saved.message, saved.status);
+      return;
+    }
+    const launchSettings = normalizeSettings(saved.settings);
+    setSettings(saved);
+    setSettingsForm(launchSettings);
+    const result = await run(() => call<ClaudeCodeLaunchResult>("launch_claude_code", { settings: launchSettings }));
+    if (result) {
+      showNotice("Claude Code", result.message, result.status);
     }
   };
 
@@ -1361,6 +1424,7 @@ export function App() {
       refreshCurrent: () => navigate(route),
       launch,
       restart,
+      launchClaudeCode,
       repairBackend,
       installEntrypoints,
       uninstallEntrypoints,
@@ -1561,6 +1625,13 @@ export function App() {
               actions={actions}
             />
           ) : null}
+          {route === "claude" ? (
+            <ClaudeCodeScreen
+              form={settingsForm}
+              onFormChange={setSettingsForm}
+              actions={actions}
+            />
+          ) : null}
           {route === "sessions" ? (
             <SessionsScreen
               settings={settings}
@@ -1620,6 +1691,7 @@ type Actions = {
   refreshCurrent: () => Promise<void>;
   launch: () => Promise<void>;
   restart: () => Promise<void>;
+  launchClaudeCode: () => Promise<void>;
   repairBackend: () => Promise<void>;
   installEntrypoints: () => Promise<void>;
   uninstallEntrypoints: () => Promise<void>;
@@ -1872,6 +1944,132 @@ function RelayScreen({
             disabled={!normalized.relayProfilesEnabled}
             actions={actions}
           />
+        </CardContent>
+      </Panel>
+    </>
+  );
+}
+
+function ClaudeCodeScreen({
+  form,
+  onFormChange,
+  actions,
+}: {
+  form: BackendSettings;
+  onFormChange: (value: BackendSettings) => void;
+  actions: Actions;
+}) {
+  const authEnv = form.claudeCodeAuthMode === "authToken" ? "ANTHROPIC_AUTH_TOKEN" : "ANTHROPIC_API_KEY";
+  return (
+    <>
+      <Panel>
+        <CardHead title="Claude Code" detail="使用 Anthropic 兼容环境变量启动 Claude Code" />
+        <CardContent>
+          <label className="switch-row">
+            <input
+              checked={form.claudeCodeEnabled}
+              onChange={(event) => onFormChange({ ...form, claudeCodeEnabled: event.currentTarget.checked })}
+              type="checkbox"
+            />
+            <span>
+              <strong>启用 Claude Code 配置</strong>
+              <small>保存后会在启动 Claude Code 时注入 API key、Base URL 和模型环境变量。</small>
+            </span>
+          </label>
+          <div className="form-row">
+            <Field label="启动命令">
+              <Input
+                value={form.claudeCodeCommand}
+                onChange={(event) => onFormChange({ ...form, claudeCodeCommand: event.currentTarget.value })}
+                placeholder="claude"
+              />
+            </Field>
+            <Field label="工作目录">
+              <Input
+                value={form.claudeCodeWorkingDirectory}
+                onChange={(event) => onFormChange({ ...form, claudeCodeWorkingDirectory: event.currentTarget.value })}
+                placeholder="留空使用当前目录"
+              />
+            </Field>
+          </div>
+          <div className="form-row">
+            <Field label="Base URL">
+              <Input
+                value={form.claudeCodeBaseUrl}
+                onChange={(event) => onFormChange({ ...form, claudeCodeBaseUrl: event.currentTarget.value })}
+                placeholder="https://api.anthropic.com 或第三方网关"
+              />
+            </Field>
+            <Field label="认证变量">
+              <select
+                className="select-input"
+                value={form.claudeCodeAuthMode}
+                onChange={(event) =>
+                  onFormChange({
+                    ...form,
+                    claudeCodeAuthMode: event.currentTarget.value as ClaudeCodeAuthMode,
+                  })
+                }
+              >
+                <option value="apiKey">ANTHROPIC_API_KEY</option>
+                <option value="authToken">ANTHROPIC_AUTH_TOKEN</option>
+              </select>
+            </Field>
+          </div>
+          <Field label={`API Key (${authEnv})`}>
+            <Input
+              type="password"
+              value={form.claudeCodeApiKey}
+              onChange={(event) => onFormChange({ ...form, claudeCodeApiKey: event.currentTarget.value })}
+            />
+          </Field>
+          <div className="form-row">
+            <Field label="主模型">
+              <Input
+                value={form.claudeCodeModel}
+                onChange={(event) => onFormChange({ ...form, claudeCodeModel: event.currentTarget.value })}
+                placeholder="例如 claude-sonnet-4-5"
+              />
+            </Field>
+            <Field label="快速模型">
+              <Input
+                value={form.claudeCodeSmallFastModel}
+                onChange={(event) => onFormChange({ ...form, claudeCodeSmallFastModel: event.currentTarget.value })}
+                placeholder="例如 claude-haiku"
+              />
+            </Field>
+          </div>
+          <label className="check-row">
+            <input
+              checked={form.claudeCodeDisableNonessentialTraffic}
+              onChange={(event) =>
+                onFormChange({
+                  ...form,
+                  claudeCodeDisableNonessentialTraffic: event.currentTarget.checked,
+                })
+              }
+              type="checkbox"
+            />
+            <span>禁用 Claude Code 非必要网络流量</span>
+          </label>
+          <Field label="额外环境变量">
+            <Textarea
+              className="launch-args-input"
+              placeholder={"KEY=value\nOTHER_KEY=value"}
+              spellCheck={false}
+              value={form.claudeCodeExtraEnv}
+              onChange={(event) => onFormChange({ ...form, claudeCodeExtraEnv: event.currentTarget.value })}
+            />
+          </Field>
+          <Toolbar>
+            <Button disabled={!form.claudeCodeEnabled} onClick={() => void actions.launchClaudeCode()}>
+              <Rocket className="h-4 w-4" />
+              保存并启动 Claude Code
+            </Button>
+            <Button variant="secondary" onClick={() => void actions.saveSettings()}>
+              保存设置
+            </Button>
+          </Toolbar>
         </CardContent>
       </Panel>
     </>
@@ -3609,6 +3807,7 @@ function routeSubtitle(route: Route) {
   const subtitles: Record<Route, string> = {
     overview: "检查问题、启动与快速修复",
     relay: "管理 API 供应商、协议、Key 与配置文件",
+    claude: "用 API Key 启动 Claude Code",
     sessions: "查看、删除和修复 Codex 本地会话",
     context: "独立管理 MCP、Skills、Plugins",
     enhance: "会话删除、导出、项目移动和脚本能力",
@@ -4339,6 +4538,16 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
     relayContextConfigContents,
     relayProfiles: profiles,
     activeRelayId,
+    claudeCodeEnabled: settings.claudeCodeEnabled === true,
+    claudeCodeCommand: (settings.claudeCodeCommand || defaultSettings.claudeCodeCommand).trim() || defaultSettings.claudeCodeCommand,
+    claudeCodeWorkingDirectory: (settings.claudeCodeWorkingDirectory || "").trim(),
+    claudeCodeBaseUrl: (settings.claudeCodeBaseUrl || "").trim(),
+    claudeCodeApiKey: (settings.claudeCodeApiKey || "").trim(),
+    claudeCodeAuthMode: settings.claudeCodeAuthMode === "authToken" ? "authToken" : "apiKey",
+    claudeCodeModel: (settings.claudeCodeModel || "").trim(),
+    claudeCodeSmallFastModel: (settings.claudeCodeSmallFastModel || "").trim(),
+    claudeCodeDisableNonessentialTraffic: settings.claudeCodeDisableNonessentialTraffic !== false,
+    claudeCodeExtraEnv: (settings.claudeCodeExtraEnv || "").trim(),
   });
 }
 

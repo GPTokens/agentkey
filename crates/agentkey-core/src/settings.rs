@@ -138,6 +138,14 @@ pub enum RelayMode {
     PureApi,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum ClaudeCodeAuthMode {
+    #[default]
+    ApiKey,
+    AuthToken,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct BackendSettings {
     #[serde(rename = "codexAppPath", default)]
@@ -216,6 +224,26 @@ pub struct BackendSettings {
         deserialize_with = "empty_as_default_api_key_env"
     )]
     pub cli_wrapper_api_key_env: String,
+    #[serde(rename = "claudeCodeEnabled", default)]
+    pub claude_code_enabled: bool,
+    #[serde(rename = "claudeCodeCommand", default = "default_claude_code_command")]
+    pub claude_code_command: String,
+    #[serde(rename = "claudeCodeWorkingDirectory", default)]
+    pub claude_code_working_directory: String,
+    #[serde(rename = "claudeCodeBaseUrl", default)]
+    pub claude_code_base_url: String,
+    #[serde(rename = "claudeCodeApiKey", default)]
+    pub claude_code_api_key: String,
+    #[serde(rename = "claudeCodeAuthMode", default)]
+    pub claude_code_auth_mode: ClaudeCodeAuthMode,
+    #[serde(rename = "claudeCodeModel", default)]
+    pub claude_code_model: String,
+    #[serde(rename = "claudeCodeSmallFastModel", default)]
+    pub claude_code_small_fast_model: String,
+    #[serde(rename = "claudeCodeDisableNonessentialTraffic", default = "default_true")]
+    pub claude_code_disable_nonessential_traffic: bool,
+    #[serde(rename = "claudeCodeExtraEnv", default)]
+    pub claude_code_extra_env: String,
 }
 
 impl Default for BackendSettings {
@@ -257,6 +285,16 @@ impl Default for BackendSettings {
             cli_wrapper_base_url: String::new(),
             cli_wrapper_api_key: String::new(),
             cli_wrapper_api_key_env: default_api_key_env(),
+            claude_code_enabled: false,
+            claude_code_command: default_claude_code_command(),
+            claude_code_working_directory: String::new(),
+            claude_code_base_url: String::new(),
+            claude_code_api_key: String::new(),
+            claude_code_auth_mode: ClaudeCodeAuthMode::ApiKey,
+            claude_code_model: String::new(),
+            claude_code_small_fast_model: String::new(),
+            claude_code_disable_nonessential_traffic: true,
+            claude_code_extra_env: String::new(),
         }
     }
 }
@@ -349,6 +387,10 @@ impl BackendSettings {
 
 pub fn default_api_key_env() -> String {
     "CUSTOM_OPENAI_API_KEY".to_string()
+}
+
+pub fn default_claude_code_command() -> String {
+    "claude".to_string()
 }
 
 pub fn default_true() -> bool {
@@ -606,6 +648,78 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
             }),
         );
     }
+    if let Some(value) = source.get("claudeCodeEnabled").and_then(Value::as_bool) {
+        target.insert("claudeCodeEnabled".to_string(), Value::Bool(value));
+    }
+    if let Some(value) = source.get("claudeCodeCommand").and_then(Value::as_str) {
+        target.insert(
+            "claudeCodeCommand".to_string(),
+            Value::String(if value.trim().is_empty() {
+                default_claude_code_command()
+            } else {
+                value.trim().to_string()
+            }),
+        );
+    }
+    if let Some(value) = source
+        .get("claudeCodeWorkingDirectory")
+        .and_then(Value::as_str)
+    {
+        target.insert(
+            "claudeCodeWorkingDirectory".to_string(),
+            Value::String(value.trim().to_string()),
+        );
+    }
+    if let Some(value) = source.get("claudeCodeBaseUrl").and_then(Value::as_str) {
+        target.insert(
+            "claudeCodeBaseUrl".to_string(),
+            Value::String(value.trim().to_string()),
+        );
+    }
+    if let Some(value) = source.get("claudeCodeApiKey").and_then(Value::as_str) {
+        target.insert(
+            "claudeCodeApiKey".to_string(),
+            Value::String(value.trim().to_string()),
+        );
+    }
+    if let Some(value) = source.get("claudeCodeAuthMode").and_then(Value::as_str) {
+        if matches!(value, "apiKey" | "authToken") {
+            target.insert(
+                "claudeCodeAuthMode".to_string(),
+                Value::String(value.to_string()),
+            );
+        }
+    }
+    if let Some(value) = source.get("claudeCodeModel").and_then(Value::as_str) {
+        target.insert(
+            "claudeCodeModel".to_string(),
+            Value::String(value.trim().to_string()),
+        );
+    }
+    if let Some(value) = source
+        .get("claudeCodeSmallFastModel")
+        .and_then(Value::as_str)
+    {
+        target.insert(
+            "claudeCodeSmallFastModel".to_string(),
+            Value::String(value.trim().to_string()),
+        );
+    }
+    if let Some(value) = source
+        .get("claudeCodeDisableNonessentialTraffic")
+        .and_then(Value::as_bool)
+    {
+        target.insert(
+            "claudeCodeDisableNonessentialTraffic".to_string(),
+            Value::Bool(value),
+        );
+    }
+    if let Some(value) = source.get("claudeCodeExtraEnv").and_then(Value::as_str) {
+        target.insert(
+            "claudeCodeExtraEnv".to_string(),
+            Value::String(value.trim().to_string()),
+        );
+    }
 }
 
 fn merge_bool_setting(target: &mut Map<String, Value>, source: &Map<String, Value>, key: &str) {
@@ -839,12 +953,17 @@ mod tests {
         assert_eq!(settings.relay_test_model, default_relay_test_model());
         assert!(!settings.cli_wrapper_enabled);
         assert_eq!(settings.cli_wrapper_api_key_env, "CUSTOM_OPENAI_API_KEY");
+        assert!(!settings.claude_code_enabled);
+        assert_eq!(settings.claude_code_command, "claude");
+        assert!(settings.claude_code_api_key.is_empty());
+        assert_eq!(settings.claude_code_auth_mode, ClaudeCodeAuthMode::ApiKey);
+        assert!(settings.claude_code_disable_nonessential_traffic);
     }
 
     #[test]
     fn settings_deserialize_uses_existing_json_keys() {
         let settings: BackendSettings = serde_json::from_str(
-            r#"{"codexAppPath":"C:\\Portable\\Codex\\app","providerSyncEnabled":true,"codexGoalsEnabled":true,"cliWrapperEnabled":true,"cliWrapperBaseUrl":"https://example.test","cliWrapperApiKey":"sk-test","cliWrapperApiKeyEnv":""}"#,
+            r#"{"codexAppPath":"C:\\Portable\\Codex\\app","providerSyncEnabled":true,"codexGoalsEnabled":true,"cliWrapperEnabled":true,"cliWrapperBaseUrl":"https://example.test","cliWrapperApiKey":"sk-test","cliWrapperApiKeyEnv":"","claudeCodeEnabled":true,"claudeCodeCommand":"claude --permission-mode acceptEdits","claudeCodeBaseUrl":"https://litellm.example.test","claudeCodeApiKey":"sk-claude","claudeCodeAuthMode":"authToken","claudeCodeModel":"claude-sonnet-4-5"}"#,
         )
         .unwrap();
         assert_eq!(settings.codex_app_path, r"C:\Portable\Codex\app");
@@ -856,6 +975,15 @@ mod tests {
         assert_eq!(settings.cli_wrapper_api_key_env, "CUSTOM_OPENAI_API_KEY");
         assert_eq!(settings.relay_base_url, default_relay_base_url());
         assert!(settings.codex_extra_args.is_empty());
+        assert!(settings.claude_code_enabled);
+        assert_eq!(
+            settings.claude_code_command,
+            "claude --permission-mode acceptEdits"
+        );
+        assert_eq!(settings.claude_code_base_url, "https://litellm.example.test");
+        assert_eq!(settings.claude_code_api_key, "sk-claude");
+        assert_eq!(settings.claude_code_auth_mode, ClaudeCodeAuthMode::AuthToken);
+        assert_eq!(settings.claude_code_model, "claude-sonnet-4-5");
     }
 
     #[test]
@@ -1289,6 +1417,8 @@ experimental_bearer_token = "sk-existing""#));
             cli_wrapper_base_url: "https://old.test".to_string(),
             cli_wrapper_api_key: "old-key".to_string(),
             cli_wrapper_api_key_env: "OLD_ENV".to_string(),
+            claude_code_command: "claude".to_string(),
+            claude_code_api_key: "old-claude-key".to_string(),
             ..BackendSettings::default()
         };
         store.save(&initial).unwrap();
@@ -1307,6 +1437,13 @@ experimental_bearer_token = "sk-existing""#));
             "relayApiKey": "sk-relay",
             "codexExtraArgs": ["--force_high_performance_gpu", "", "  ", " --enable-gpu "],
             "cliWrapperApiKeyEnv": "",
+            "claudeCodeEnabled": true,
+            "claudeCodeCommand": " claude --verbose ",
+            "claudeCodeBaseUrl": " https://gateway.example.test ",
+            "claudeCodeApiKey": " sk-new-claude ",
+            "claudeCodeAuthMode": "authToken",
+            "claudeCodeModel": " claude-sonnet-4-5 ",
+            "claudeCodeDisableNonessentialTraffic": false,
             "unknownKey": "ignored"
             }))
             .unwrap();
@@ -1332,6 +1469,13 @@ experimental_bearer_token = "sk-existing""#));
         assert_eq!(updated.cli_wrapper_base_url, "https://old.test");
         assert_eq!(updated.cli_wrapper_api_key, "old-key");
         assert_eq!(updated.cli_wrapper_api_key_env, "CUSTOM_OPENAI_API_KEY");
+        assert!(updated.claude_code_enabled);
+        assert_eq!(updated.claude_code_command, "claude --verbose");
+        assert_eq!(updated.claude_code_base_url, "https://gateway.example.test");
+        assert_eq!(updated.claude_code_api_key, "sk-new-claude");
+        assert_eq!(updated.claude_code_auth_mode, ClaudeCodeAuthMode::AuthToken);
+        assert_eq!(updated.claude_code_model, "claude-sonnet-4-5");
+        assert!(!updated.claude_code_disable_nonessential_traffic);
         assert_eq!(store.load().unwrap(), updated);
     }
 

@@ -28,8 +28,11 @@ AgentKey is being built from the local desktop bridge worktree into a desktop br
 
 ## Phase 4: Claude Code Support
 
-- Identify Claude Code desktop-client launch, injection, and local protocol requirements.
-- Add a Claude Code profile beside the existing Codex profile.
+- Add a Claude Code launch profile beside the existing Codex profile.
+- Start Claude Code with `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN`.
+- Support `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`, `ANTHROPIC_SMALL_FAST_MODEL`, and extra environment variables.
+- Open Claude Code in a visible terminal on Windows so interactive workflows remain usable.
+- Continue identifying desktop-client injection and local protocol requirements.
 - Share common helper, security, provider, and diagnostics code.
 - Keep product-specific bridge code isolated behind provider/client adapters.
 

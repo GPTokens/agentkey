@@ -34,6 +34,7 @@ pub fn run() {
             commands::load_overview,
             commands::launch_agentkey,
             commands::restart_agentkey,
+            commands::launch_claude_code,
             commands::load_settings,
             commands::save_settings,
             commands::list_local_sessions,

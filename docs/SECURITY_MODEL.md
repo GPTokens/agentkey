@@ -29,3 +29,7 @@ Updater code must verify release artifacts before execution. Acceptable verifica
 ## Diagnostics
 
 Diagnostics may include environment details, configuration paths, and provider settings. Diagnostics must redact secrets before sending or saving reports.
+
+## Claude Code Launch
+
+Claude Code is started with API credentials in the child process environment. API keys must not be written to command-line arguments or diagnostic events. Extra environment variables are accepted only as `KEY=value` lines with validated variable names.

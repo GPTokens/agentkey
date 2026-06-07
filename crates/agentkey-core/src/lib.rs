@@ -4,6 +4,7 @@ pub mod assets;
 pub mod bridge;
 pub mod ccs_import;
 pub mod cdp;
+pub mod claude_code;
 pub mod cli_wrapper;
 pub mod diagnostic_log;
 pub mod http_client;

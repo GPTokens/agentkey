@@ -7,7 +7,7 @@ AgentKey is a local desktop bridge for AI coding agents. It lets users configure
 ## Goals
 
 - Use Codex desktop workflows through API keys.
-- Add Claude Code support through the same desktop bridge model.
+- Launch Claude Code with Anthropic-compatible API key settings.
 - Support OpenAI-compatible providers with custom base URLs.
 - Keep setup simple for users who already have provider API keys.
 - Protect the local helper with session-scoped authentication.
@@ -20,7 +20,7 @@ AgentKey is being prepared from the local desktop bridge worktree. The first dev
 - Rebranding the public project identity to AgentKey.
 - Hardening local helper authentication and CORS.
 - Improving API key provider setup.
-- Adding a Claude Code profile beside the existing Codex profile.
+- Adding a Claude Code launch profile with `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, and model environment support.
 - Removing old project-specific release and sponsor metadata.
 
 ## Security Model
