@@ -148,7 +148,7 @@ pub enum ClaudeCodeAuthMode {
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct BackendSettings {
-    #[serde(rename = "codexAppPath", default)]
+    #[serde(rename = "desktopClientPath", alias = "codexAppPath", default)]
     pub codex_app_path: String,
     #[serde(rename = "codexExtraArgs", default)]
     pub codex_extra_args: Vec<String>,
@@ -577,9 +577,7 @@ impl SettingsStore {
 }
 
 fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<String, Value>) {
-    if let Some(value) = source.get("codexAppPath").and_then(Value::as_str) {
-        target.insert("codexAppPath".to_string(), Value::String(value.to_string()));
-    }
+    merge_string_setting_alias(target, source, "desktopClientPath", "codexAppPath");
     if let Some(value) = source.get("codexExtraArgs").and_then(Value::as_array) {
         let args = value
             .iter()
@@ -866,6 +864,25 @@ fn merge_bool_setting_alias(
     }
 }
 
+fn merge_string_setting_alias(
+    target: &mut Map<String, Value>,
+    source: &Map<String, Value>,
+    key: &str,
+    legacy_key: &str,
+) {
+    let value = source
+        .get(key)
+        .or_else(|| source.get(legacy_key))
+        .or_else(|| target.get(key))
+        .or_else(|| target.get(legacy_key))
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+    target.remove(legacy_key);
+    if let Some(value) = value {
+        target.insert(key.to_string(), Value::String(value));
+    }
+}
+
 fn preserve_official_mix_bearer_tokens(
     profiles: &mut [RelayProfile],
     previous: &Map<String, Value>,
@@ -1101,10 +1118,10 @@ mod tests {
     #[test]
     fn settings_deserialize_uses_existing_json_keys() {
         let settings: BackendSettings = serde_json::from_str(
-            r#"{"codexAppPath":"C:\\Portable\\Codex\\app","providerSyncEnabled":true,"codexGoalsEnabled":true,"cliWrapperEnabled":true,"cliWrapperBaseUrl":"https://example.test","cliWrapperApiKey":"sk-test","cliWrapperApiKeyEnv":"","claudeCodeEnabled":true,"claudeCodeCommand":"claude --permission-mode acceptEdits","claudeCodeBaseUrl":"https://litellm.example.test","claudeCodeApiKey":"sk-claude","claudeCodeAuthMode":"authToken","claudeCodeModel":"claude-sonnet-4-5"}"#,
+            r#"{"desktopClientPath":"C:\\Portable\\Client\\app","providerSyncEnabled":true,"codexGoalsEnabled":true,"cliWrapperEnabled":true,"cliWrapperBaseUrl":"https://example.test","cliWrapperApiKey":"sk-test","cliWrapperApiKeyEnv":"","claudeCodeEnabled":true,"claudeCodeCommand":"claude --permission-mode acceptEdits","claudeCodeBaseUrl":"https://litellm.example.test","claudeCodeApiKey":"sk-claude","claudeCodeAuthMode":"authToken","claudeCodeModel":"claude-sonnet-4-5"}"#,
         )
         .unwrap();
-        assert_eq!(settings.codex_app_path, r"C:\Portable\Codex\app");
+        assert_eq!(settings.codex_app_path, r"C:\Portable\Client\app");
         assert!(settings.provider_sync_enabled);
         assert!(settings.codex_goals_enabled);
         assert!(settings.cli_wrapper_enabled);
@@ -1122,6 +1139,14 @@ mod tests {
         assert_eq!(settings.claude_code_api_key, "sk-claude");
         assert_eq!(settings.claude_code_auth_mode, ClaudeCodeAuthMode::AuthToken);
         assert_eq!(settings.claude_code_model, "claude-sonnet-4-5");
+    }
+
+    #[test]
+    fn settings_deserialize_accepts_legacy_app_path_key() {
+        let settings: BackendSettings =
+            serde_json::from_str(r#"{"codexAppPath":"C:\\Portable\\Legacy\\app"}"#).unwrap();
+
+        assert_eq!(settings.codex_app_path, r"C:\Portable\Legacy\app");
     }
 
     #[test]
@@ -1574,7 +1599,7 @@ experimental_bearer_token = "sk-existing""#));
         let updated = store
             .update(json!({
             "providerSyncEnabled": true,
-            "codexAppPath": "C:\\Portable\\Codex\\Codex.exe",
+            "desktopClientPath": "C:\\Portable\\Client\\Client.exe",
             "enhancementsEnabled": false,
             "desktopClientPluginEntryUnlock": false,
             "desktopClientSessionDelete": false,
@@ -1597,7 +1622,7 @@ experimental_bearer_token = "sk-existing""#));
             .unwrap();
 
         assert!(updated.provider_sync_enabled);
-        assert_eq!(updated.codex_app_path, r"C:\Portable\Codex\Codex.exe");
+        assert_eq!(updated.codex_app_path, r"C:\Portable\Client\Client.exe");
         assert!(!updated.enhancements_enabled);
         assert!(!updated.codex_app_plugin_entry_unlock);
         assert!(!updated.codex_app_session_delete);
@@ -1630,8 +1655,59 @@ experimental_bearer_token = "sk-existing""#));
                 .unwrap();
         assert_eq!(saved["desktopClientPluginEntryUnlock"], json!(false));
         assert_eq!(saved["desktopClientServiceTierControls"], json!(true));
+        assert_eq!(saved["desktopClientPath"], json!(r"C:\Portable\Client\Client.exe"));
+        assert!(saved.get("codexAppPath").is_none());
         assert!(saved.get("codexAppPluginEntryUnlock").is_none());
         assert!(saved.get("codexAppServiceTierControls").is_none());
+    }
+
+    #[test]
+    fn settings_store_update_canonicalizes_legacy_app_path_key() {
+        let dir = temp_dir();
+        let store = SettingsStore::new(dir.join("settings.json"));
+
+        let updated = store
+            .update(json!({
+                "codexAppPath": "C:\\Portable\\Legacy\\Client.exe"
+            }))
+            .unwrap();
+
+        assert_eq!(updated.codex_app_path, r"C:\Portable\Legacy\Client.exe");
+        let saved: Value =
+            serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
+                .unwrap();
+        assert_eq!(
+            saved["desktopClientPath"],
+            json!(r"C:\Portable\Legacy\Client.exe")
+        );
+        assert!(saved.get("codexAppPath").is_none());
+    }
+
+    #[test]
+    fn settings_store_update_migrates_existing_legacy_app_path_key() {
+        let dir = temp_dir();
+        std::fs::write(
+            dir.join("settings.json"),
+            r#"{"codexAppPath":"C:\\Portable\\Old\\Client.exe"}"#,
+        )
+        .unwrap();
+        let store = SettingsStore::new(dir.join("settings.json"));
+
+        let updated = store
+            .update(json!({
+                "providerSyncEnabled": true
+            }))
+            .unwrap();
+
+        assert_eq!(updated.codex_app_path, r"C:\Portable\Old\Client.exe");
+        let saved: Value =
+            serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
+                .unwrap();
+        assert_eq!(
+            saved["desktopClientPath"],
+            json!(r"C:\Portable\Old\Client.exe")
+        );
+        assert!(saved.get("codexAppPath").is_none());
     }
 
     #[test]

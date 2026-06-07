@@ -98,7 +98,8 @@ type RawOverviewResult = OverviewResult & {
 };
 
 type BackendSettings = {
-  codexAppPath: string;
+  desktopClientPath: string;
+  codexAppPath?: string;
   codexExtraArgs: string[];
   providerSyncEnabled: boolean;
   providerSyncSavedProviders: string[];
@@ -511,7 +512,7 @@ const routes: Array<{ id: Route; label: string; icon: LucideIcon }> = [
 ];
 
 const defaultSettings: BackendSettings = {
-  codexAppPath: "",
+  desktopClientPath: "",
   codexExtraArgs: [],
   providerSyncEnabled: false,
   providerSyncSavedProviders: [],
@@ -645,7 +646,7 @@ export function App() {
       setSettingsForm(normalized);
       setLaunchForm((current) => ({
         ...current,
-        appPath: current.appPath || result.settings.codexAppPath || "",
+        appPath: current.appPath || normalizeSettings(result.settings).desktopClientPath || "",
       }));
       if (!silent) showResultNotice("设置已加载", result, { silentSuccess: true });
       return normalized;
@@ -1415,13 +1416,13 @@ export function App() {
   }, [theme]);
 
   const saveCodexAppPath = async (appPath: string) => {
-    const next = { ...settingsForm, codexAppPath: appPath };
+    const next = { ...settingsForm, desktopClientPath: appPath };
     const result = await run(() => call<SettingsResult>("save_settings", { settings: next }));
     if (result) {
       setSettings(result);
       const normalized = normalizeSettings(result.settings);
       setSettingsForm(normalized);
-      setLaunchForm((current) => ({ ...current, appPath: normalized.codexAppPath }));
+      setLaunchForm((current) => ({ ...current, appPath: normalized.desktopClientPath }));
       await refreshOverview(true);
     }
     return result;
@@ -1471,7 +1472,7 @@ export function App() {
         }
       },
       clearCodexAppPath: async () => {
-        const next = { ...settingsForm, codexAppPath: "" };
+        const next = { ...settingsForm, desktopClientPath: "" };
         const result = await run(() => call<SettingsResult>("save_settings", { settings: next }));
         if (result) {
           setSettings(result);
@@ -2391,7 +2392,7 @@ function MaintenanceScreen({
   onRemoveOwnedDataChange: (value: boolean) => void;
   actions: Actions;
 }) {
-  const savedCodexAppPath = settings?.settings.codexAppPath ?? "";
+  const savedDesktopClientPath = normalizeSettings(settings?.settings ?? defaultSettings).desktopClientPath;
   return (
     <>
       <Panel>
@@ -2439,12 +2440,12 @@ function MaintenanceScreen({
         <CardHead title="桌面客户端路径" detail="免安装版或解包版只需要选择一次，之后静默启动会自动复用" />
         <CardContent>
           <div className="status-table">
-            <StatusRow title="保存路径" status={savedCodexAppPath ? "ok" : "not_checked"} path={savedCodexAppPath || null} />
+            <StatusRow title="保存路径" status={savedDesktopClientPath ? "ok" : "not_checked"} path={savedDesktopClientPath || null} />
             <StatusRow title="当前识别" status={overview?.desktop_client.status} path={overview?.desktop_client.path} />
           </div>
           <Field label="保存的应用路径">
             <Input
-              value={settings?.settings.codexAppPath ?? ""}
+              value={normalizeSettings(settings?.settings ?? defaultSettings).desktopClientPath}
               placeholder="选择桌面客户端可执行文件、应用包、app 目录或解包目录"
               readOnly
             />
@@ -2463,7 +2464,7 @@ function MaintenanceScreen({
             <Input
               value={launchForm.appPath}
               onChange={(event) => onLaunchFormChange({ ...launchForm, appPath: event.currentTarget.value })}
-              placeholder={savedCodexAppPath || "例如 C:\\Program Files\\WindowsApps\\OpenAI.Codex...\\app"}
+              placeholder={savedDesktopClientPath || "例如 C:\\Program Files\\WindowsApps\\DesktopClient...\\app"}
             />
           </Field>
           <div className="form-row">
@@ -4516,6 +4517,7 @@ function normalizeOverview(result: RawOverviewResult): OverviewResult {
 }
 
 function normalizeSettings(settings: BackendSettings): BackendSettings {
+  const { codexAppPath: legacyDesktopClientPath, ...canonicalSettings } = settings;
   const splitCommon = splitContextConfigText(settings.relayCommonConfigContents || "");
   const relayCommonConfigContents = splitCommon.common;
   const relayContextConfigContents = joinTomlSectionsRootFirst([
@@ -4559,7 +4561,8 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
     : profiles[0]?.id || "default";
   return syncLegacyRelayFields({
     ...defaultSettings,
-    ...settings,
+    ...canonicalSettings,
+    desktopClientPath: settings.desktopClientPath || legacyDesktopClientPath || "",
     relayProfilesEnabled: settings.relayProfilesEnabled !== false,
     ccsLinkEnabled: settings.ccsLinkEnabled === true,
     relayCommonConfigContents,
