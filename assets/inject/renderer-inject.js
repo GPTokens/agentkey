@@ -10,11 +10,11 @@
   const moreButtonClass = "agentkey-session-more-button";
   const moreMenuClass = "agentkey-session-more-menu";
   const actionTooltipClass = "agentkey-session-action-tooltip";
-  const timelineClass = "codex-conversation-timeline";
-  const timelineTrackClass = "codex-conversation-timeline-track";
-  const timelineMarkerClass = "codex-conversation-timeline-marker";
-  const timelineTooltipClass = "codex-conversation-timeline-tooltip";
-  const timelineTargetClass = "codex-conversation-timeline-target";
+  const timelineClass = "agentkey-conversation-timeline";
+  const timelineTrackClass = "agentkey-conversation-timeline-track";
+  const timelineMarkerClass = "agentkey-conversation-timeline-marker";
+  const timelineTooltipClass = "agentkey-conversation-timeline-tooltip";
+  const timelineTargetClass = "agentkey-conversation-timeline-target";
   const conversationViewMinWidth = 320;
   const conversationViewMaxAllowedWidth = 4000;
   const conversationViewDefaultWidth = 900;
@@ -50,8 +50,8 @@
   const codexActionGroupVersion = "5";
   const agentKeyArchiveRowActionsVersion = "1";
   const agentKeyArchiveDeleteAllVersion = "2";
-  const codexConversationTimelineVersion = "2";
-  const codexConversationViewVersion = "1";
+  const agentKeyConversationTimelineVersion = "2";
+  const agentKeyConversationViewVersion = "1";
   const codexThreadScrollVersion = "1";
   const codexThreadServiceTierVersion = "1";
   const agentKeyServiceTierBadgeClass = "agentkey-service-tier-badge";
@@ -90,7 +90,7 @@
   window.__codexThreadScrollSyncTimers = [];
   window.__codexThreadScrollRestoreRevision = (window.__codexThreadScrollRestoreRevision || 0) + 1;
   window.__codexThreadScrollSyncRevision = (window.__codexThreadScrollSyncRevision || 0) + 1;
-  window.__codexConversationTimelineNodeCounter = window.__codexConversationTimelineNodeCounter || 0;
+  window.__agentKeyConversationTimelineNodeCounter = window.__agentKeyConversationTimelineNodeCounter || 0;
   let upstreamBranchDefaultsCache = new Map();
   const upstreamBranchDefaultsCacheTtlMs = 5000;
   const upstreamRemoteBranchDefaultsCacheTtlMs = 30000;
@@ -842,7 +842,7 @@
       }
       .${timelineMarkerClass}:hover,
       .${timelineMarkerClass}:focus-visible,
-      .${timelineMarkerClass}.codex-conversation-timeline-marker-active {
+      .${timelineMarkerClass}.agentkey-conversation-timeline-marker-active {
         background: #8b8b8b;
         outline: none;
       }
@@ -876,9 +876,9 @@
         z-index: 2147482501;
       }
       .${timelineTargetClass} {
-        animation: codex-conversation-timeline-pulse 1.2s ease-out;
+        animation: agentkey-conversation-timeline-pulse 1.2s ease-out;
       }
-      @keyframes codex-conversation-timeline-pulse {
+      @keyframes agentkey-conversation-timeline-pulse {
         0% { box-shadow: 0 0 0 0 rgba(16, 163, 127, .35); }
         100% { box-shadow: 0 0 0 14px rgba(16, 163, 127, 0); }
       }
@@ -6504,11 +6504,11 @@
   }
 
   function timelineNodeId(node) {
-    if (!node.__codexConversationTimelineNodeId) {
-      window.__codexConversationTimelineNodeCounter += 1;
-      node.__codexConversationTimelineNodeId = String(window.__codexConversationTimelineNodeCounter);
+    if (!node.__agentKeyConversationTimelineNodeId) {
+      window.__agentKeyConversationTimelineNodeCounter += 1;
+      node.__agentKeyConversationTimelineNodeId = String(window.__agentKeyConversationTimelineNodeCounter);
     }
-    return node.__codexConversationTimelineNodeId;
+    return node.__agentKeyConversationTimelineNodeId;
   }
 
   function visibleTimelineNode(node) {
@@ -6588,8 +6588,8 @@
     node.classList.remove(timelineTargetClass);
     void node.offsetWidth;
     node.classList.add(timelineTargetClass);
-    clearTimeout(node.__codexConversationTimelineHighlightTimer);
-    node.__codexConversationTimelineHighlightTimer = setTimeout(() => {
+    clearTimeout(node.__agentKeyConversationTimelineHighlightTimer);
+    node.__agentKeyConversationTimelineHighlightTimer = setTimeout(() => {
       node.classList.remove(timelineTargetClass);
     }, 1300);
   }
@@ -6602,7 +6602,7 @@
     marker.setAttribute("aria-label", `跳转到：${truncateTimelineQuestion(question.text)}`);
     const tooltip = document.createElement("span");
     tooltip.className = timelineTooltipClass;
-    tooltip.id = `codex-conversation-timeline-tooltip-${question.nodeId}`;
+    tooltip.id = `agentkey-conversation-timeline-tooltip-${question.nodeId}`;
     tooltip.setAttribute("role", "tooltip");
     tooltip.textContent = truncateTimelineQuestion(question.text);
     marker.setAttribute("aria-describedby", tooltip.id);
@@ -6611,10 +6611,10 @@
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation?.();
-      document.querySelectorAll(`.${timelineMarkerClass}.codex-conversation-timeline-marker-active`).forEach((node) => {
-        node.classList.remove("codex-conversation-timeline-marker-active");
+      document.querySelectorAll(`.${timelineMarkerClass}.agentkey-conversation-timeline-marker-active`).forEach((node) => {
+        node.classList.remove("agentkey-conversation-timeline-marker-active");
       });
-      marker.classList.add("codex-conversation-timeline-marker-active");
+      marker.classList.add("agentkey-conversation-timeline-marker-active");
       scrollTimelineTarget(question.node);
       highlightTimelineTarget(question.node);
     };
@@ -6649,16 +6649,16 @@
     const signature = timelineSignature(questions);
     const existing = document.querySelector(`.${timelineClass}`);
     if (
-      existing?.dataset.codexConversationTimelineVersion === codexConversationTimelineVersion &&
-      existing?.dataset.codexConversationTimelineSignature === signature
+      existing?.dataset.agentKeyConversationTimelineVersion === agentKeyConversationTimelineVersion &&
+      existing?.dataset.agentKeyConversationTimelineSignature === signature
     ) {
       return;
     }
     removeConversationTimeline();
     const container = document.createElement("div");
     container.className = timelineClass;
-    container.dataset.codexConversationTimelineVersion = codexConversationTimelineVersion;
-    container.dataset.codexConversationTimelineSignature = signature;
+    container.dataset.agentKeyConversationTimelineVersion = agentKeyConversationTimelineVersion;
+    container.dataset.agentKeyConversationTimelineSignature = signature;
     const track = document.createElement("div");
     track.className = timelineTrackClass;
     container.appendChild(track);
@@ -7748,7 +7748,7 @@
   }
 
   function isExtensionUiNode(node) {
-    return !!node?.closest?.(`.agentkey-delete-toast, .agentkey-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${agentKeyServiceTierBadgeClass}, .agentkey-zed-remote-button, .agentkey-zed-remote-toast, #agentkey-menu`);
+    return !!node?.closest?.(`.agentkey-delete-toast, .agentkey-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .agentkey-conversation-timeline, .${agentKeyServiceTierBadgeClass}, .agentkey-zed-remote-button, .agentkey-zed-remote-toast, #agentkey-menu`);
   }
 
   function scanRelevantSelector() {
