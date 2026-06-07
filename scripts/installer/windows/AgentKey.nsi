@@ -36,8 +36,8 @@ Section "Install"
   File "${ROOT}\dist\windows\app\agentkey.exe"
   File "${ROOT}\dist\windows\app\agentkey-manager.exe"
 
-  Delete "$DESKTOP\AgentKey 绠＄悊宸ュ叿.lnk"
-  Delete "$SMPROGRAMS\AgentKey\AgentKey 绠＄悊宸ュ叿.lnk"
+  Delete "$DESKTOP\AgentKey 管理工具.lnk"
+  Delete "$SMPROGRAMS\AgentKey\AgentKey 管理工具.lnk"
 
   CreateShortcut "$DESKTOP\AgentKey.lnk" "$INSTDIR\agentkey.exe" "" "$INSTDIR\agentkey.exe"
   CreateShortcut "$DESKTOP\AgentKey Manager.lnk" "$INSTDIR\agentkey-manager.exe" "" "$INSTDIR\agentkey-manager.exe"
@@ -64,10 +64,10 @@ Section "Uninstall"
 
   Delete "$DESKTOP\AgentKey.lnk"
   Delete "$DESKTOP\AgentKey Manager.lnk"
-  Delete "$DESKTOP\AgentKey 绠＄悊宸ュ叿.lnk"
+  Delete "$DESKTOP\AgentKey 管理工具.lnk"
   Delete "$SMPROGRAMS\AgentKey\AgentKey.lnk"
   Delete "$SMPROGRAMS\AgentKey\AgentKey Manager.lnk"
-  Delete "$SMPROGRAMS\AgentKey\AgentKey 绠＄悊宸ュ叿.lnk"
+  Delete "$SMPROGRAMS\AgentKey\AgentKey 管理工具.lnk"
   Delete "$SMPROGRAMS\AgentKey\卸载 AgentKey.lnk"
   RMDir "$SMPROGRAMS\AgentKey"
 

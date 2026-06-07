@@ -75,6 +75,25 @@ fn windows_binaries_request_administrator_privileges() {
 }
 
 #[test]
+fn windows_installer_shortcut_names_are_readable() {
+    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let windows_installer = manifest_dir
+        .parent()
+        .and_then(std::path::Path::parent)
+        .and_then(std::path::Path::parent)
+        .unwrap()
+        .join("scripts/installer/windows/AgentKey.nsi");
+    let windows_installer =
+        std::fs::read_to_string(&windows_installer).expect("read windows installer");
+
+    assert!(windows_installer.contains("AgentKey 管理工具.lnk"));
+    for codepoint in [0x7ba0, 0x608a, 0x5bb8] {
+        let marker = char::from_u32(codepoint).unwrap();
+        assert!(!windows_installer.contains(marker));
+    }
+}
+
+#[test]
 fn manager_launch_button_spawns_silent_launcher_binary() {
     let commands_rs =
         std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/src/commands.rs"))
