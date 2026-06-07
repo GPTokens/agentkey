@@ -33,7 +33,7 @@ body:
     id: expected_behavior
     attributes:
       label: 预期行为
-      placeholder: 应该同步当前供应商配置并启动 Codex。
+      placeholder: 应该同步当前供应商配置并启动桌面客户端。
     validations:
       required: true
   - type: textarea

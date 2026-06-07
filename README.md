@@ -13,11 +13,32 @@ AgentKey is a local desktop bridge for AI coding agents. It lets users configure
 - Protects privileged helper routes with a random session token and restricted CORS.
 - Redacts API keys, bearer tokens, and auth values from diagnostics.
 
+## Quick Start
+
+1. Download the latest installer from [GitHub Releases](https://github.com/GPTokens/agentkey/releases).
+2. Open AgentKey Manager.
+3. Keep or choose the Pure API profile.
+4. Enter your provider Base URL, API key, and model.
+5. Save the profile and launch AgentKey.
+6. For Claude Code, enable Claude Code settings, enter the command, Base URL, API key or auth token, and model, then launch it from AgentKey Manager.
+
+Pure API mode is the default no-login path. Official-account login is optional and only used when a user deliberately selects an official provider profile.
+
 ## Supported Provider Settings
 
 - OpenAI-compatible: `base_url`, API key, model, Responses or Chat Completions protocol.
 - Claude Code: `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`, `ANTHROPIC_SMALL_FAST_MODEL`.
 - Local development: loopback HTTP is allowed for `localhost`, `127.0.0.1`, and `::1`; remote providers must use HTTPS.
+
+## Release Builds
+
+Expected release assets:
+
+- Windows: `AgentKey-*-windows-x64-setup.exe`.
+- macOS Intel: `AgentKey-*-macos-x64.dmg`.
+- macOS Apple Silicon: `AgentKey-*-macos-arm64.dmg`.
+
+Update assets must include SHA-256 metadata and pass verification before execution.
 
 ## Development
 
