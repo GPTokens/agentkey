@@ -119,6 +119,7 @@ fn is_sensitive_key(key: &str) -> bool {
 
 fn redact_diagnostic_string(value: &str) -> String {
     let mut redacted = redact_after_markers(value);
+    redacted = redact_url_query_params(&redacted);
     redacted = redact_key_value_markers(&redacted);
     for prefix in [
         "sk-", "sk_", "gho_", "ghp_", "github_pat_", "xoxb-", "xoxp-", "AKIA",
@@ -160,6 +161,62 @@ fn redact_marker_value(value: &str, marker: &str) -> String {
         output.push_str("[REDACTED]");
         let token_end = after_marker
             .find(|ch: char| ch.is_whitespace() || matches!(ch, '"' | '\'' | ',' | ';' | '}'))
+            .unwrap_or(after_marker.len());
+        remaining = &after_marker[token_end..];
+    }
+    output.push_str(remaining);
+    output
+}
+
+fn redact_url_query_params(value: &str) -> String {
+    let mut output = value.to_string();
+    for marker in [
+        "?api_key=",
+        "&api_key=",
+        "?apiKey=",
+        "&apiKey=",
+        "?key=",
+        "&key=",
+        "?token=",
+        "&token=",
+        "?access_token=",
+        "&access_token=",
+        "?refresh_token=",
+        "&refresh_token=",
+        "?id_token=",
+        "&id_token=",
+        "?authToken=",
+        "&authToken=",
+        "?code=",
+        "&code=",
+        "?session=",
+        "&session=",
+        "?secret=",
+        "&secret=",
+        "#token=",
+        "#access_token=",
+    ] {
+        output = redact_url_param_value(&output, marker);
+    }
+    output
+}
+
+fn redact_url_param_value(value: &str, marker: &str) -> String {
+    let mut output = String::with_capacity(value.len());
+    let mut remaining = value;
+    while let Some(index) = remaining.find(marker) {
+        let (before, after_before) = remaining.split_at(index);
+        output.push_str(before);
+        output.push_str(marker);
+        output.push_str("[REDACTED]");
+        let after_marker = &after_before[marker.len()..];
+        let token_end = after_marker
+            .find(|ch: char| {
+                matches!(
+                    ch,
+                    '&' | '#' | '?' | '"' | '\'' | '<' | '>' | ')' | ' ' | '\n' | '\r' | '\t'
+                )
+            })
             .unwrap_or(after_marker.len());
         remaining = &after_marker[token_end..];
     }
@@ -284,5 +341,24 @@ mod tests {
         assert!(!text.contains("toml-secret"));
         assert!(!text.contains("json-secret"));
         assert!(!text.contains("claude-secret"));
+    }
+
+    #[test]
+    fn redacts_secret_url_query_params() {
+        let redacted = redact_diagnostic_value(json!({
+            "location": "https://client.example/callback?code=oauth-code&state=visible#access_token=access-secret",
+            "message": "next=http://localhost/?apiKey=query-secret&model=gpt"
+        }));
+
+        let location = redacted["location"].as_str().unwrap();
+        let message = redacted["message"].as_str().unwrap();
+        assert!(location.contains("code=[REDACTED]"));
+        assert!(location.contains("#access_token=[REDACTED]"));
+        assert!(location.contains("state=visible"));
+        assert!(message.contains("apiKey=[REDACTED]"));
+        assert!(message.contains("model=gpt"));
+        assert!(!location.contains("oauth-code"));
+        assert!(!location.contains("access-secret"));
+        assert!(!message.contains("query-secret"));
     }
 }
