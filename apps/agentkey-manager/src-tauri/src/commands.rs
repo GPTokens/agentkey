@@ -1133,8 +1133,8 @@ pub fn delete_user_script(key: String) -> CommandResult<SettingsPayload> {
 #[tauri::command]
 pub fn open_external_url(url: String) -> CommandResult<Value> {
     let trimmed = url.trim();
-    if !(trimmed.starts_with("https://") || trimmed.starts_with("http://")) {
-        return failed("只允许打开 http 或 https 链接。", json!({}));
+    if !external_url_allowed(trimmed) {
+        return failed("只允许打开 https 链接。", json!({}));
     }
     match open_url(trimmed) {
         Ok(()) => ok("已在系统浏览器打开链接。", json!({ "url": trimmed })),
@@ -2357,6 +2357,10 @@ fn diagnostics_report() -> String {
     .unwrap_or_else(|error| format!("诊断报告序列化失败：{error}"))
 }
 
+fn external_url_allowed(url: &str) -> bool {
+    url.starts_with("https://")
+}
+
 fn load_overview_payload() -> (
     Option<PathBuf>,
     install::EntryPointState,
@@ -2869,10 +2873,18 @@ model_reasoning_effort = "high"
     }
 
     #[test]
-    fn open_external_url_rejects_non_http_urls() {
+    fn external_url_validation_requires_https() {
+        assert!(external_url_allowed("https://github.com/GPTokens/agentkey"));
+        assert!(!external_url_allowed("http://example.com"));
+        assert!(!external_url_allowed("file:///C:/Windows/win.ini"));
+        assert!(!external_url_allowed("javascript:alert(1)"));
+    }
+
+    #[test]
+    fn open_external_url_rejects_non_https_urls() {
         let result = open_external_url("file:///C:/Windows/win.ini".to_string());
 
         assert_eq!(result.status, "failed");
-        assert!(result.message.contains("只允许打开 http 或 https 链接"));
+        assert!(result.message.contains("只允许打开 https 链接"));
     }
 }
