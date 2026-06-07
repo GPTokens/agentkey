@@ -93,7 +93,7 @@ fn responses_request_matches_ccs_reasoning_and_tool_choice_edges() {
 }
 
 #[test]
-fn proxy_route_matchers_accept_ccswitch_codex_aliases() {
+fn proxy_route_matchers_accept_desktop_client_aliases() {
     for path in [
         "/responses",
         "/v1/responses",
@@ -122,7 +122,7 @@ fn proxy_route_matchers_accept_ccswitch_codex_aliases() {
 }
 
 #[test]
-fn responses_request_applies_ccswitch_reasoning_dialects() {
+fn responses_request_applies_provider_reasoning_dialects() {
     let deepseek = responses_to_chat_completions(json!({
         "model": "deepseek-reasoner",
         "reasoning": { "effort": "xhigh" },
@@ -236,7 +236,7 @@ fn responses_request_collapses_system_messages_to_head_for_strict_chat_upstreams
 }
 
 #[test]
-fn responses_request_maps_latest_reminder_to_user_like_ccswitch() {
+fn responses_request_maps_latest_reminder_to_user() {
     let converted = responses_to_chat_completions(json!({
         "model": "gpt-5-mini",
         "input": [
@@ -779,7 +779,7 @@ fn chat_completion_response_maps_reasoning_tool_calls_and_usage_details() {
 }
 
 #[test]
-fn chat_completion_response_extracts_reasoning_details_like_ccswitch() {
+fn chat_completion_response_extracts_reasoning_details() {
     let converted = chat_completion_to_response(json!({
         "id": "chatcmpl_reasoning_details",
         "created": 123,

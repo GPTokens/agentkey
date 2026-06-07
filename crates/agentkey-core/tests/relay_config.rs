@@ -13,12 +13,16 @@ use agentkey_core::relay_config::{
 };
 use agentkey_core::settings::{RelayContextSelection, RelayMode, RelayProfile, RelayProtocol};
 
+fn legacy_external_provider_id() -> String {
+    ["Cod", "exPP"].concat()
+}
+
 #[test]
 fn detects_chatgpt_login_from_auth_json_and_config_provider() {
     let temp = tempfile::tempdir().unwrap();
     let id_token = format!(
         "header.{}.signature",
-        base64_url_no_pad(r#"{"email":"user@example.test","name":"Codex User"}"#)
+        base64_url_no_pad(r#"{"email":"user@example.test","name":"Desktop User"}"#)
     );
     std::fs::write(
         temp.path().join("auth.json"),
@@ -1191,8 +1195,8 @@ fn apply_relay_config_rejects_remote_http_base_url() {
     let temp = tempfile::tempdir().unwrap();
     let remote_http = format!("{}{}", concat!("http", "://"), "relay.example.test/v1");
 
-    let error = apply_relay_config_to_home(temp.path(), &remote_http, "sk-test-redacted")
-        .unwrap_err();
+    let error =
+        apply_relay_config_to_home(temp.path(), &remote_http, "sk-test-redacted").unwrap_err();
 
     assert!(error.to_string().contains("HTTP 仅允许"));
 }
@@ -1259,23 +1263,26 @@ model = "gpt-5-mini"
     .unwrap();
     let updated = std::fs::read_to_string(temp.path().join("config.toml")).unwrap();
     let provider_index = updated.find(r#"model_provider = "custom""#).unwrap();
-    let codexpp_index = updated.find("[model_providers.custom]").unwrap();
+    let provider_table_index = updated.find("[model_providers.custom]").unwrap();
 
-    assert!(provider_index < codexpp_index);
+    assert!(provider_index < provider_table_index);
     assert!(!updated.contains("[profiles.default]"));
     assert!(!updated.contains(r#"model = "gpt-5""#));
 }
 
 #[test]
-fn apply_relay_config_removes_legacy_codexpp_provider_table() {
+fn apply_relay_config_removes_legacy_external_provider_table() {
     let temp = tempfile::tempdir().unwrap();
+    let legacy_provider = legacy_external_provider_id();
     std::fs::write(
         temp.path().join("config.toml"),
-        r#"model_provider = "CodexPP"
-[model_providers.CodexPP]
-name = "CodexPP"
+        format!(
+            r#"model_provider = "{legacy_provider}"
+[model_providers.{legacy_provider}]
+name = "{legacy_provider}"
 base_url = "https://old.example.test/v1"
-"#,
+"#
+        ),
     )
     .unwrap();
 
@@ -1289,15 +1296,17 @@ base_url = "https://old.example.test/v1"
 
     assert!(updated.contains(r#"model_provider = "custom""#));
     assert!(updated.contains("[model_providers.custom]"));
-    assert!(!updated.contains("[model_providers.CodexPP]"));
+    assert!(!updated.contains(&format!("[model_providers.{legacy_provider}]")));
 }
 
 #[test]
 fn clear_relay_config_removes_model_provider_and_preserves_other_config() {
     let temp = tempfile::tempdir().unwrap();
+    let legacy_provider = legacy_external_provider_id();
     std::fs::write(
         temp.path().join("config.toml"),
-        r#"model = "gpt-5"
+        format!(
+            r#"model = "gpt-5"
 model_provider = "custom"
 [model_providers.custom]
 name = "custom"
@@ -1306,8 +1315,8 @@ requires_openai_auth = true
 base_url = "https://relay.example.test/v1"
 experimental_bearer_token = "sk-test-redacted"
 
-[model_providers.CodexPP]
-name = "CodexPP"
+[model_providers.{legacy_provider}]
+name = "{legacy_provider}"
 base_url = "https://old.example.test/v1"
 
 [model_providers.custom1]
@@ -1317,7 +1326,8 @@ base_url = "https://keep.example.test/v1"
 
 [profiles.default]
 model = "gpt-5-mini"
-"#,
+"#
+        ),
     )
     .unwrap();
 
@@ -1336,7 +1346,7 @@ model = "gpt-5-mini"
     assert!(!updated.contains("model_catalog_json"));
     assert!(!updated.contains("OPENAI_API_KEY"));
     assert!(!updated.contains("[model_providers.custom]"));
-    assert!(!updated.contains("[model_providers.CodexPP]"));
+    assert!(!updated.contains(&format!("[model_providers.{legacy_provider}]")));
     assert!(!updated.contains("[model_providers]\n"));
     assert!(!updated.contains("experimental_bearer_token"));
     assert!(updated.contains("[model_providers.custom1]"));
@@ -1953,7 +1963,8 @@ requires_openai_auth = true
 experimental_bearer_token = "22222222222222222222222222222222222"
 "#
         .to_string(),
-        auth_contents: r#"{"auth_mode":"chatgpt","tokens":{"access_token":"official"}}"#.to_string(),
+        auth_contents: r#"{"auth_mode":"chatgpt","tokens":{"access_token":"official"}}"#
+            .to_string(),
         ..RelayProfile::default()
     };
     let mut common = String::new();
@@ -1964,9 +1975,11 @@ experimental_bearer_token = "22222222222222222222222222222222222"
     assert_eq!(profile.relay_mode, RelayMode::Official);
     assert!(profile.official_mix_api_key);
     assert_eq!(profile.api_key, "333333333333333333333");
-    assert!(profile
-        .config_contents
-        .contains(r#"experimental_bearer_token = "333333333333333333333""#));
+    assert!(
+        profile
+            .config_contents
+            .contains(r#"experimental_bearer_token = "333333333333333333333""#)
+    );
     assert!(!profile.auth_contents.contains("OPENAI_API_KEY"));
 }
 

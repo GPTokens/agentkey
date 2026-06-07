@@ -1,6 +1,6 @@
 # Implementation Plan
 
-AgentKey is being built from the local desktop bridge worktree into a desktop bridge for Codex and Claude Code API-key workflows.
+AgentKey is a desktop bridge for Codex and Claude Code API-key workflows.
 
 ## Phase 1: Project Identity
 

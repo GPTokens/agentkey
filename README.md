@@ -1,29 +1,37 @@
 # AgentKey
 
-Use Codex and Claude Code desktop clients with API keys, without account login.
+Use Codex and Claude Code desktop workflows with API keys, without account login.
 
-AgentKey is a local desktop bridge for AI coding agents. It lets users configure provider API keys and run desktop-client workflows through a local helper, while keeping account login out of the runtime path.
+AgentKey is a local desktop bridge for AI coding agents. It lets users configure third-party provider API keys, route desktop-client traffic through a protected loopback helper, and keep account login out of the runtime path.
 
-## Goals
+## What It Does
 
-- Use Codex desktop workflows through API keys.
-- Launch Claude Code with Anthropic-compatible API key settings.
-- Support OpenAI-compatible providers with custom base URLs.
-- Keep setup simple for users who already have provider API keys.
-- Protect the local helper with session-scoped authentication.
-- Avoid exposing API keys to arbitrary web pages or untrusted local clients.
+- Runs Codex desktop workflows with OpenAI-compatible API providers.
+- Launches Claude Code with Anthropic-compatible API key or auth-token settings.
+- Supports custom base URLs, model names, and provider profiles.
+- Preserves desktop-client features through local bridge injection.
+- Protects privileged helper routes with a random session token and restricted CORS.
+- Redacts API keys, bearer tokens, and auth values from diagnostics.
 
-## Current Scope
+## Supported Provider Settings
 
-AgentKey is being prepared from the local desktop bridge worktree. The first development track focuses on:
+- OpenAI-compatible: `base_url`, API key, model, Responses or Chat Completions protocol.
+- Claude Code: `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`, `ANTHROPIC_SMALL_FAST_MODEL`.
+- Local development: loopback HTTP is allowed for `localhost`, `127.0.0.1`, and `::1`; remote providers must use HTTPS.
 
-- Rebranding the public project identity to AgentKey.
-- Hardening local helper authentication and CORS.
-- Improving API key provider setup.
-- Adding a Claude Code launch profile with `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, and model environment support.
-- Removing old project-specific release and sponsor metadata.
+## Development
 
-## Security Model
+```bash
+cd apps/agentkey-manager
+npm install
+npm run check
+npm run vite:build
+
+cd ../..
+cargo test --workspace
+```
+
+## Security
 
 AgentKey treats the local helper as privileged because it can proxy requests that use user-provided API keys.
 
@@ -37,6 +45,8 @@ Required controls:
 - Redact API keys and bearer tokens from diagnostics.
 - Verify downloaded update assets before execution.
 - Validate script integrity before enabling installed scripts.
+
+See [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md) for the full model.
 
 ## Repository
 
