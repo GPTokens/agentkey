@@ -675,7 +675,8 @@ async fn handle_helper_connection(
     let request_line = request.lines().next().unwrap_or_default();
     let mut parts = request_line.split_whitespace();
     let method = parts.next().unwrap_or_default();
-    let path = parts.next().unwrap_or_default();
+    let raw_path = parts.next().unwrap_or_default();
+    let path = helper_request_path(raw_path);
     let request_body = http_request_body(&request);
     let remote_addr_text = remote_addr.map(|addr| addr.to_string());
     let request_origin = http_header_value(&request, "Origin");
@@ -689,7 +690,6 @@ async fn handle_helper_connection(
         serde_json::json!({
             "method": method,
             "path": path,
-            "request_line": request_line,
             "remote_addr": remote_addr_text,
             "body_bytes": request_body.len()
         }),
@@ -1237,6 +1237,14 @@ fn http_header_value(request: &str, header_name: &str) -> Option<String> {
     })
 }
 
+fn helper_request_path(raw_path: &str) -> &str {
+    raw_path
+        .split(['?', '#'])
+        .next()
+        .unwrap_or_default()
+        .trim()
+}
+
 fn helper_request_authorized(request: &str, helper_token: &str, allow_relay_token: bool) -> bool {
     let header_token =
         http_header_value(request, "X-AgentKey-Token").filter(|value| !value.trim().is_empty());
@@ -1440,6 +1448,15 @@ mod helper_security_tests {
             "POST /backend/status HTTP/1.1\r\nAuthorization: Bearer relay-token\r\n\r\n{}";
 
         assert!(!helper_request_authorized(request, "session-token", false));
+    }
+
+    #[test]
+    fn helper_request_path_removes_query_and_fragment() {
+        assert_eq!(
+            helper_request_path("/backend/status?api_key=secret#access_token=secret"),
+            "/backend/status"
+        );
+        assert_eq!(helper_request_path("  /diagnostics/log  "), "/diagnostics/log");
     }
 
     #[test]
