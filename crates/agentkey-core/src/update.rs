@@ -166,10 +166,7 @@ pub fn select_update_asset(assets: &[(String, String)]) -> Option<ReleaseAsset> 
 }
 
 pub fn update_url_allowed(url: &str) -> bool {
-    match reqwest::Url::parse(url.trim()) {
-        Ok(parsed) => parsed.scheme() == "https",
-        Err(_) => false,
-    }
+    crate::url_policy::https_url_allowed(url)
 }
 
 fn ensure_https_update_url(url: &str, label: &str) -> anyhow::Result<()> {

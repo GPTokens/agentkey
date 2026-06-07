@@ -124,7 +124,10 @@ fn asset_selection_prefers_current_platform_artifacts() {
 #[test]
 fn update_urls_must_use_https() {
     assert!(update_url_allowed("https://example.test/pkg.zip"));
+    assert!(update_url_allowed("  https://example.test/pkg.zip  "));
     assert!(!update_url_allowed("http://example.test/pkg.zip"));
+    assert!(!update_url_allowed("https://"));
+    assert!(!update_url_allowed("https:///missing-host/pkg.zip"));
     assert!(!update_url_allowed("file:///tmp/pkg.zip"));
 }
 
@@ -139,6 +142,10 @@ fn asset_selection_ignores_non_https_urls() {
         (
             "AgentKey_1.0.9_x64.dmg".to_string(),
             format!("{insecure_prefix}example.test/app.dmg"),
+        ),
+        (
+            "AgentKey-1.0.9-windows-x64-setup.exe".to_string(),
+            "https:///missing-host/setup.exe".to_string(),
         ),
     ];
 
