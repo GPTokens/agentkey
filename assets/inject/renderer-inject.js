@@ -1040,7 +1040,7 @@
   let agentKeyBackendSettings = { providerSyncEnabled: false, enhancementsEnabled: true, launchMode: "patch", codexAppVersion: "" };
   const agentKeyPluginLegacyEntryUnlockBeforeVersion = "26.601.2237";
 
-  function parseCodexVersionParts(version) {
+  function parseDesktopClientVersionParts(version) {
     const raw = String(version || "").trim();
     if (!raw) return null;
     const match = raw.match(/\d+(?:\.\d+)*/);
@@ -1050,9 +1050,9 @@
     return parts;
   }
 
-  function compareCodexVersions(left, right) {
-    const leftParts = parseCodexVersionParts(left);
-    const rightParts = parseCodexVersionParts(right);
+  function compareDesktopClientVersions(left, right) {
+    const leftParts = parseDesktopClientVersionParts(left);
+    const rightParts = parseDesktopClientVersionParts(right);
     if (!leftParts || !rightParts) return null;
     const length = Math.max(leftParts.length, rightParts.length);
     for (let index = 0; index < length; index += 1) {
@@ -1065,19 +1065,19 @@
 
   function agentKeyPluginUnlockStrategy() {
     const version = String(agentKeyBackendSettings.codexAppVersion || "").trim();
-    const comparison = compareCodexVersions(version, agentKeyPluginLegacyEntryUnlockBeforeVersion);
+    const comparison = compareDesktopClientVersions(version, agentKeyPluginLegacyEntryUnlockBeforeVersion);
     if (comparison == null) return "unknown";
     return comparison < 0 ? "legacy" : "modern";
   }
 
-  function logCodexPluginUnlockStrategy(strategy) {
-    const codexAppVersion = String(agentKeyBackendSettings.codexAppVersion || "").trim();
-    const signature = `${strategy}:${codexAppVersion || "unknown"}`;
+  function logAgentKeyPluginUnlockStrategy(strategy) {
+    const desktopClientVersion = String(agentKeyBackendSettings.codexAppVersion || "").trim();
+    const signature = `${strategy}:${desktopClientVersion || "unknown"}`;
     if (window.__agentKeyPluginUnlockStrategyLogged === signature) return;
     window.__agentKeyPluginUnlockStrategyLogged = signature;
     sendAgentKeyDiagnostic("plugin_unlock_strategy_selected", {
       strategy,
-      codexAppVersion,
+      desktopClientVersion,
       cutoff: agentKeyPluginLegacyEntryUnlockBeforeVersion,
     });
   }
@@ -1101,7 +1101,7 @@
   const agentKeyThreadServiceTierModes = new Set(["inherit", "standard", "fast"]);
   const agentKeyServiceTierControlModes = new Set(["inherit", "global-standard", "global-fast", "custom"]);
 
-  function codexAppAssetUrl(namePart) {
+  function desktopClientAssetUrl(namePart) {
     const urls = [
       ...Array.from(document.scripts || []).map((script) => script.src),
       ...Array.from(document.querySelectorAll("link[href]") || []).map((link) => link.href),
@@ -1110,11 +1110,11 @@
     return urls.find((url) => url.includes("/assets/") && url.includes(namePart) && url.split("?")[0].endsWith(".js")) || "";
   }
 
-  async function loadCodexAppModule(namePart) {
+  async function loadDesktopClientModule(namePart) {
     if (!agentKeyServiceTierModulePromises.has(namePart)) {
       const promise = Promise.resolve().then(async () => {
-        const url = codexAppAssetUrl(namePart);
-        if (!url) throw new Error(`未找到 Codex App asset: ${namePart}`);
+        const url = desktopClientAssetUrl(namePart);
+        if (!url) throw new Error(`未找到桌面客户端资源: ${namePart}`);
         return await import(url);
       }).catch((error) => {
         agentKeyServiceTierModulePromises.delete(namePart);
@@ -1125,17 +1125,17 @@
     return await agentKeyServiceTierModulePromises.get(namePart);
   }
 
-  async function codexSettingStorageModule() {
-    const module = await loadCodexAppModule("setting-storage-");
+  async function desktopSettingStorageModule() {
+    const module = await loadDesktopClientModule("setting-storage-");
     if (typeof module.n !== "function" || typeof module.s !== "function") {
-      throw new Error("Codex setting-storage 接口不可用");
+      throw new Error("桌面客户端设置接口不可用");
     }
     return module;
   }
 
   async function getAgentKeyServiceTierSetting() {
     try {
-      const settingStorage = await codexSettingStorageModule();
+      const settingStorage = await desktopSettingStorageModule();
       return await settingStorage.n(agentKeyDefaultServiceTierSetting);
     } catch (error) {
       if (typeof codexStateCall === "function") {
@@ -1626,10 +1626,10 @@
     if (window.__agentKeyServiceTierRequestOverrideInstalled === agentKeyServiceTierRequestOverrideVersion) return;
     const patch = async () => {
       try {
-        const module = await loadCodexAppModule("setting-storage-");
+        const module = await loadDesktopClientModule("setting-storage-");
         const dispatcherClass = typeof module.v === "function" && String(module.v).includes("dispatchMessage") ? module.v : null;
         const dispatcher = dispatcherClass?.getInstance?.();
-        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Codex dispatcher unavailable");
+        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Desktop client dispatcher unavailable");
         if (dispatcher.__agentKeyServiceTierOriginalDispatchMessage) {
           window.__agentKeyServiceTierRequestOverrideInstalled = agentKeyServiceTierRequestOverrideVersion;
           return;
@@ -1982,7 +1982,7 @@
               <button type="button" class="agentkey-toggle" data-agentkey-setting="forcePluginInstall" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">模型白名单解锁</div><div class="agentkey-row-description">从环境变量和 Codex config.toml 中的中转站 /v1/models 拉取模型，并补进模型选择列表。</div></div>
+              <div><div class="agentkey-row-title">模型白名单解锁</div><div class="agentkey-row-description">从环境变量和本地 config.toml 中的中转站 /v1/models 拉取模型，并补进模型选择列表。</div></div>
               <button type="button" class="agentkey-toggle" data-agentkey-setting="modelWhitelistUnlock"><span></span></button>
             </div>
             <div class="agentkey-row">
@@ -2035,7 +2035,7 @@
               <button type="button" class="agentkey-toggle" data-agentkey-setting="threadScrollRestore"><span></span></button>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">Zed Remote open</div><div class="agentkey-row-description">Open supported remote SSH file references in Zed without patching Codex.app.</div></div>
+              <div><div class="agentkey-row-title">Zed Remote open</div><div class="agentkey-row-description">Open supported remote SSH file references in Zed without patching the desktop client.</div></div>
               <button type="button" class="agentkey-toggle" data-agentkey-setting="zedRemoteOpen"><span></span></button>
             </div>
             <div class="agentkey-row">
@@ -2058,11 +2058,11 @@
               <button type="button" class="agentkey-toggle" data-agentkey-setting="nativeMenuPlacement"><span></span></button>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">打开 DevTools</div><div class="agentkey-row-description">打开当前 Codex 页面开发者工具，方便查看用户脚本报错。</div></div>
+              <div><div class="agentkey-row-title">打开 DevTools</div><div class="agentkey-row-description">打开当前桌面客户端页面开发者工具，方便查看用户脚本报错。</div></div>
               <button type="button" class="agentkey-action-button" data-agentkey-open-devtools="true">打开 DevTools</button>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">关于 AgentKey</div><div class="agentkey-about">AgentKey 是通过本地 launcher 注入的桌面桥接菜单，用 API Key 支持 Codex 与 Claude Code 工作流。<br>Build: <span data-agentkey-build="true">${agentKeyBuild}</span><br>GitHub: <a href="https://github.com/GPTokens/agentkey" target="_blank" rel="noreferrer">https://github.com/GPTokens/agentkey</a></div></div>
+              <div><div class="agentkey-row-title">关于 AgentKey</div><div class="agentkey-about">AgentKey 是通过本地 launcher 注入的桌面桥接菜单，用 API Key 支持桌面客户端与 Claude Code 工作流。<br>Build: <span data-agentkey-build="true">${agentKeyBuild}</span><br>GitHub: <a href="https://github.com/GPTokens/agentkey" target="_blank" rel="noreferrer">https://github.com/GPTokens/agentkey</a></div></div>
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">提出问题</div><div class="agentkey-row-description">打开 GitHub Issues 反馈问题或建议。</div></div>
@@ -2613,7 +2613,7 @@
     if (!agentKeySettings().pluginMarketplaceUnlock) return;
     const patch = async () => {
       try {
-        const module = await loadCodexAppModule("app-server-manager-signals-");
+        const module = await loadDesktopClientModule("app-server-manager-signals-");
         const candidates = Object.values(module).filter((value) => value && typeof value === "object");
         let patchedCount = 0;
         for (const candidate of candidates) {
@@ -4068,7 +4068,7 @@
     if (window.__agentKeyAppServerModelRequestPatchInstalled === codexAppServerModelRequestPatchVersion) return;
     const patch = async () => {
       try {
-        const module = await loadCodexAppModule("app-server-manager-signals-");
+        const module = await loadDesktopClientModule("app-server-manager-signals-");
         const candidates = Object.values(module).filter((value) => value && typeof value === "object");
         let patchedCount = 0;
         for (const candidate of candidates) {
@@ -5613,10 +5613,10 @@
     if (window.__agentKeyUpstreamPendingWorktreeDispatcherPatch === patchVersion) return;
     const patch = async () => {
       try {
-        const module = await loadCodexAppModule("setting-storage-");
+        const module = await loadDesktopClientModule("setting-storage-");
         const dispatcherClass = typeof module.v === "function" && String(module.v).includes("dispatchMessage") ? module.v : null;
         const dispatcher = dispatcherClass?.getInstance?.();
-        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Codex dispatcher unavailable");
+        if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Desktop client dispatcher unavailable");
         if (!dispatcher.__agentKeyUpstreamWorktreeOriginalDispatchMessage) {
           dispatcher.__agentKeyUpstreamWorktreeOriginalDispatchMessage = dispatcher.dispatchMessage.bind(dispatcher);
           dispatcher.dispatchMessage = (type, payload) => {
@@ -5689,7 +5689,7 @@
     if (!trigger) return false;
     const payload = upstreamWorktreePayloadFromSelection(trigger) || upstreamWorktreeNativePayloadFromElement(trigger);
     if (!payload) {
-      showToast("无法安全识别 Codex 原生 worktree 表单，请使用 AgentKey 菜单创建。", null);
+      showToast("无法安全识别原生 worktree 表单，请使用 AgentKey 菜单创建。", null);
       return false;
     }
     event.preventDefault();
@@ -7728,7 +7728,7 @@
     } else {
       const pluginUnlockStrategy = agentKeyPluginUnlockStrategy();
       const settings = agentKeySettings();
-      logCodexPluginUnlockStrategy(pluginUnlockStrategy);
+      logAgentKeyPluginUnlockStrategy(pluginUnlockStrategy);
       if ((pluginUnlockStrategy === "legacy" || pluginUnlockStrategy === "unknown") && settings.pluginEntryUnlock) {
         enablePluginEntry();
       }

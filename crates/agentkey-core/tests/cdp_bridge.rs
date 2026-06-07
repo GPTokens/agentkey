@@ -117,15 +117,15 @@ fn injection_script_defines_version_gated_plugin_unlock_strategy() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("agentKeyPluginLegacyEntryUnlockBeforeVersion = \"26.601.2237\""));
-    assert!(script.contains("function parseCodexVersionParts(version)"));
-    assert!(script.contains("function compareCodexVersions(left, right)"));
+    assert!(script.contains("function parseDesktopClientVersionParts(version)"));
+    assert!(script.contains("function compareDesktopClientVersions(left, right)"));
     assert!(script.contains("function agentKeyPluginUnlockStrategy()"));
-    assert!(script.contains("const comparison = compareCodexVersions(version, agentKeyPluginLegacyEntryUnlockBeforeVersion)"));
+    assert!(script.contains("const comparison = compareDesktopClientVersions(version, agentKeyPluginLegacyEntryUnlockBeforeVersion)"));
     assert!(script.contains("return comparison < 0 ? \"legacy\" : \"modern\""));
 }
 
 #[test]
-fn injection_script_gates_legacy_and_modern_plugin_unlock_by_codex_version() {
+fn injection_script_gates_legacy_and_modern_plugin_unlock_by_desktop_client_version() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("const pluginUnlockStrategy = agentKeyPluginUnlockStrategy()"));
@@ -375,7 +375,7 @@ fn injection_script_exposes_fast_service_tier_control() {
 
     assert!(script.contains("default-service-tier"));
     assert!(script.contains("setting-storage-"));
-    assert!(script.contains("codexAppAssetUrl"));
+    assert!(script.contains("desktopClientAssetUrl"));
     assert!(script.contains("agentKeyThreadServiceTierOverrides"));
     assert!(script.contains("codexThreadServiceTierOverrides"));
     assert!(script.contains("setAgentKeyThreadServiceTierMode"));
