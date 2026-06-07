@@ -33,6 +33,8 @@ pub struct MarketScriptInstall {
     pub name: String,
     pub version: String,
     pub script_url: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub sha256: String,
     pub homepage: String,
     pub installed_at: String,
 }
@@ -105,6 +107,11 @@ impl UserScriptManager {
     pub fn set_script_enabled(&self, key: &str, enabled: bool) -> anyhow::Result<UserScriptConfig> {
         let _guard = self.config_lock.lock().unwrap();
         let mut config = self.load_config_unlocked();
+        if enabled {
+            if let Some(install) = config.market.get(key) {
+                self.verify_market_script_integrity(key, install)?;
+            }
+        }
         config.scripts.insert(key.to_string(), enabled);
         self.save_config_unlocked(&config)?;
         Ok(config)
@@ -167,6 +174,7 @@ impl UserScriptManager {
                 name: script.name.clone(),
                 version: script.version.clone(),
                 script_url: script.script_url.clone(),
+                sha256: script.sha256.clone(),
                 homepage: script.homepage.clone(),
                 installed_at: current_unix_timestamp_string(),
             },
@@ -196,11 +204,47 @@ impl UserScriptManager {
             if !script.enabled {
                 continue;
             }
-            let source = fs::read_to_string(&script.path)
+            let source = self
+                .verified_script_source(&script, &config)
                 .unwrap_or_else(|error| format!("throw new Error({});", json!(error.to_string())));
             blocks.push(wrap_script(&script, &source));
         }
         Ok(blocks.join("\n"))
+    }
+
+    fn verified_script_source(
+        &self,
+        script: &UserScriptFile,
+        config: &UserScriptConfig,
+    ) -> anyhow::Result<String> {
+        let content = fs::read(&script.path)
+            .with_context(|| format!("failed to read user script {}", script.path.display()))?;
+        if let Some(install) = config.market.get(&script.key) {
+            verify_market_script_bytes(&script.key, install, &content)?;
+        }
+        String::from_utf8(content)
+            .with_context(|| format!("user script {} is not valid UTF-8", script.path.display()))
+    }
+
+    fn verify_market_script_integrity(
+        &self,
+        key: &str,
+        install: &MarketScriptInstall,
+    ) -> anyhow::Result<()> {
+        let path = self.path_for_user_script_key(key)?;
+        let content = fs::read(&path)
+            .with_context(|| format!("failed to read market script {}", path.display()))?;
+        verify_market_script_bytes(key, install, &content)
+    }
+
+    fn path_for_user_script_key(&self, key: &str) -> anyhow::Result<PathBuf> {
+        let Some(file_name) = key.strip_prefix("user:").filter(|value| !value.is_empty()) else {
+            anyhow::bail!("market script key must reference a user script");
+        };
+        if file_name.contains(['/', '\\']) || file_name == "." || file_name == ".." {
+            anyhow::bail!("invalid market script key");
+        }
+        Ok(self.user_dir.join(file_name))
     }
 
     fn scan_scripts(&self, config: &UserScriptConfig) -> anyhow::Result<Vec<Value>> {
@@ -225,6 +269,7 @@ impl UserScriptManager {
                     "version": market.as_ref().map(|item| item.version.as_str()).unwrap_or(""),
                     "installed": market.is_some(),
                     "source_url": market.as_ref().map(|item| item.script_url.as_str()).unwrap_or(""),
+                    "sha256": market.as_ref().map(|item| item.sha256.as_str()).unwrap_or(""),
                     "homepage": market.as_ref().map(|item| item.homepage.as_str()).unwrap_or("")
                 })
             })
@@ -364,6 +409,7 @@ fn market_install_from_value(value: &Value) -> Option<MarketScriptInstall> {
         name: string_field(raw, "name").unwrap_or_default(),
         version: string_field(raw, "version")?,
         script_url: string_field(raw, "script_url")?,
+        sha256: string_field(raw, "sha256").unwrap_or_default(),
         homepage: string_field(raw, "homepage").unwrap_or_default(),
         installed_at: string_field(raw, "installed_at").unwrap_or_default(),
     })
@@ -389,6 +435,33 @@ fn sanitize_market_id(id: &str) -> String {
         .collect::<String>()
         .trim_matches('-')
         .to_string()
+}
+
+fn verify_market_script_bytes(
+    key: &str,
+    install: &MarketScriptInstall,
+    content: &[u8],
+) -> anyhow::Result<()> {
+    let expected = normalized_sha256(&install.sha256)
+        .ok_or_else(|| anyhow::anyhow!("市场脚本 {key} 缺少 sha256 校验值，拒绝启用"))?;
+    let actual = crate::update::sha256_hex(content);
+    if actual != expected {
+        anyhow::bail!("市场脚本 {key} sha256 不匹配，拒绝启用");
+    }
+    Ok(())
+}
+
+fn normalized_sha256(value: &str) -> Option<String> {
+    let trimmed = value
+        .trim()
+        .strip_prefix("sha256:")
+        .unwrap_or_else(|| value.trim())
+        .to_ascii_lowercase();
+    if trimmed.len() == 64 && trimmed.chars().all(|ch| ch.is_ascii_hexdigit()) {
+        Some(trimmed)
+    } else {
+        None
+    }
 }
 
 fn current_unix_timestamp_string() -> String {

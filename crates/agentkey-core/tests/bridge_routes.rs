@@ -572,6 +572,92 @@ async fn user_script_manager_deletes_market_script_metadata_and_rejects_builtin_
 }
 
 #[tokio::test]
+async fn market_script_enable_rejects_tampered_content() {
+    let temp = tempfile::tempdir().unwrap();
+    let builtin_dir = temp.path().join("builtin");
+    let user_dir = temp.path().join("user");
+    std::fs::create_dir_all(&builtin_dir).unwrap();
+    let manager = UserScriptManager::new(
+        builtin_dir,
+        user_dir.clone(),
+        temp.path().join("user_scripts.json"),
+    );
+    let script = agentkey_core::script_market::MarketScript {
+        id: "demo".to_string(),
+        name: "Demo".to_string(),
+        description: String::new(),
+        version: "1.0.0".to_string(),
+        author: String::new(),
+        tags: Vec::new(),
+        homepage: "https://example.com/demo".to_string(),
+        script_url: "https://example.com/demo.js".to_string(),
+        sha256: sha256_hex(b"window.demo = true;"),
+    };
+
+    agentkey_core::script_market::install_market_script_content(
+        &manager,
+        &script,
+        b"window.demo = true;",
+    )
+    .unwrap();
+    std::fs::write(user_dir.join("market-demo.js"), "window.evil = true;").unwrap();
+
+    let error = manager
+        .set_script_enabled("user:market-demo.js", true)
+        .unwrap_err();
+
+    assert!(error.to_string().contains("sha256"));
+    assert_eq!(
+        manager.load_config().scripts.get("user:market-demo.js"),
+        Some(&false)
+    );
+    assert_eq!(
+        manager.inventory().unwrap()["scripts"][0]["sha256"],
+        sha256_hex(b"window.demo = true;")
+    );
+}
+
+#[tokio::test]
+async fn enabled_market_script_bundle_rejects_tampered_content() {
+    let temp = tempfile::tempdir().unwrap();
+    let builtin_dir = temp.path().join("builtin");
+    let user_dir = temp.path().join("user");
+    std::fs::create_dir_all(&builtin_dir).unwrap();
+    let manager = UserScriptManager::new(
+        builtin_dir,
+        user_dir.clone(),
+        temp.path().join("user_scripts.json"),
+    );
+    let script = agentkey_core::script_market::MarketScript {
+        id: "demo".to_string(),
+        name: "Demo".to_string(),
+        description: String::new(),
+        version: "1.0.0".to_string(),
+        author: String::new(),
+        tags: Vec::new(),
+        homepage: "https://example.com/demo".to_string(),
+        script_url: "https://example.com/demo.js".to_string(),
+        sha256: sha256_hex(b"window.demo = true;"),
+    };
+
+    agentkey_core::script_market::install_market_script_content(
+        &manager,
+        &script,
+        b"window.demo = true;",
+    )
+    .unwrap();
+    manager
+        .set_script_enabled("user:market-demo.js", true)
+        .unwrap();
+    std::fs::write(user_dir.join("market-demo.js"), "window.evil = true;").unwrap();
+
+    let bundle = manager.build_enabled_bundle().unwrap();
+
+    assert!(bundle.contains("sha256"));
+    assert!(!bundle.contains("window.evil = true;"));
+}
+
+#[tokio::test]
 async fn core_runtime_reload_evaluates_enabled_user_bundle_and_status_is_ok() {
     let temp = tempfile::tempdir().unwrap();
     let builtin_dir = temp.path().join("builtin");
