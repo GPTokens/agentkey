@@ -121,6 +121,42 @@ fn validate_wrapper_config_value(label: &str, value: &str) -> anyhow::Result<()>
     Ok(())
 }
 
+fn validate_wrapper_api_key_env(value: &str) -> anyhow::Result<()> {
+    validate_wrapper_config_value("Desktop CLI Bridge API Key Env", value)?;
+    if !is_valid_env_key(value) {
+        anyhow::bail!("Desktop CLI Bridge API Key Env 不是有效环境变量名：{value}");
+    }
+    if is_process_control_env_key(value) {
+        anyhow::bail!("Desktop CLI Bridge API Key Env 不能使用进程控制变量：{value}");
+    }
+    Ok(())
+}
+
+fn is_valid_env_key(value: &str) -> bool {
+    let mut chars = value.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    (first == '_' || first.is_ascii_alphabetic())
+        && chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
+}
+
+fn is_process_control_env_key(value: &str) -> bool {
+    matches!(
+        value.to_ascii_uppercase().as_str(),
+        "PATH"
+            | "PATHEXT"
+            | "COMSPEC"
+            | "SHELL"
+            | "IFS"
+            | "LD_PRELOAD"
+            | "LD_LIBRARY_PATH"
+            | "DYLD_INSERT_LIBRARIES"
+            | "DYLD_LIBRARY_PATH"
+            | "DYLD_FRAMEWORK_PATH"
+    )
+}
+
 pub fn build_wrapper_config(settings: &BackendSettings) -> anyhow::Result<String> {
     let api_key_env = settings.cli_wrapper_api_key_env.trim();
     let api_key_env = if api_key_env.is_empty() {
@@ -128,7 +164,7 @@ pub fn build_wrapper_config(settings: &BackendSettings) -> anyhow::Result<String
     } else {
         api_key_env.to_string()
     };
-    validate_wrapper_config_value("Desktop CLI Bridge API Key Env", &api_key_env)?;
+    validate_wrapper_api_key_env(&api_key_env)?;
     let api_key = settings.cli_wrapper_api_key.trim();
     validate_wrapper_config_value("Desktop CLI Bridge API Key", api_key)?;
     let base_url = crate::url_policy::validate_optional_api_base_url(

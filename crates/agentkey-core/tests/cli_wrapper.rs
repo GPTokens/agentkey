@@ -25,9 +25,7 @@ fn wrapper_source_embeds_absolute_desktop_client_path() {
 
     assert!(source.contains(r#"class AgentKeyCliBridge"#));
     assert!(!source.contains(r#"class CodexWrapper"#));
-    assert!(source.contains(
-        r#"string desktopClientCli = @"C:\AgentKey\Runtime\codex.exe";"#
-    ));
+    assert!(source.contains(r#"string desktopClientCli = @"C:\AgentKey\Runtime\codex.exe";"#));
     assert!(!source.contains("string realCodex"));
     assert!(!source.contains("string codexHome"));
     assert!(!source.contains(r#"string desktopClientCli = @"codex";"#));
@@ -100,6 +98,44 @@ fn wrapper_config_rejects_multiline_secret_values() {
     let error = build_wrapper_config(&settings).unwrap_err();
 
     assert!(error.to_string().contains("换行"));
+}
+
+#[test]
+fn wrapper_config_rejects_invalid_api_key_env_names() {
+    for api_key_env in ["1BAD", "BAD-NAME", "BAD=NAME"] {
+        let settings = BackendSettings {
+            cli_wrapper_enabled: true,
+            cli_wrapper_api_key_env: api_key_env.to_string(),
+            cli_wrapper_api_key: "sk-test".to_string(),
+            ..BackendSettings::default()
+        };
+
+        let error = build_wrapper_config(&settings).unwrap_err();
+
+        assert!(error.to_string().contains(api_key_env));
+    }
+}
+
+#[test]
+fn wrapper_config_rejects_process_control_api_key_env_names() {
+    for api_key_env in [
+        "PATH",
+        "Path",
+        "COMSPEC",
+        "LD_PRELOAD",
+        "DYLD_INSERT_LIBRARIES",
+    ] {
+        let settings = BackendSettings {
+            cli_wrapper_enabled: true,
+            cli_wrapper_api_key_env: api_key_env.to_string(),
+            cli_wrapper_api_key: "sk-test".to_string(),
+            ..BackendSettings::default()
+        };
+
+        let error = build_wrapper_config(&settings).unwrap_err();
+
+        assert!(error.to_string().contains(api_key_env));
+    }
 }
 
 #[test]
