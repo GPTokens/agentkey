@@ -1392,12 +1392,16 @@ pub fn reset_settings() -> CommandResult<SettingsPayload> {
 #[tauri::command]
 pub fn relay_status() -> CommandResult<RelayPayload> {
     let status = agentkey_core::relay_config::default_relay_status();
-    let message = if status.authenticated {
-        "已检测到 ChatGPT 登录状态。"
-    } else {
-        "未检测到 ChatGPT 登录状态，请先在 Codex/ChatGPT 中正常登录。"
-    };
+    let message = relay_status_message(status.authenticated);
     ok(message, relay_payload(status, None))
+}
+
+fn relay_status_message(authenticated: bool) -> &'static str {
+    if authenticated {
+        "已检测到官方账号登录状态。"
+    } else {
+        "未检测到官方账号登录状态；纯 API 供应商可直接使用，官方登录模式才需要账号。"
+    }
 }
 
 #[tauri::command]
@@ -2602,6 +2606,15 @@ mod tests {
 
         assert!(!text.contains("sk-"));
         assert!(text.contains("hasBearerToken"));
+    }
+
+    #[test]
+    fn relay_status_message_keeps_pure_api_no_login_path_clear() {
+        let message = relay_status_message(false);
+
+        assert!(message.contains("纯 API"));
+        assert!(message.contains("直接使用"));
+        assert!(!message.contains("请先"));
     }
 
     #[test]
