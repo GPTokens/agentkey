@@ -41,6 +41,8 @@ Claude Code is started with API credentials in the child process environment. AP
 
 Claude Code and Codex CLI wrapper provider base URLs must use HTTPS. HTTP is accepted only for loopback development endpoints such as `localhost`, `127.0.0.1`, or `::1`.
 
+The Codex CLI wrapper must not write raw command arguments that look like keys, tokens, secrets, passwords, or authorization values to its log file.
+
 ## Script Market
 
 Market scripts must provide a valid SHA-256 checksum before installation. AgentKey verifies the downloaded bytes before writing the script file. Newly installed market scripts are disabled by default and must be enabled explicitly.

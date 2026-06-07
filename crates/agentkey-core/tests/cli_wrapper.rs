@@ -17,20 +17,34 @@ fn wrapper_source_embeds_absolute_real_codex_path() {
         ..BackendSettings::default()
     };
     let source = build_wrapper_source(
-        &PathBuf::from(
-            r"C:\Program Files\WindowsApps\OpenAI.Codex_1.0.0.0_x64__abc\app\resources\codex.exe",
-        ),
+        &PathBuf::from(r"C:\AgentKey\Runtime\codex.exe"),
         &PathBuf::from(r"C:\Users\me\.agentkey-cli"),
         &settings,
     );
 
-    assert!(source.contains(r#"string realCodex = @"C:\Program Files\WindowsApps\OpenAI.Codex_1.0.0.0_x64__abc\app\resources\codex.exe";"#));
+    assert!(source.contains(r#"class AgentKeyCliBridge"#));
+    assert!(!source.contains(r#"class CodexWrapper"#));
+    assert!(source.contains(r#"string realCodex = @"C:\AgentKey\Runtime\codex.exe";"#));
     assert!(!source.contains(r#"string realCodex = @"codex";"#));
     assert!(source.contains(r#"string apiKeyEnv = @"CUSTOM_KEY";"#));
     assert!(source.contains(
         r#"startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = @"https://proxy.example/v1";"#
     ));
     assert!(source.contains(r#"startInfo.EnvironmentVariables[apiKeyEnv] = @"sk-test";"#));
+}
+
+#[test]
+fn wrapper_source_redacts_logged_arguments() {
+    let source = build_wrapper_source(
+        &PathBuf::from(r"C:\AgentKey\Runtime\codex.exe"),
+        &PathBuf::from(r"C:\Users\me\.agentkey-cli"),
+        &BackendSettings::default(),
+    );
+
+    assert!(source.contains("agentkey-cli-wrapper.log"));
+    assert!(source.contains("RedactArguments(args)"));
+    assert!(source.contains("LooksLikeSecret"));
+    assert!(!source.contains("start args=\" + string.Join(\" \", args)"));
 }
 
 #[test]
@@ -130,6 +144,19 @@ fn repair_refreshes_when_wrapper_already_exists_even_if_setting_is_disabled() {
     let temp = tempfile::tempdir().unwrap();
     let wrapper_dir = temp.path().join("AgentKey");
     std::fs::create_dir_all(&wrapper_dir).unwrap();
+    std::fs::write(wrapper_dir.join("agentkey-cli-wrapper.exe"), "").unwrap();
+
+    assert!(should_refresh_cli_wrapper(
+        &BackendSettings::default(),
+        &wrapper_dir
+    ));
+}
+
+#[test]
+fn repair_refreshes_legacy_wrapper_when_setting_is_disabled() {
+    let temp = tempfile::tempdir().unwrap();
+    let wrapper_dir = temp.path().join("AgentKey");
+    std::fs::create_dir_all(&wrapper_dir).unwrap();
     std::fs::write(wrapper_dir.join("codex-wrapper.exe"), "").unwrap();
 
     assert!(should_refresh_cli_wrapper(
@@ -155,7 +182,7 @@ fn repair_preserves_existing_wrapper_api_settings_when_global_setting_is_disable
     std::fs::create_dir_all(&wrapper_dir).unwrap();
     std::fs::write(
         wrapper_dir.join("codex-wrapper.cs"),
-        r#"class CodexWrapper
+        r#"class AgentKeyCliBridge
 {
     static int Main(string[] args)
     {

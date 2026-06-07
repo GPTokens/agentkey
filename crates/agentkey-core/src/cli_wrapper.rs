@@ -5,8 +5,10 @@ use anyhow::Context;
 
 use crate::settings::BackendSettings;
 
-pub const WRAPPER_EXE: &str = "codex-wrapper.exe";
-pub const WRAPPER_SOURCE: &str = "codex-wrapper.cs";
+pub const WRAPPER_EXE: &str = "agentkey-cli-wrapper.exe";
+pub const WRAPPER_SOURCE: &str = "agentkey-cli-wrapper.cs";
+const LEGACY_WRAPPER_EXE: &str = "codex-wrapper.exe";
+const LEGACY_WRAPPER_SOURCE: &str = "codex-wrapper.cs";
 const CLI_HOME_DIR: &str = ".agentkey-cli";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,7 +33,9 @@ pub fn ensure_cli_wrapper(settings: &BackendSettings) -> anyhow::Result<Option<W
 }
 
 pub fn should_refresh_cli_wrapper(settings: &BackendSettings, wrapper_dir: &Path) -> bool {
-    settings.cli_wrapper_enabled || wrapper_dir.join(WRAPPER_EXE).is_file()
+    settings.cli_wrapper_enabled
+        || wrapper_dir.join(WRAPPER_EXE).is_file()
+        || wrapper_dir.join(LEGACY_WRAPPER_EXE).is_file()
 }
 
 pub fn wrapper_settings_for_refresh(
@@ -42,10 +46,16 @@ pub fn wrapper_settings_for_refresh(
         return settings.clone();
     }
 
-    std::fs::read_to_string(wrapper_dir.join(WRAPPER_SOURCE))
+    read_wrapper_source_for_refresh(wrapper_dir)
         .ok()
         .and_then(|source| parse_wrapper_source_settings(&source))
         .unwrap_or_else(|| settings.clone())
+}
+
+fn read_wrapper_source_for_refresh(wrapper_dir: &Path) -> anyhow::Result<String> {
+    std::fs::read_to_string(wrapper_dir.join(WRAPPER_SOURCE))
+        .or_else(|_| std::fs::read_to_string(wrapper_dir.join(LEGACY_WRAPPER_SOURCE)))
+        .with_context(|| format!("failed to read wrapper source in {}", wrapper_dir.display()))
 }
 
 pub fn parse_wrapper_source_settings(source: &str) -> Option<BackendSettings> {
@@ -206,7 +216,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-class CodexWrapper
+class AgentKeyCliBridge
 {{
     static int Main(string[] args)
     {{
@@ -214,9 +224,9 @@ class CodexWrapper
         string codexHome = @{codex_home};
         string apiKeyEnv = @{api_key_env};
         Directory.CreateDirectory(codexHome);
-        string logPath = Path.Combine(codexHome, "codex-wrapper.log");
-        AppendLog(logPath, "codex-wrapper start args=" + string.Join(" ", args));
-        AppendLog(logPath, "real_codex=" + realCodex);
+        string logPath = Path.Combine(codexHome, "agentkey-cli-wrapper.log");
+        AppendLog(logPath, "agentkey-cli-wrapper start args=" + RedactArguments(args));
+        AppendLog(logPath, "target_cli=" + realCodex);
         AppendLog(logPath, "CODEX_HOME=" + codexHome);
         AppendLog(logPath, "api_key_env=" + apiKeyEnv + " api_key_present={api_key_present}");
         var startInfo = new ProcessStartInfo(realCodex);
@@ -239,6 +249,49 @@ class CodexWrapper
     static void AppendLog(string path, string message)
     {{
         File.AppendAllText(path, "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] " + message + Environment.NewLine, Encoding.UTF8);
+    }}
+
+    static string RedactArguments(string[] args)
+    {{
+        string[] redacted = new string[args.Length];
+        bool redactNext = false;
+        for (int i = 0; i < args.Length; i++)
+        {{
+            string arg = args[i] ?? "";
+            string lower = arg.ToLowerInvariant();
+            if (redactNext)
+            {{
+                redacted[i] = "[REDACTED]";
+                redactNext = false;
+                continue;
+            }}
+            int equalsIndex = arg.IndexOf('=');
+            string key = equalsIndex >= 0 ? lower.Substring(0, equalsIndex) : lower;
+            if (IsSecretName(key))
+            {{
+                redacted[i] = equalsIndex >= 0 ? arg.Substring(0, equalsIndex + 1) + "[REDACTED]" : arg;
+                redactNext = equalsIndex < 0;
+            }}
+            else if (LooksLikeSecret(arg))
+            {{
+                redacted[i] = "[REDACTED]";
+            }}
+            else
+            {{
+                redacted[i] = arg;
+            }}
+        }}
+        return string.Join(" ", redacted);
+    }}
+
+    static bool IsSecretName(string value)
+    {{
+        return value.Contains("key") || value.Contains("token") || value.Contains("secret") || value.Contains("password") || value.Contains("authorization");
+    }}
+
+    static bool LooksLikeSecret(string value)
+    {{
+        return value.StartsWith("sk-", StringComparison.OrdinalIgnoreCase) || value.StartsWith("sess-", StringComparison.OrdinalIgnoreCase);
     }}
 
     static string QuoteArgument(string value)
