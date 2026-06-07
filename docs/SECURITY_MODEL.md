@@ -12,6 +12,7 @@ AgentKey exposes local desktop-client functionality through a loopback helper. T
 - Never allow wildcard CORS on privileged helper routes.
 - Redact API keys and bearer tokens from diagnostics.
 - Verify downloaded update assets before execution.
+- Require HTTPS for script market indexes and script downloads.
 - Validate script integrity before enabling installed scripts.
 
 ## Local Helper Token
@@ -39,3 +40,5 @@ Claude Code is started with API credentials in the child process environment. AP
 ## Script Market
 
 Market scripts must provide a valid SHA-256 checksum before installation. AgentKey verifies the downloaded bytes before writing the script file. Newly installed market scripts are disabled by default and must be enabled explicitly.
+
+Script market index URLs and script download URLs must use HTTPS. Manifest entries with non-HTTPS script URLs are ignored, and non-HTTPS homepage URLs are omitted from the UI payload.

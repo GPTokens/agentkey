@@ -57,6 +57,7 @@ pub fn parse_market_manifest(raw: Value) -> anyhow::Result<ScriptMarketManifest>
 }
 
 pub async fn fetch_market_manifest(url: &str) -> anyhow::Result<ScriptMarketManifest> {
+    ensure_https_url(url, "script market index")?;
     let raw = reqwest::get(url)
         .await
         .with_context(|| format!("failed to request script market index {url}"))?
@@ -69,6 +70,7 @@ pub async fn fetch_market_manifest(url: &str) -> anyhow::Result<ScriptMarketMani
 }
 
 pub async fn download_script(url: &str) -> anyhow::Result<Vec<u8>> {
+    ensure_https_url(url, "script download")?;
     Ok(reqwest::get(url)
         .await
         .with_context(|| format!("failed to request script {url}"))?
@@ -128,6 +130,15 @@ fn parse_market_script(raw: Value) -> Option<MarketScript> {
     let name = required_string(&raw, "name")?;
     let version = required_string(&raw, "version")?;
     let script_url = required_string(&raw, "script_url")?;
+    if !https_url_allowed(&script_url) {
+        return None;
+    }
+    let homepage = optional_string(&raw, "homepage");
+    let homepage = if homepage.is_empty() || https_url_allowed(&homepage) {
+        homepage
+    } else {
+        String::new()
+    };
     Some(MarketScript {
         id,
         name,
@@ -147,10 +158,22 @@ fn parse_market_script(raw: Value) -> Option<MarketScript> {
                     .collect()
             })
             .unwrap_or_default(),
-        homepage: optional_string(&raw, "homepage"),
+        homepage,
         script_url,
         sha256: optional_string(&raw, "sha256"),
     })
+}
+
+fn ensure_https_url(url: &str, label: &str) -> anyhow::Result<()> {
+    if https_url_allowed(url) {
+        Ok(())
+    } else {
+        anyhow::bail!("{label} URL 必须使用 https")
+    }
+}
+
+fn https_url_allowed(url: &str) -> bool {
+    url.trim().starts_with("https://")
 }
 
 fn required_string(raw: &Value, key: &str) -> Option<String> {

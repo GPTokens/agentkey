@@ -717,7 +717,9 @@ fn script_market_manifest_filters_invalid_entries() {
                 "sha256": ""
             },
             { "id": "", "name": "Bad", "version": "1", "script_url": "https://example.com/bad.js" },
-            { "id": "missing-url", "name": "Bad", "version": "1" }
+            { "id": "missing-url", "name": "Bad", "version": "1" },
+            { "id": "http-url", "name": "Bad", "version": "1", "script_url": format!("{}{}", concat!("http", "://"), "example.com/bad.js") },
+            { "id": "http-homepage", "name": "No Homepage", "version": "1", "homepage": format!("{}{}", concat!("http", "://"), "example.com/demo"), "script_url": "https://example.com/no-homepage.js" }
         ]
     });
 
@@ -725,9 +727,11 @@ fn script_market_manifest_filters_invalid_entries() {
 
     assert_eq!(manifest.version, 1);
     assert_eq!(manifest.updated_at.as_deref(), Some("2026-05-21T00:00:00Z"));
-    assert_eq!(manifest.scripts.len(), 1);
+    assert_eq!(manifest.scripts.len(), 2);
     assert_eq!(manifest.scripts[0].id, "demo");
     assert_eq!(manifest.scripts[0].tags, vec!["ui"]);
+    assert_eq!(manifest.scripts[1].id, "http-homepage");
+    assert_eq!(manifest.scripts[1].homepage, "");
 }
 
 #[test]
