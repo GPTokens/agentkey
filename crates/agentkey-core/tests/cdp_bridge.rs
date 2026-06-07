@@ -355,7 +355,8 @@ fn injection_script_does_not_add_delete_controls_on_archived_page() {
 fn injection_script_unlocks_custom_model_catalog() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("/codex-model-catalog"));
+    assert!(script.contains("/desktop-client-model-catalog"));
+    assert!(!script.contains("/codex-model-catalog"));
     assert!(script.contains("codexModelCatalog"));
     assert!(script.contains("patchModelArray"));
     assert!(script.contains("patchStatsigModelDynamicConfig"));

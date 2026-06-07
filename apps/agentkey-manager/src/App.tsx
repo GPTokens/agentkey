@@ -2234,13 +2234,13 @@ function SessionsScreen({
   return (
     <>
       <Panel>
-        <CardHead title="会话管理" detail="读取 Codex 本地 state_5.sqlite，会删除数据库记录和对应 rollout 文件" />
+        <CardHead title="会话管理" detail="读取桌面客户端本地 state_5.sqlite，会删除数据库记录和对应 rollout 文件" />
         <CardContent>
           <div className="metric-list">
             <Metric label="会话总数" value={`${items.length} 个`} />
             <Metric label="未归档" value={`${activeCount} 个`} />
             <Metric label="已归档" value={`${archivedCount} 个`} />
-            <Metric label="数据库" value={sessions?.dbPath ?? "~/.codex/state_5.sqlite"} />
+            <Metric label="数据库" value={sessions?.dbPath ?? "客户端配置目录/state_5.sqlite"} />
           </div>
           <div className="form-row">
             <Field label="同步目标">
@@ -3567,7 +3567,7 @@ function RelayFileEditors({
         <div className="relay-file-head">
           <div>
             <strong>auth.json</strong>
-            <span>{isActive ? "当前使用中：打开时从 ~/.codex/auth.json 回填，保存后会作为此供应商 auth 存档" : "切换到此供应商时会写入 ~/.codex/auth.json"}</span>
+            <span>{isActive ? "当前使用中：打开时从客户端 auth.json 回填，保存后会作为此供应商 auth 存档" : "切换到此供应商时会写入客户端 auth.json"}</span>
           </div>
         </div>
         <SyncedTextarea
@@ -3820,7 +3820,7 @@ function routeSubtitle(route: Route) {
     overview: "检查问题、启动与快速修复",
     relay: "管理 API 供应商、协议、Key 与配置文件",
     claude: "用 API Key 启动 Claude Code",
-    sessions: "查看、删除和修复 Codex 本地会话",
+    sessions: "查看、删除和修复桌面客户端本地会话",
     context: "独立管理 MCP、Skills、Plugins",
     enhance: "会话删除、导出、项目移动和脚本能力",
     userScripts: "内置和用户自定义脚本清单",

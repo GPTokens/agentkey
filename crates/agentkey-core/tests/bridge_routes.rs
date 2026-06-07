@@ -34,6 +34,8 @@ async fn bridge_routes_cover_all_current_paths() {
         ("/manager/open", json!({})),
         ("/backend/status", json!({})),
         ("/backend/repair", json!({})),
+        ("/desktop-client-model-catalog", json!({})),
+        ("/desktop-client-config-model", json!({})),
         ("/codex-model-catalog", json!({})),
         ("/codex-config-model", json!({})),
         ("/ads", json!({})),
