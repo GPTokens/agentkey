@@ -4696,7 +4696,7 @@ function relayProfileReadinessText(profile: RelayProfile, relay: RelayResult | n
     }
     return relay?.authenticated
       ? `官方账号已登录：${relay.accountLabel || relay.authSource || "已检测"}。`
-      : "当前未登录官方账号；切到官方登录模式后仍需要先在 Codex/ChatGPT 登录。";
+      : "当前未登录官方账号；切到官方登录模式后需要先完成官方账号登录。";
   }
   const hasFiles = profile.configContents.trim() && profile.authContents.trim();
   if (!hasFiles) return "当前供应商还没有完整 config.toml / API Key 存档。";

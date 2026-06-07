@@ -1825,10 +1825,10 @@ pub fn apply_relay_injection() -> CommandResult<RelayPayload> {
             &relay,
             &status,
             None,
-            Some("未检测到 ChatGPT 登录状态".to_string()),
+            Some("未检测到官方账号登录状态".to_string()),
         );
         return failed(
-            "未检测到 ChatGPT 登录状态，已停止写入中转配置。",
+            "未检测到官方账号登录状态，已停止写入官方混入 API 配置。",
             relay_payload(status, None),
         );
     }

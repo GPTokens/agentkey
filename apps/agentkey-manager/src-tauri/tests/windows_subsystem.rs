@@ -105,6 +105,20 @@ fn manager_launch_button_spawns_silent_launcher_binary() {
 }
 
 #[test]
+fn manager_messages_do_not_require_desktop_account_for_api_key_mode() {
+    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let app_tsx = manifest_dir.parent().unwrap().join("src/App.tsx");
+    let app_tsx = std::fs::read_to_string(&app_tsx).expect("read manager App.tsx");
+    let commands_rs =
+        std::fs::read_to_string(manifest_dir.join("src/commands.rs")).expect("read commands.rs");
+
+    assert!(!commands_rs.contains(&format!("{} 登录状态", "ChatGPT")));
+    assert!(!commands_rs.contains(&format!("请先在 {}", "Codex")));
+    assert!(!app_tsx.contains(&format!("{}/{} 登录", "Codex", "ChatGPT")));
+    assert!(commands_rs.contains("纯 API 供应商可直接使用"));
+}
+
+#[test]
 fn macos_packager_hides_silent_launcher_but_not_manager() {
     let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     let packager = manifest_dir
