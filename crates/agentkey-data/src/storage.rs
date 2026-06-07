@@ -19,7 +19,7 @@ pub struct SQLiteStorageAdapter {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum SchemaKind {
     GenericSessions,
-    CodexThreads,
+    DesktopThreads,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -62,7 +62,7 @@ impl SQLiteStorageAdapter {
             let mut db = Connection::open(&self.db_path)?;
             match schema_kind(&db)? {
                 Some(SchemaKind::GenericSessions) => self.delete_generic_session(&mut db, session),
-                Some(SchemaKind::CodexThreads) => self.delete_codex_thread(&mut db, session),
+                Some(SchemaKind::DesktopThreads) => self.delete_desktop_thread(&mut db, session),
                 None => Ok(failed(
                     &session.session_id,
                     "Unsupported local storage schema".to_string(),
@@ -77,7 +77,7 @@ impl SQLiteStorageAdapter {
             return Ok(Vec::new());
         }
         let db = Connection::open(&self.db_path)?;
-        if schema_kind(&db)? != Some(SchemaKind::CodexThreads) {
+        if schema_kind(&db)? != Some(SchemaKind::DesktopThreads) {
             anyhow::bail!("Unsupported local storage schema");
         }
         let columns = table_columns(&db, "threads")?
@@ -178,7 +178,7 @@ impl SQLiteStorageAdapter {
 
     pub fn find_archived_thread_by_title(&self, title: &str) -> Option<SessionRef> {
         let db = Connection::open(&self.db_path).ok()?;
-        if schema_kind(&db).ok().flatten() != Some(SchemaKind::CodexThreads)
+        if schema_kind(&db).ok().flatten() != Some(SchemaKind::DesktopThreads)
             || !has_columns(&db, "threads", &["archived"]).ok()?
         {
             return None;
@@ -197,7 +197,7 @@ impl SQLiteStorageAdapter {
         SessionRef::new(id, row_title.unwrap_or_else(|| title.to_string())).ok()
     }
 
-    pub fn move_codex_thread_workspace(
+    pub fn move_desktop_thread_workspace(
         &self,
         session: &SessionRef,
         target_cwd: &str,
@@ -211,15 +211,15 @@ impl SQLiteStorageAdapter {
         }
         let result = (|| -> anyhow::Result<Value> {
             let db = Connection::open(&self.db_path)?;
-            if schema_kind(&db)? != Some(SchemaKind::CodexThreads)
+            if schema_kind(&db)? != Some(SchemaKind::DesktopThreads)
                 || !has_columns(&db, "threads", &["cwd", "rollout_path"])?
             {
                 return Ok(
                     json!({"status": "failed", "session_id": session.session_id, "message": "Unsupported local storage schema"}),
                 );
             }
-            let thread_id = normalize_codex_thread_id(&session.session_id);
-            let timestamp_columns = codex_thread_timestamp_columns(&db)?;
+            let thread_id = normalize_desktop_thread_id(&session.session_id);
+            let timestamp_columns = desktop_thread_timestamp_columns(&db)?;
             let mut columns = vec![
                 "id".to_string(),
                 "title".to_string(),
@@ -277,18 +277,18 @@ impl SQLiteStorageAdapter {
         result.unwrap_or_else(|err| json!({"status": "failed", "session_id": session.session_id, "message": err.to_string()}))
     }
 
-    pub fn codex_thread_sort_key(&self, session: &SessionRef) -> serde_json::Value {
+    pub fn desktop_thread_sort_key(&self, session: &SessionRef) -> serde_json::Value {
         if !self.db_path.exists() {
             return json!({"status": "failed", "session_id": session.session_id, "message": format!("Database not found: {}", self.db_path.to_string_lossy())});
         }
         let result = (|| -> anyhow::Result<Value> {
             let db = Connection::open(&self.db_path)?;
-            if schema_kind(&db)? != Some(SchemaKind::CodexThreads) {
+            if schema_kind(&db)? != Some(SchemaKind::DesktopThreads) {
                 return Ok(
                     json!({"status": "failed", "session_id": session.session_id, "message": "Unsupported local storage schema"}),
                 );
             }
-            let thread_id = normalize_codex_thread_id(&session.session_id);
+            let thread_id = normalize_desktop_thread_id(&session.session_id);
             match fetch_thread_timestamp_payload(&db, &thread_id)? {
                 Some(mut payload) => {
                     payload.insert("status".to_string(), json!("ok"));
@@ -303,14 +303,14 @@ impl SQLiteStorageAdapter {
         result.unwrap_or_else(|err| json!({"status": "failed", "session_id": session.session_id, "message": err.to_string()}))
     }
 
-    pub fn codex_thread_sort_keys(&self, sessions: &[SessionRef]) -> serde_json::Value {
+    pub fn desktop_thread_sort_keys(&self, sessions: &[SessionRef]) -> serde_json::Value {
         if !self.db_path.exists() {
             return json!({"status": "failed", "message": format!("Database not found: {}", self.db_path.to_string_lossy()), "sort_keys": []});
         }
         let thread_ids = sessions
             .iter()
             .filter(|session| !session.session_id.is_empty())
-            .map(|session| normalize_codex_thread_id(&session.session_id))
+            .map(|session| normalize_desktop_thread_id(&session.session_id))
             .fold(Vec::<String>::new(), |mut acc, id| {
                 if !acc.contains(&id) && acc.len() < 200 {
                     acc.push(id);
@@ -322,7 +322,7 @@ impl SQLiteStorageAdapter {
         }
         let result = (|| -> anyhow::Result<Value> {
             let db = Connection::open(&self.db_path)?;
-            if schema_kind(&db)? != Some(SchemaKind::CodexThreads) {
+            if schema_kind(&db)? != Some(SchemaKind::DesktopThreads) {
                 return Ok(
                     json!({"status": "failed", "message": "Unsupported local storage schema", "sort_keys": []}),
                 );
@@ -341,7 +341,7 @@ impl SQLiteStorageAdapter {
         )
     }
 
-    pub fn codex_thread_usage_history(&self, session: &SessionRef) -> serde_json::Value {
+    pub fn desktop_thread_usage_history(&self, session: &SessionRef) -> serde_json::Value {
         if !self.db_path.exists() {
             return json!({
                 "status": "failed",
@@ -352,7 +352,7 @@ impl SQLiteStorageAdapter {
         }
         let result = (|| -> anyhow::Result<Value> {
             let db = Connection::open(&self.db_path)?;
-            if schema_kind(&db)? != Some(SchemaKind::CodexThreads)
+            if schema_kind(&db)? != Some(SchemaKind::DesktopThreads)
                 || !has_columns(&db, "threads", &["rollout_path"])?
             {
                 return Ok(json!({
@@ -362,7 +362,7 @@ impl SQLiteStorageAdapter {
                     "history": []
                 }));
             }
-            let thread_id = normalize_codex_thread_id(&session.session_id);
+            let thread_id = normalize_desktop_thread_id(&session.session_id);
             let rollout_path: Option<String> = db.query_row(
                 "SELECT rollout_path FROM threads WHERE id = ?1",
                 [&thread_id],
@@ -457,12 +457,12 @@ impl SQLiteStorageAdapter {
         Ok(local_deleted(&session.session_id, &token, &backup_path))
     }
 
-    fn delete_codex_thread(
+    fn delete_desktop_thread(
         &self,
         db: &mut Connection,
         session: &SessionRef,
     ) -> anyhow::Result<DeleteResult> {
-        let thread_id = normalize_codex_thread_id(&session.session_id);
+        let thread_id = normalize_desktop_thread_id(&session.session_id);
         let thread_rows = select_dicts(db, "SELECT * FROM threads WHERE id = ?1", &[&thread_id])?;
         if thread_rows.is_empty() {
             return Ok(failed(
@@ -713,7 +713,7 @@ fn failed_with_undo(
     }
 }
 
-fn normalize_codex_thread_id(session_id: &str) -> String {
+fn normalize_desktop_thread_id(session_id: &str) -> String {
     session_id
         .strip_prefix("local:")
         .unwrap_or(session_id)
@@ -728,7 +728,7 @@ fn schema_kind(db: &Connection) -> anyhow::Result<Option<SchemaKind>> {
         return Ok(Some(SchemaKind::GenericSessions));
     }
     if has_table(db, "threads")? && has_columns(db, "threads", &["id", "title", "rollout_path"])? {
-        return Ok(Some(SchemaKind::CodexThreads));
+        return Ok(Some(SchemaKind::DesktopThreads));
     }
     Ok(None)
 }
@@ -1034,7 +1034,7 @@ fn update_rollout_session_meta_cwd(
     }
 }
 
-fn codex_thread_timestamp_columns(db: &Connection) -> anyhow::Result<Vec<String>> {
+fn desktop_thread_timestamp_columns(db: &Connection) -> anyhow::Result<Vec<String>> {
     let existing: HashSet<String> = table_columns(db, "threads")?.into_iter().collect();
     Ok(["updated_at", "updated_at_ms", "created_at_ms"]
         .iter()
@@ -1047,7 +1047,7 @@ fn fetch_thread_timestamp_payload(
     db: &Connection,
     thread_id: &str,
 ) -> anyhow::Result<Option<Map<String, Value>>> {
-    let timestamp_columns = codex_thread_timestamp_columns(db)?;
+    let timestamp_columns = desktop_thread_timestamp_columns(db)?;
     let mut columns = vec!["id".to_string()];
     columns.extend(timestamp_columns);
     let sql = format!("SELECT {} FROM threads WHERE id = ?1", columns.join(", "));

@@ -9,7 +9,7 @@ fn session(id: &str, title: &str) -> SessionRef {
     SessionRef::new(id, title).unwrap()
 }
 
-fn create_codex_thread_db(path: &Path, rollout_path: &Path, thread_id: &str, title: &str) {
+fn create_desktop_thread_db(path: &Path, rollout_path: &Path, thread_id: &str, title: &str) {
     let db = Connection::open(path).unwrap();
     db.execute(
         "CREATE TABLE threads (id TEXT PRIMARY KEY, rollout_path TEXT, title TEXT, archived INTEGER, archived_at INTEGER)",
@@ -38,7 +38,7 @@ fn markdown_exporter_exports_messages_images_and_sanitized_filename() {
         ),
     )
     .unwrap();
-    create_codex_thread_db(&db_path, &rollout_path, "thread:1", "Bad<>:\"/\\|?* Title");
+    create_desktop_thread_db(&db_path, &rollout_path, "thread:1", "Bad<>:\"/\\|?* Title");
 
     let result =
         MarkdownExportService::new(Some(&db_path)).export(&session("local:thread:1", "Ignored"));
@@ -61,13 +61,13 @@ fn markdown_exporter_returns_failed_for_missing_or_empty_rollout() {
     let tmp = tempdir().unwrap();
     let missing_db = tmp.path().join("missing.sqlite");
     let missing_rollout = tmp.path().join("missing.jsonl");
-    create_codex_thread_db(&missing_db, &missing_rollout, "t1", "Codex Thread");
+    create_desktop_thread_db(&missing_db, &missing_rollout, "t1", "AgentKey Thread");
 
-    let result = MarkdownExportService::new(None::<&Path>).export(&session("t1", "Codex Thread"));
+    let result = MarkdownExportService::new(None::<&Path>).export(&session("t1", "AgentKey Thread"));
     assert_eq!(result.status, ExportStatus::Failed);
 
     let result =
-        MarkdownExportService::new(Some(&missing_db)).export(&session("t1", "Codex Thread"));
+        MarkdownExportService::new(Some(&missing_db)).export(&session("t1", "AgentKey Thread"));
     assert_eq!(result.status, ExportStatus::Failed);
 
     let empty_db = tmp.path().join("empty.sqlite");
@@ -77,9 +77,9 @@ fn markdown_exporter_returns_failed_for_missing_or_empty_rollout() {
         "{\"type\":\"response_item\",\"payload\":{\"type\":\"message\",\"role\":\"developer\",\"content\":[{\"type\":\"input_text\",\"text\":\"ignore\"}]}}\n",
     )
     .unwrap();
-    create_codex_thread_db(&empty_db, &empty_rollout, "t1", "Codex Thread");
+    create_desktop_thread_db(&empty_db, &empty_rollout, "t1", "AgentKey Thread");
 
-    let result = MarkdownExportService::new(Some(&empty_db)).export(&session("t1", "Codex Thread"));
+    let result = MarkdownExportService::new(Some(&empty_db)).export(&session("t1", "AgentKey Thread"));
 
     assert_eq!(result.status, ExportStatus::Failed);
 }

@@ -18,7 +18,7 @@ impl MarkdownExportService {
 
     pub fn export(&self, session: &SessionRef) -> ExportResult {
         let Some(db_path) = &self.db_path else {
-            return failed(&session.session_id, "未配置本地 Codex 数据库");
+            return failed(&session.session_id, "未配置本地会话数据库");
         };
         if !db_path.exists() {
             return failed(
@@ -29,7 +29,7 @@ impl MarkdownExportService {
         let thread_id = normalize_session_id(&session.session_id);
         let result = (|| -> anyhow::Result<ExportResult> {
             let db = Connection::open(db_path)?;
-            if !supports_codex_threads(&db)? {
+            if !supports_desktop_threads(&db)? {
                 return Ok(failed(&thread_id, "不支持当前本地存储结构"));
             }
             let row = db.query_row(
@@ -95,7 +95,7 @@ fn failed(session_id: &str, message: impl Into<String>) -> ExportResult {
     }
 }
 
-fn supports_codex_threads(db: &Connection) -> anyhow::Result<bool> {
+fn supports_desktop_threads(db: &Connection) -> anyhow::Result<bool> {
     let has_threads = db
         .query_row(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'threads'",

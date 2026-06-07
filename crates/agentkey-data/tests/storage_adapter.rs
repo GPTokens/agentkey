@@ -34,7 +34,7 @@ fn create_supported_db(path: &Path) {
     .unwrap();
 }
 
-fn create_codex_thread_db(path: &Path, rollout_path: &Path) {
+fn create_desktop_thread_db(path: &Path, rollout_path: &Path) {
     let db = Connection::open(path).unwrap();
     db.execute("CREATE TABLE threads (id TEXT PRIMARY KEY, rollout_path TEXT, title TEXT, cwd TEXT, archived INTEGER, archived_at INTEGER, updated_at INTEGER, updated_at_ms INTEGER)", []).unwrap();
     db.execute(
@@ -58,7 +58,7 @@ fn create_codex_thread_db(path: &Path, rollout_path: &Path) {
         [],
     )
     .unwrap();
-    db.execute("INSERT INTO threads (id, rollout_path, title, cwd, archived, archived_at, updated_at, updated_at_ms) VALUES ('t1', ?1, 'Codex Thread', '/old/project', 0, NULL, 100, 100000)", [rollout_path.to_string_lossy().to_string()]).unwrap();
+    db.execute("INSERT INTO threads (id, rollout_path, title, cwd, archived, archived_at, updated_at, updated_at_ms) VALUES ('t1', ?1, 'AgentKey Thread', '/old/project', 0, NULL, 100, 100000)", [rollout_path.to_string_lossy().to_string()]).unwrap();
     db.execute(
         "INSERT INTO thread_dynamic_tools (thread_id, tool_name) VALUES ('t1', 'Read')",
         [],
@@ -91,14 +91,14 @@ fn backup_store_writes_reads_and_sanitizes_tokens() {
     let token = store
         .write_backup(
             "s1",
-            Path::new("C:/state/codex.sqlite"),
+            Path::new("C:/state/agentkey.sqlite"),
             json!({"sessions": [{"id": "s1", "title": "Hello"}]}),
         )
         .unwrap();
     let backup = store.read_backup(&token).unwrap();
 
     assert_eq!(backup["session_id"], "s1");
-    assert_eq!(backup["source_db"], "C:/state/codex.sqlite");
+    assert_eq!(backup["source_db"], "C:/state/agentkey.sqlite");
     assert_eq!(backup["tables"]["sessions"][0]["title"], "Hello");
     assert_eq!(
         store.path_for("../bad token!").file_name().unwrap(),
@@ -110,7 +110,7 @@ fn backup_store_writes_reads_and_sanitizes_tokens() {
 #[test]
 fn delete_local_session_creates_backup_and_undo_restores_rows() {
     let tmp = tempdir().unwrap();
-    let db_path = tmp.path().join("codex.sqlite");
+    let db_path = tmp.path().join("agentkey.sqlite");
     create_supported_db(&db_path);
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
 
@@ -158,7 +158,7 @@ fn delete_local_session_creates_backup_and_undo_restores_rows() {
 #[test]
 fn undo_fails_on_existing_db_row_conflict_without_overwriting_new_row() {
     let tmp = tempdir().unwrap();
-    let db_path = tmp.path().join("codex.sqlite");
+    let db_path = tmp.path().join("agentkey.sqlite");
     create_supported_db(&db_path);
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
     let deleted = adapter.delete_local(&session("s1", "First"));
@@ -206,9 +206,9 @@ fn undo_fails_on_existing_rollout_file_conflict_without_overwriting_new_file() {
     let db_path = tmp.path().join("state_5.sqlite");
     let rollout_path = tmp.path().join("rollout.jsonl");
     fs::write(&rollout_path, "old rollout\n").unwrap();
-    create_codex_thread_db(&db_path, &rollout_path);
+    create_desktop_thread_db(&db_path, &rollout_path);
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
-    let deleted = adapter.delete_local(&session("t1", "Codex Thread"));
+    let deleted = adapter.delete_local(&session("t1", "AgentKey Thread"));
     let token = deleted.undo_token.as_deref().unwrap();
     fs::write(&rollout_path, "new rollout\n").unwrap();
 
@@ -231,7 +231,7 @@ fn undo_fails_on_existing_rollout_file_conflict_without_overwriting_new_file() {
 #[test]
 fn undo_fails_for_unknown_backup_table_without_executing_it() {
     let tmp = tempdir().unwrap();
-    let db_path = tmp.path().join("codex.sqlite");
+    let db_path = tmp.path().join("agentkey.sqlite");
     create_supported_db(&db_path);
     let backup_store = BackupStore::new(tmp.path().join("backups"));
     let adapter = SQLiteStorageAdapter::new(&db_path, backup_store.clone());
@@ -274,7 +274,7 @@ fn undo_fails_for_unknown_backup_table_without_executing_it() {
 #[test]
 fn generic_delete_rolls_back_when_later_delete_fails() {
     let tmp = tempdir().unwrap();
-    let db_path = tmp.path().join("codex.sqlite");
+    let db_path = tmp.path().join("agentkey.sqlite");
     create_supported_db(&db_path);
     let db = Connection::open(&db_path).unwrap();
     db.execute(
@@ -310,15 +310,15 @@ fn generic_delete_rolls_back_when_later_delete_fails() {
 }
 
 #[test]
-fn delete_codex_thread_schema_removes_related_rows_file_and_undo_restores_everything() {
+fn delete_desktop_thread_schema_removes_related_rows_file_and_undo_restores_everything() {
     let tmp = tempdir().unwrap();
     let db_path = tmp.path().join("state_5.sqlite");
     let rollout_path = tmp.path().join("rollout.jsonl");
     fs::write(&rollout_path, "{\"type\":\"message\"}\n").unwrap();
-    create_codex_thread_db(&db_path, &rollout_path);
+    create_desktop_thread_db(&db_path, &rollout_path);
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
 
-    let deleted = adapter.delete_local(&session("local:t1", "Codex Thread"));
+    let deleted = adapter.delete_local(&session("local:t1", "AgentKey Thread"));
 
     assert_eq!(deleted.status, DeleteStatus::LocalDeleted);
     assert!(!rollout_path.exists());
@@ -354,7 +354,7 @@ fn delete_codex_thread_schema_removes_related_rows_file_and_undo_restores_everyt
             row.get::<_, String>(0)
         })
         .unwrap(),
-        "Codex Thread"
+        "AgentKey Thread"
     );
     assert_eq!(
         db.query_row("SELECT COUNT(*) FROM thread_spawn_edges WHERE parent_thread_id = 't1' OR child_thread_id = 't1'", [], |row| row.get::<_, i64>(0))
@@ -373,7 +373,7 @@ fn delete_codex_thread_schema_removes_related_rows_file_and_undo_restores_everyt
 }
 
 #[test]
-fn list_local_sessions_reads_codex_threads_ordered_by_update_time() {
+fn list_local_sessions_reads_desktop_threads_ordered_by_update_time() {
     let tmp = tempdir().unwrap();
     let db_path = tmp.path().join("state_5.sqlite");
     let backup = BackupStore::new(tmp.path().join("backups"));
@@ -407,15 +407,15 @@ fn list_local_sessions_reads_codex_threads_ordered_by_update_time() {
 }
 
 #[test]
-fn undo_codex_thread_delete_fails_when_agent_job_was_reassigned() {
+fn undo_desktop_thread_delete_fails_when_agent_job_was_reassigned() {
     let tmp = tempdir().unwrap();
     let db_path = tmp.path().join("state_5.sqlite");
     let rollout_path = tmp.path().join("rollout.jsonl");
     fs::write(&rollout_path, "{\"type\":\"message\"}\n").unwrap();
-    create_codex_thread_db(&db_path, &rollout_path);
+    create_desktop_thread_db(&db_path, &rollout_path);
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
 
-    let deleted = adapter.delete_local(&session("local:t1", "Codex Thread"));
+    let deleted = adapter.delete_local(&session("local:t1", "AgentKey Thread"));
 
     assert_eq!(deleted.status, DeleteStatus::LocalDeleted);
     let token = deleted.undo_token.as_deref().unwrap();
@@ -450,12 +450,12 @@ fn undo_codex_thread_delete_fails_when_agent_job_was_reassigned() {
 }
 
 #[test]
-fn codex_delete_rolls_back_when_related_delete_fails() {
+fn desktop_delete_rolls_back_when_related_delete_fails() {
     let tmp = tempdir().unwrap();
     let db_path = tmp.path().join("state_5.sqlite");
     let rollout_path = tmp.path().join("rollout.jsonl");
     fs::write(&rollout_path, "{\"type\":\"message\"}\n").unwrap();
-    create_codex_thread_db(&db_path, &rollout_path);
+    create_desktop_thread_db(&db_path, &rollout_path);
     let db = Connection::open(&db_path).unwrap();
     db.execute(
         "CREATE TRIGGER fail_goals_delete BEFORE DELETE ON thread_goals BEGIN SELECT RAISE(ABORT, 'boom'); END",
@@ -465,7 +465,7 @@ fn codex_delete_rolls_back_when_related_delete_fails() {
     drop(db);
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
 
-    let result = adapter.delete_local(&session("t1", "Codex Thread"));
+    let result = adapter.delete_local(&session("t1", "AgentKey Thread"));
 
     assert_eq!(result.status, DeleteStatus::Failed);
     assert!(result.undo_token.is_some());
@@ -530,10 +530,10 @@ fn archived_lookup_workspace_move_and_sort_keys_match_expected_shape() {
     let rollout_path = tmp.path().join("rollout.jsonl");
     fs::write(
         &rollout_path,
-        "{\"type\":\"session_meta\",\"payload\":{\"id\":\"t1\",\"cwd\":\"/old/project\",\"title\":\"Codex Thread\"}}\n{\"type\":\"session_meta\",\"payload\":{\"id\":\"other\",\"cwd\":\"/old/project\"}}\n",
+        "{\"type\":\"session_meta\",\"payload\":{\"id\":\"t1\",\"cwd\":\"/old/project\",\"title\":\"AgentKey Thread\"}}\n{\"type\":\"session_meta\",\"payload\":{\"id\":\"other\",\"cwd\":\"/old/project\"}}\n",
     )
     .unwrap();
-    create_codex_thread_db(&db_path, &rollout_path);
+    create_desktop_thread_db(&db_path, &rollout_path);
     let db = Connection::open(&db_path).unwrap();
     db.execute(
         "UPDATE threads SET archived = 1, archived_at = 123 WHERE id = 't1'",
@@ -545,12 +545,12 @@ fn archived_lookup_workspace_move_and_sort_keys_match_expected_shape() {
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
 
     assert_eq!(
-        adapter.find_archived_thread_by_title("Codex Thread 2026年5月9日，1:19 · RustGUI"),
-        Some(session("t1", "Codex Thread"))
+        adapter.find_archived_thread_by_title("AgentKey Thread 2026年5月9日，1:19 · RustGUI"),
+        Some(session("t1", "AgentKey Thread"))
     );
 
     let moved =
-        adapter.move_codex_thread_workspace(&session("local:t1", "Codex Thread"), "/new/project");
+        adapter.move_desktop_thread_workspace(&session("local:t1", "AgentKey Thread"), "/new/project");
     assert_eq!(moved["status"], "moved");
     assert_eq!(moved["previous_cwd"], "/old/project");
     assert_eq!(moved["target_cwd"], "/new/project");
@@ -562,13 +562,13 @@ fn archived_lookup_workspace_move_and_sort_keys_match_expected_shape() {
     assert!(text.contains("\"id\":\"other\",\"cwd\":\"/old/project\""));
 
     assert_eq!(
-        adapter.codex_thread_sort_key(&session("local:t1", "Codex Thread")),
+        adapter.desktop_thread_sort_key(&session("local:t1", "AgentKey Thread")),
         json!({"status": "ok", "session_id": "t1", "updated_at": 100, "updated_at_ms": 100000, "created_at_ms": null})
     );
     assert_eq!(
-        adapter.codex_thread_sort_keys(&[
+        adapter.desktop_thread_sort_keys(&[
             session("local:t2", "Second"),
-            session("local:t1", "Codex Thread")
+            session("local:t1", "AgentKey Thread")
         ]),
         json!({
             "status": "ok",
@@ -580,7 +580,7 @@ fn archived_lookup_workspace_move_and_sort_keys_match_expected_shape() {
     );
 
     assert_eq!(
-        adapter.codex_thread_usage_history(&session("local:t1", "Codex Thread")),
+        adapter.desktop_thread_usage_history(&session("local:t1", "AgentKey Thread")),
         json!({
             "status": "ok",
             "session_id": "t1",
@@ -606,11 +606,11 @@ fn thread_usage_history_reads_rollout_token_count_events() {
         ),
     )
     .unwrap();
-    create_codex_thread_db(&db_path, &rollout_path);
+    create_desktop_thread_db(&db_path, &rollout_path);
     let adapter = SQLiteStorageAdapter::new(&db_path, BackupStore::new(tmp.path().join("backups")));
 
     assert_eq!(
-        adapter.codex_thread_usage_history(&session("local:t1", "Codex Thread")),
+        adapter.desktop_thread_usage_history(&session("local:t1", "AgentKey Thread")),
         json!({
             "status": "ok",
             "session_id": "t1",
