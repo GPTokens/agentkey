@@ -2,6 +2,9 @@ pub fn api_base_url_allowed(url: &str) -> bool {
     let Ok(parsed) = reqwest::Url::parse(url.trim()) else {
         return false;
     };
+    if url_has_userinfo(&parsed) {
+        return false;
+    }
     match parsed.scheme() {
         "https" => true,
         "http" => match parsed.host_str() {
@@ -23,7 +26,11 @@ pub fn https_url_allowed(url: &str) -> bool {
     let Ok(parsed) = reqwest::Url::parse(trimmed) else {
         return false;
     };
-    parsed.scheme() == "https" && parsed.host_str().is_some()
+    parsed.scheme() == "https" && parsed.host_str().is_some() && !url_has_userinfo(&parsed)
+}
+
+fn url_has_userinfo(url: &reqwest::Url) -> bool {
+    !url.username().is_empty() || url.password().is_some()
 }
 
 pub fn validate_api_base_url(label: &str, url: &str) -> anyhow::Result<String> {
@@ -61,6 +68,13 @@ mod tests {
     fn api_base_url_rejects_cleartext_remote_hosts() {
         assert!(!api_base_url_allowed("http://192.168.1.10:4000/v1"));
         assert!(!api_base_url_allowed("http://gateway.example.test/v1"));
+        assert!(!api_base_url_allowed(
+            "https://user:pass@gateway.example.test/v1"
+        ));
+        assert!(!api_base_url_allowed(
+            "https://sk-secret@gateway.example.test/v1"
+        ));
+        assert!(!api_base_url_allowed("http://user:pass@127.0.0.1:4000/v1"));
         assert!(!api_base_url_allowed("ftp://gateway.example.test/v1"));
         assert!(!api_base_url_allowed("not a url"));
     }
@@ -71,6 +85,8 @@ mod tests {
         assert!(https_url_allowed("  https://example.test/path?q=1  "));
         assert!(!https_url_allowed("http://example.test"));
         assert!(!https_url_allowed("javascript:alert(1)"));
+        assert!(!https_url_allowed("https://user:pass@example.test/path"));
+        assert!(!https_url_allowed("https://token@example.test/path"));
         assert!(!https_url_allowed("https://"));
         assert!(!https_url_allowed("https:///missing-host"));
         assert!(!https_url_allowed("not a url"));
