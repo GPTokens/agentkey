@@ -1337,18 +1337,20 @@ fn allowed_helper_cors_origin(origin: Option<&str>) -> Option<String> {
     }
 }
 
+const TRUSTED_HELPER_ORIGINS: &[&str] = &[
+    "https://chatgpt.com",
+    "https://chat.openai.com",
+    "https://codex.openai.com",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
+    "app://localhost",
+    "tauri://localhost",
+    "http://localhost:1420",
+    "http://127.0.0.1:1420",
+];
+
 fn helper_origin_allowed(origin: &str) -> bool {
-    matches!(
-        origin,
-        "https://chatgpt.com"
-            | "https://chat.openai.com"
-            | "https://codex.openai.com"
-            | "http://tauri.localhost"
-            | "https://tauri.localhost"
-    ) || origin.starts_with("app://")
-        || origin.starts_with("tauri://")
-        || origin.starts_with("http://127.0.0.1:")
-        || origin.starts_with("http://localhost:")
+    TRUSTED_HELPER_ORIGINS.contains(&origin)
 }
 
 fn helper_cors_headers(cors_origin: Option<&str>) -> String {
@@ -1357,6 +1359,37 @@ fn helper_cors_headers(cors_origin: Option<&str>) -> String {
             "Access-Control-Allow-Origin: {origin}\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-AgentKey-Token\r\n"
         ),
         None => String::new(),
+    }
+}
+
+#[cfg(test)]
+mod helper_security_tests {
+    use super::*;
+
+    #[test]
+    fn helper_cors_allows_only_trusted_origins() {
+        for origin in TRUSTED_HELPER_ORIGINS {
+            assert!(helper_origin_allowed(origin));
+        }
+
+        for origin in [
+            concat!("http://127.0.0.1:", "57321"),
+            concat!("http://localhost:", "57321"),
+            "https://evil.example",
+            "app://evil.example",
+            "tauri://evil.example",
+        ] {
+            assert!(!helper_origin_allowed(origin));
+        }
+    }
+
+    #[test]
+    fn helper_cors_headers_use_agentkey_token_header() {
+        let headers = helper_cors_headers(Some("https://chatgpt.com"));
+
+        assert!(headers.contains("Access-Control-Allow-Origin: https://chatgpt.com"));
+        assert!(headers.contains("X-AgentKey-Token"));
+        assert!(!headers.contains(concat!("X-Codex", "-Plus-Token")));
     }
 }
 
