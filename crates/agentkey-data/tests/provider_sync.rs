@@ -266,6 +266,38 @@ fn provider_sync_backup_metadata_contains_reference_fields_and_managed_marker() 
         .as_array()
         .unwrap()
         .contains(&json!("state_5.sqlite")));
+    assert_provider_sync_backup_is_restricted(&backup_dir);
+}
+
+#[cfg(unix)]
+fn assert_provider_sync_backup_is_restricted(backup_dir: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+
+    for path in [
+        backup_dir.join("metadata.json"),
+        backup_dir.join("session-meta-backup.json"),
+        backup_dir.join("config.toml"),
+        backup_dir.join("db/state_5.sqlite"),
+    ] {
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600,
+            "{} should be owner-only",
+            path.display()
+        );
+    }
+    assert_eq!(
+        fs::metadata(backup_dir).unwrap().permissions().mode() & 0o777,
+        0o700
+    );
+}
+
+#[cfg(windows)]
+fn assert_provider_sync_backup_is_restricted(backup_dir: &Path) {
+    assert!(backup_dir.join("metadata.json").exists());
+    assert!(backup_dir.join("session-meta-backup.json").exists());
+    assert!(backup_dir.join("config.toml").exists());
+    assert!(backup_dir.join("db/state_5.sqlite").exists());
 }
 
 #[test]

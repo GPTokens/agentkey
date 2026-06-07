@@ -655,7 +655,7 @@ fn create_backup(
     ] {
         let source = home.join(name);
         if source.exists() {
-            fs::copy(&source, backup_dir.join(name))?;
+            copy_backup_file(&source, &backup_dir.join(name))?;
         }
     }
     let db_dir = backup_dir.join("db");
@@ -664,7 +664,7 @@ fn create_backup(
         let source = home.join(name);
         if source.exists() {
             fs::create_dir_all(&db_dir)?;
-            fs::copy(&source, db_dir.join(name))?;
+            copy_backup_file(&source, &db_dir.join(name))?;
             db_files.push(name.to_string());
         }
     }
@@ -678,12 +678,12 @@ fn create_backup(
             })
         })
         .collect::<Vec<_>>();
-    fs::write(
-        backup_dir.join("session-meta-backup.json"),
-        serde_json::to_string_pretty(&manifest)?,
+    write_backup_file(
+        &backup_dir.join("session-meta-backup.json"),
+        serde_json::to_string_pretty(&manifest)?.as_bytes(),
     )?;
-    fs::write(
-        backup_dir.join("metadata.json"),
+    write_backup_file(
+        &backup_dir.join("metadata.json"),
         serde_json::to_string_pretty(&json!({
             "version": 1,
             "namespace": "provider-sync",
@@ -693,9 +693,20 @@ fn create_backup(
             "dbFiles": db_files,
             "changedSessionFiles": changes.len(),
             "managedBy": "AgentKey provider sync"
-        }))?,
+        }))?
+        .as_bytes(),
     )?;
     Ok(backup_dir)
+}
+
+fn copy_backup_file(source: &Path, target: &Path) -> anyhow::Result<()> {
+    fs::copy(source, target)?;
+    agentkey_core::harden_sensitive_file(target)
+}
+
+fn write_backup_file(path: &Path, contents: &[u8]) -> anyhow::Result<()> {
+    fs::write(path, contents)?;
+    agentkey_core::harden_sensitive_file(path)
 }
 
 fn apply_session_changes(changes: &[SessionChange]) -> anyhow::Result<AppliedSessionChanges> {
