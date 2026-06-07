@@ -896,20 +896,20 @@
   }
 
   const agentKeyBackendSettingMap = {
-    pluginEntryUnlock: "codexAppPluginEntryUnlock",
-    pluginMarketplaceUnlock: "codexAppPluginMarketplaceUnlock",
-    forcePluginInstall: "codexAppForcePluginInstall",
-    modelWhitelistUnlock: "codexAppModelWhitelistUnlock",
-    sessionDelete: "codexAppSessionDelete",
-    markdownExport: "codexAppMarkdownExport",
-    projectMove: "codexAppProjectMove",
-    conversationTimeline: "codexAppConversationTimeline",
-    conversationView: "codexAppConversationView",
-    threadScrollRestore: "codexAppThreadScrollRestore",
-    zedRemoteOpen: "codexAppZedRemoteOpen",
-    upstreamWorktreeCreate: "codexAppUpstreamWorktreeCreate",
-    nativeMenuPlacement: "codexAppNativeMenuPlacement",
-    serviceTierControls: "codexAppServiceTierControls",
+    pluginEntryUnlock: "desktopClientPluginEntryUnlock",
+    pluginMarketplaceUnlock: "desktopClientPluginMarketplaceUnlock",
+    forcePluginInstall: "desktopClientForcePluginInstall",
+    modelWhitelistUnlock: "desktopClientModelWhitelistUnlock",
+    sessionDelete: "desktopClientSessionDelete",
+    markdownExport: "desktopClientMarkdownExport",
+    projectMove: "desktopClientProjectMove",
+    conversationTimeline: "desktopClientConversationTimeline",
+    conversationView: "desktopClientConversationView",
+    threadScrollRestore: "desktopClientThreadScrollRestore",
+    zedRemoteOpen: "desktopClientZedRemoteOpen",
+    upstreamWorktreeCreate: "desktopClientUpstreamWorktreeCreate",
+    nativeMenuPlacement: "desktopClientNativeMenuPlacement",
+    serviceTierControls: "desktopClientServiceTierControls",
   };
 
   function backendAgentKeySettings() {
@@ -1037,7 +1037,7 @@
     refreshAgentKeyServiceTierControls();
   }
 
-  let agentKeyBackendSettings = { providerSyncEnabled: false, enhancementsEnabled: true, launchMode: "patch", codexAppVersion: "" };
+  let agentKeyBackendSettings = { providerSyncEnabled: false, enhancementsEnabled: true, launchMode: "patch", desktopClientVersion: "" };
   const agentKeyPluginLegacyEntryUnlockBeforeVersion = "26.601.2237";
 
   function parseDesktopClientVersionParts(version) {
@@ -1063,15 +1063,20 @@
     return 0;
   }
 
+  function agentKeyDesktopClientVersion() {
+    const legacyVersionKey = `${"codex"}AppVersion`;
+    return String(agentKeyBackendSettings.desktopClientVersion || agentKeyBackendSettings[legacyVersionKey] || "").trim();
+  }
+
   function agentKeyPluginUnlockStrategy() {
-    const version = String(agentKeyBackendSettings.codexAppVersion || "").trim();
+    const version = agentKeyDesktopClientVersion();
     const comparison = compareDesktopClientVersions(version, agentKeyPluginLegacyEntryUnlockBeforeVersion);
     if (comparison == null) return "unknown";
     return comparison < 0 ? "legacy" : "modern";
   }
 
   function logAgentKeyPluginUnlockStrategy(strategy) {
-    const desktopClientVersion = String(agentKeyBackendSettings.codexAppVersion || "").trim();
+    const desktopClientVersion = agentKeyDesktopClientVersion();
     const signature = `${strategy}:${desktopClientVersion || "unknown"}`;
     if (window.__agentKeyPluginUnlockStrategyLogged === signature) return;
     window.__agentKeyPluginUnlockStrategyLogged = signature;

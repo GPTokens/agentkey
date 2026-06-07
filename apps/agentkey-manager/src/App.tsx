@@ -101,20 +101,20 @@ type BackendSettings = {
   relayProfilesEnabled: boolean;
   ccsLinkEnabled: boolean;
   enhancementsEnabled: boolean;
-  codexAppPluginEntryUnlock: boolean;
-  codexAppPluginMarketplaceUnlock: boolean;
-  codexAppForcePluginInstall: boolean;
-  codexAppModelWhitelistUnlock: boolean;
-  codexAppSessionDelete: boolean;
-  codexAppMarkdownExport: boolean;
-  codexAppProjectMove: boolean;
-  codexAppConversationTimeline: boolean;
-  codexAppConversationView: boolean;
-  codexAppThreadScrollRestore: boolean;
-  codexAppZedRemoteOpen: boolean;
-  codexAppUpstreamWorktreeCreate: boolean;
-  codexAppNativeMenuPlacement: boolean;
-  codexAppServiceTierControls: boolean;
+  desktopClientPluginEntryUnlock: boolean;
+  desktopClientPluginMarketplaceUnlock: boolean;
+  desktopClientForcePluginInstall: boolean;
+  desktopClientModelWhitelistUnlock: boolean;
+  desktopClientSessionDelete: boolean;
+  desktopClientMarkdownExport: boolean;
+  desktopClientProjectMove: boolean;
+  desktopClientConversationTimeline: boolean;
+  desktopClientConversationView: boolean;
+  desktopClientThreadScrollRestore: boolean;
+  desktopClientZedRemoteOpen: boolean;
+  desktopClientUpstreamWorktreeCreate: boolean;
+  desktopClientNativeMenuPlacement: boolean;
+  desktopClientServiceTierControls: boolean;
   codexGoalsEnabled: boolean;
   launchMode: LaunchMode;
   relayBaseUrl: string;
@@ -514,20 +514,20 @@ const defaultSettings: BackendSettings = {
   relayProfilesEnabled: true,
   ccsLinkEnabled: false,
   enhancementsEnabled: true,
-  codexAppPluginEntryUnlock: true,
-  codexAppPluginMarketplaceUnlock: true,
-  codexAppForcePluginInstall: true,
-  codexAppModelWhitelistUnlock: true,
-  codexAppSessionDelete: true,
-  codexAppMarkdownExport: true,
-  codexAppProjectMove: true,
-  codexAppConversationTimeline: true,
-  codexAppConversationView: false,
-  codexAppThreadScrollRestore: true,
-  codexAppZedRemoteOpen: true,
-  codexAppUpstreamWorktreeCreate: true,
-  codexAppNativeMenuPlacement: true,
-  codexAppServiceTierControls: false,
+  desktopClientPluginEntryUnlock: true,
+  desktopClientPluginMarketplaceUnlock: true,
+  desktopClientForcePluginInstall: true,
+  desktopClientModelWhitelistUnlock: true,
+  desktopClientSessionDelete: true,
+  desktopClientMarkdownExport: true,
+  desktopClientProjectMove: true,
+  desktopClientConversationTimeline: true,
+  desktopClientConversationView: false,
+  desktopClientThreadScrollRestore: true,
+  desktopClientZedRemoteOpen: true,
+  desktopClientUpstreamWorktreeCreate: true,
+  desktopClientNativeMenuPlacement: true,
+  desktopClientServiceTierControls: false,
   codexGoalsEnabled: false,
   launchMode: "patch",
   relayBaseUrl: "",
@@ -2114,20 +2114,20 @@ function EnhanceScreen({
             </div>
           ) : null}
           <div className="feature-switch-grid">
-            <FeatureToggle title="插件市场解锁" detail="API Key 模式下扩展插件市场请求，尽量显示完整插件列表；官方/混合模式通常不需要。" checked={form.codexAppPluginMarketplaceUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("codexAppPluginMarketplaceUnlock", value)} />
-            <FeatureToggle title="强制解锁入口" detail="恢复 1.1.9 的入口解锁方式，强制显示并启用插件入口。" checked={form.codexAppPluginEntryUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("codexAppPluginEntryUnlock", value)} />
-            <FeatureToggle title="特殊插件强制安装" detail="解除 App unavailable / 应用不可用导致的前端安装禁用。" checked={form.codexAppForcePluginInstall} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("codexAppForcePluginInstall", value)} />
-            <FeatureToggle title="模型白名单解锁" detail="从环境变量和 config.toml 的 /v1/models 拉取模型并补进模型列表。" checked={form.codexAppModelWhitelistUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppModelWhitelistUnlock", value)} />
-            <FeatureToggle title="Fast 按钮" detail="显示服务模式切换按钮，可控制 Standard / Fast / priority。" checked={form.codexAppServiceTierControls} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppServiceTierControls", value)} />
-            <FeatureToggle title="会话删除" detail="在会话列表悬停显示删除按钮，并支持撤销。" checked={form.codexAppSessionDelete} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppSessionDelete", value)} />
-            <FeatureToggle title="Markdown 导出" detail="在会话列表显示导出按钮，导出带时间戳的 Markdown。" checked={form.codexAppMarkdownExport} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppMarkdownExport", value)} />
-            <FeatureToggle title="会话项目移动" detail="把会话移动到普通对话或其他本地项目。" checked={form.codexAppProjectMove} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppProjectMove", value)} />
-            <FeatureToggle title="对话 Timeline" detail="在对话右侧显示用户提问时间线，支持摘要和跳转。" checked={form.codexAppConversationTimeline} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppConversationTimeline", value)} />
-            <FeatureToggle title="对话居中宽度" detail="把主对话和输入框限制到固定最大宽度，适合大屏阅读。" checked={form.codexAppConversationView} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppConversationView", value)} />
-            <FeatureToggle title="切换对话保留位置" detail="切换 thread 时恢复上一次浏览位置。" checked={form.codexAppThreadScrollRestore} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppThreadScrollRestore", value)} />
-            <FeatureToggle title="Zed Remote open" detail="远程 SSH 文件引用可直接用 Zed Remote Development 打开。" checked={form.codexAppZedRemoteOpen} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppZedRemoteOpen", value)} />
-            <FeatureToggle title="Upstream worktree" detail="从最新 upstream 分支创建 Git worktree。" checked={form.codexAppUpstreamWorktreeCreate} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppUpstreamWorktreeCreate", value)} />
-            <FeatureToggle title="原生菜单栏位置" detail="把 AgentKey 菜单插入 Codex 顶部原生菜单栏。" checked={form.codexAppNativeMenuPlacement} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("codexAppNativeMenuPlacement", value)} />
+            <FeatureToggle title="插件市场解锁" detail="API Key 模式下扩展插件市场请求，尽量显示完整插件列表；官方/混合模式通常不需要。" checked={form.desktopClientPluginMarketplaceUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginMarketplaceUnlock", value)} />
+            <FeatureToggle title="强制解锁入口" detail="恢复 1.1.9 的入口解锁方式，强制显示并启用插件入口。" checked={form.desktopClientPluginEntryUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginEntryUnlock", value)} />
+            <FeatureToggle title="特殊插件强制安装" detail="解除 App unavailable / 应用不可用导致的前端安装禁用。" checked={form.desktopClientForcePluginInstall} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientForcePluginInstall", value)} />
+            <FeatureToggle title="模型白名单解锁" detail="从环境变量和 config.toml 的 /v1/models 拉取模型并补进模型列表。" checked={form.desktopClientModelWhitelistUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientModelWhitelistUnlock", value)} />
+            <FeatureToggle title="Fast 按钮" detail="显示服务模式切换按钮，可控制 Standard / Fast / priority。" checked={form.desktopClientServiceTierControls} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientServiceTierControls", value)} />
+            <FeatureToggle title="会话删除" detail="在会话列表悬停显示删除按钮，并支持撤销。" checked={form.desktopClientSessionDelete} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientSessionDelete", value)} />
+            <FeatureToggle title="Markdown 导出" detail="在会话列表显示导出按钮，导出带时间戳的 Markdown。" checked={form.desktopClientMarkdownExport} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientMarkdownExport", value)} />
+            <FeatureToggle title="会话项目移动" detail="把会话移动到普通对话或其他本地项目。" checked={form.desktopClientProjectMove} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientProjectMove", value)} />
+            <FeatureToggle title="对话 Timeline" detail="在对话右侧显示用户提问时间线，支持摘要和跳转。" checked={form.desktopClientConversationTimeline} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientConversationTimeline", value)} />
+            <FeatureToggle title="对话居中宽度" detail="把主对话和输入框限制到固定最大宽度，适合大屏阅读。" checked={form.desktopClientConversationView} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientConversationView", value)} />
+            <FeatureToggle title="切换对话保留位置" detail="切换 thread 时恢复上一次浏览位置。" checked={form.desktopClientThreadScrollRestore} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientThreadScrollRestore", value)} />
+            <FeatureToggle title="Zed Remote open" detail="远程 SSH 文件引用可直接用 Zed Remote Development 打开。" checked={form.desktopClientZedRemoteOpen} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientZedRemoteOpen", value)} />
+            <FeatureToggle title="Upstream worktree" detail="从最新 upstream 分支创建 Git worktree。" checked={form.desktopClientUpstreamWorktreeCreate} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientUpstreamWorktreeCreate", value)} />
+            <FeatureToggle title="原生菜单栏位置" detail="把 AgentKey 菜单插入桌面客户端顶部原生菜单栏。" checked={form.desktopClientNativeMenuPlacement} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientNativeMenuPlacement", value)} />
           </div>
           <div className="hint-line">
             <Info className="h-4 w-4" />

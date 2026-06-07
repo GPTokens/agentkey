@@ -104,10 +104,10 @@ async fn settings_get_includes_runtime_codex_app_version() {
 
     let result = handle_bridge_request(ctx, "/settings/get", json!({})).await;
 
-    assert_eq!(result["codexAppVersion"], json!("26.601.21317"));
-    assert_eq!(result["codexAppPluginEntryUnlock"], json!(true));
-    assert_eq!(result["codexAppPluginMarketplaceUnlock"], json!(true));
-    assert_eq!(result["codexAppForcePluginInstall"], json!(true));
+    assert_eq!(result["desktopClientVersion"], json!("26.601.21317"));
+    assert_eq!(result["desktopClientPluginEntryUnlock"], json!(true));
+    assert_eq!(result["desktopClientPluginMarketplaceUnlock"], json!(true));
+    assert_eq!(result["desktopClientForcePluginInstall"], json!(true));
 }
 
 #[tokio::test]
@@ -123,18 +123,18 @@ async fn settings_set_does_not_persist_runtime_codex_app_version() {
         ctx,
         "/settings/set",
         json!({
-            "codexAppVersion": "1.2.3",
-            "codexAppPluginMarketplaceUnlock": false
+            "desktopClientVersion": "1.2.3",
+            "desktopClientPluginMarketplaceUnlock": false
         }),
     )
     .await;
 
-    assert_eq!(result["codexAppVersion"], json!("26.601.21317"));
-    assert_eq!(result["codexAppPluginMarketplaceUnlock"], json!(false));
+    assert_eq!(result["desktopClientVersion"], json!("26.601.21317"));
+    assert_eq!(result["desktopClientPluginMarketplaceUnlock"], json!(false));
 
     let persisted = settings.settings.lock().unwrap().clone();
     let persisted_value = serde_json::to_value(persisted).unwrap();
-    assert!(persisted_value.get("codexAppVersion").is_none());
+    assert!(persisted_value.get("desktopClientVersion").is_none());
 }
 
 #[tokio::test]
@@ -154,7 +154,7 @@ async fn bridge_context_core_with_app_dir_exposes_runtime_codex_app_version() {
 
     let result = handle_bridge_request(ctx, "/settings/get", json!({})).await;
 
-    assert_eq!(result["codexAppVersion"], json!("26.601.21317.0"));
+    assert_eq!(result["desktopClientVersion"], json!("26.601.21317.0"));
 }
 
 #[tokio::test]
@@ -235,14 +235,14 @@ async fn settings_routes_use_settings_service() {
     let updated = handle_bridge_request(
         ctx.clone(),
         "/settings/set",
-        json!({"providerSyncEnabled": true, "codexAppSessionDelete": false, "codexAppServiceTierControls": true, "cliWrapperApiKeyEnv": ""}),
+        json!({"providerSyncEnabled": true, "desktopClientSessionDelete": false, "desktopClientServiceTierControls": true, "cliWrapperApiKeyEnv": ""}),
     )
     .await;
     let loaded = handle_bridge_request(ctx, "/settings/get", json!({})).await;
 
     assert_eq!(updated["providerSyncEnabled"], true);
-    assert_eq!(updated["codexAppSessionDelete"], false);
-    assert_eq!(updated["codexAppServiceTierControls"], true);
+    assert_eq!(updated["desktopClientSessionDelete"], false);
+    assert_eq!(updated["desktopClientServiceTierControls"], true);
     assert_eq!(updated["cliWrapperApiKeyEnv"], "CUSTOM_OPENAI_API_KEY");
     assert_eq!(loaded, updated);
 }
@@ -945,20 +945,20 @@ impl BridgeSettingsService for FakeSettings {
             raw.insert("enhancementsEnabled".to_string(), json!(value));
         }
         for key in [
-            "codexAppPluginEntryUnlock",
-            "codexAppPluginMarketplaceUnlock",
-            "codexAppForcePluginInstall",
-            "codexAppModelWhitelistUnlock",
-            "codexAppSessionDelete",
-            "codexAppMarkdownExport",
-            "codexAppProjectMove",
-            "codexAppConversationTimeline",
-            "codexAppConversationView",
-            "codexAppThreadScrollRestore",
-            "codexAppZedRemoteOpen",
-            "codexAppUpstreamWorktreeCreate",
-            "codexAppNativeMenuPlacement",
-            "codexAppServiceTierControls",
+            "desktopClientPluginEntryUnlock",
+            "desktopClientPluginMarketplaceUnlock",
+            "desktopClientForcePluginInstall",
+            "desktopClientModelWhitelistUnlock",
+            "desktopClientSessionDelete",
+            "desktopClientMarkdownExport",
+            "desktopClientProjectMove",
+            "desktopClientConversationTimeline",
+            "desktopClientConversationView",
+            "desktopClientThreadScrollRestore",
+            "desktopClientZedRemoteOpen",
+            "desktopClientUpstreamWorktreeCreate",
+            "desktopClientNativeMenuPlacement",
+            "desktopClientServiceTierControls",
         ] {
             if let Some(value) = payload.get(key).and_then(Value::as_bool) {
                 raw.insert(key.to_string(), json!(value));

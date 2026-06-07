@@ -140,7 +140,7 @@ fn injection_script_restores_legacy_plugin_sidebar_entry_unlock() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("pluginEntryUnlock: true"));
-    assert!(script.contains("pluginEntryUnlock: \"codexAppPluginEntryUnlock\""));
+    assert!(script.contains("pluginEntryUnlock: \"desktopClientPluginEntryUnlock\""));
     assert!(script.contains("function reactFiberFrom(element)"));
     assert!(script.contains("function authContextValueFrom(element)"));
     assert!(script.contains("function spoofChatGPTAuthMethod(element)"));
@@ -159,7 +159,7 @@ fn injection_script_keeps_plugin_marketplace_unlock_separate_from_entry_unlock()
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("pluginMarketplaceUnlock: true"));
-    assert!(script.contains("pluginMarketplaceUnlock: \"codexAppPluginMarketplaceUnlock\""));
+    assert!(script.contains("pluginMarketplaceUnlock: \"desktopClientPluginMarketplaceUnlock\""));
     assert!(script.contains("if (!agentKeySettings().pluginMarketplaceUnlock) return"));
     assert!(script.contains("installPluginBuildFlavorFilterPatch"));
     assert!(script.contains("installPluginMarketplaceRequestPatch"));

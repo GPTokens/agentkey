@@ -585,10 +585,13 @@ fn spawn_manager(manager_path: &Path) -> anyhow::Result<()> {
         .map_err(|error| anyhow::anyhow!("启动管理工具失败：{error}"))
 }
 
-fn settings_payload_value(settings: BackendSettings, codex_app_version: String) -> anyhow::Result<Value> {
+fn settings_payload_value(settings: BackendSettings, desktop_client_version: String) -> anyhow::Result<Value> {
     let mut value = serde_json::to_value(settings)?;
     if let Some(object) = value.as_object_mut() {
-        object.insert("codexAppVersion".to_string(), Value::String(codex_app_version));
+        object.insert(
+            "desktopClientVersion".to_string(),
+            Value::String(desktop_client_version),
+        );
     }
     Ok(value)
 }
@@ -598,8 +601,8 @@ async fn settings_value(
     result: anyhow::Result<BackendSettings>,
 ) -> anyhow::Result<Value> {
     let settings = result?;
-    let codex_app_version = ctx.settings.codex_app_version().await.unwrap_or_default();
-    settings_payload_value(settings, codex_app_version)
+    let desktop_client_version = ctx.settings.codex_app_version().await.unwrap_or_default();
+    settings_payload_value(settings, desktop_client_version)
 }
 
 fn result_value<T>(result: anyhow::Result<T>) -> anyhow::Result<Value>

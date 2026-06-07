@@ -166,33 +166,89 @@ pub struct BackendSettings {
     pub ccs_link_enabled: bool,
     #[serde(rename = "enhancementsEnabled", default = "default_true")]
     pub enhancements_enabled: bool,
-    #[serde(rename = "codexAppPluginEntryUnlock", default = "default_true")]
+    #[serde(
+        rename = "desktopClientPluginEntryUnlock",
+        alias = "codexAppPluginEntryUnlock",
+        default = "default_true"
+    )]
     pub codex_app_plugin_entry_unlock: bool,
-    #[serde(rename = "codexAppPluginMarketplaceUnlock", default = "default_true")]
+    #[serde(
+        rename = "desktopClientPluginMarketplaceUnlock",
+        alias = "codexAppPluginMarketplaceUnlock",
+        default = "default_true"
+    )]
     pub codex_app_plugin_marketplace_unlock: bool,
-    #[serde(rename = "codexAppForcePluginInstall", default = "default_true")]
+    #[serde(
+        rename = "desktopClientForcePluginInstall",
+        alias = "codexAppForcePluginInstall",
+        default = "default_true"
+    )]
     pub codex_app_force_plugin_install: bool,
-    #[serde(rename = "codexAppModelWhitelistUnlock", default = "default_true")]
+    #[serde(
+        rename = "desktopClientModelWhitelistUnlock",
+        alias = "codexAppModelWhitelistUnlock",
+        default = "default_true"
+    )]
     pub codex_app_model_whitelist_unlock: bool,
-    #[serde(rename = "codexAppSessionDelete", default = "default_true")]
+    #[serde(
+        rename = "desktopClientSessionDelete",
+        alias = "codexAppSessionDelete",
+        default = "default_true"
+    )]
     pub codex_app_session_delete: bool,
-    #[serde(rename = "codexAppMarkdownExport", default = "default_true")]
+    #[serde(
+        rename = "desktopClientMarkdownExport",
+        alias = "codexAppMarkdownExport",
+        default = "default_true"
+    )]
     pub codex_app_markdown_export: bool,
-    #[serde(rename = "codexAppProjectMove", default = "default_true")]
+    #[serde(
+        rename = "desktopClientProjectMove",
+        alias = "codexAppProjectMove",
+        default = "default_true"
+    )]
     pub codex_app_project_move: bool,
-    #[serde(rename = "codexAppConversationTimeline", default = "default_true")]
+    #[serde(
+        rename = "desktopClientConversationTimeline",
+        alias = "codexAppConversationTimeline",
+        default = "default_true"
+    )]
     pub codex_app_conversation_timeline: bool,
-    #[serde(rename = "codexAppConversationView", default)]
+    #[serde(
+        rename = "desktopClientConversationView",
+        alias = "codexAppConversationView",
+        default
+    )]
     pub codex_app_conversation_view: bool,
-    #[serde(rename = "codexAppThreadScrollRestore", default = "default_true")]
+    #[serde(
+        rename = "desktopClientThreadScrollRestore",
+        alias = "codexAppThreadScrollRestore",
+        default = "default_true"
+    )]
     pub codex_app_thread_scroll_restore: bool,
-    #[serde(rename = "codexAppZedRemoteOpen", default = "default_true")]
+    #[serde(
+        rename = "desktopClientZedRemoteOpen",
+        alias = "codexAppZedRemoteOpen",
+        default = "default_true"
+    )]
     pub codex_app_zed_remote_open: bool,
-    #[serde(rename = "codexAppUpstreamWorktreeCreate", default = "default_true")]
+    #[serde(
+        rename = "desktopClientUpstreamWorktreeCreate",
+        alias = "codexAppUpstreamWorktreeCreate",
+        default = "default_true"
+    )]
     pub codex_app_upstream_worktree_create: bool,
-    #[serde(rename = "codexAppNativeMenuPlacement", default = "default_true")]
+    #[serde(
+        rename = "desktopClientNativeMenuPlacement",
+        alias = "codexAppNativeMenuPlacement",
+        default = "default_true"
+    )]
     pub codex_app_native_menu_placement: bool,
-    #[serde(rename = "codexAppServiceTierControls", default)]
+    #[serde(
+        rename = "desktopClientServiceTierControls",
+        alias = "codexAppServiceTierControls",
+        default
+    )]
     pub codex_app_service_tier_controls: bool,
     #[serde(rename = "codexGoalsEnabled", default)]
     pub codex_goals_enabled: bool,
@@ -552,20 +608,90 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
     if let Some(value) = source.get("enhancementsEnabled").and_then(Value::as_bool) {
         target.insert("enhancementsEnabled".to_string(), Value::Bool(value));
     }
-    merge_bool_setting(target, source, "codexAppPluginEntryUnlock");
-    merge_bool_setting(target, source, "codexAppPluginMarketplaceUnlock");
-    merge_bool_setting(target, source, "codexAppForcePluginInstall");
-    merge_bool_setting(target, source, "codexAppModelWhitelistUnlock");
-    merge_bool_setting(target, source, "codexAppSessionDelete");
-    merge_bool_setting(target, source, "codexAppMarkdownExport");
-    merge_bool_setting(target, source, "codexAppProjectMove");
-    merge_bool_setting(target, source, "codexAppConversationTimeline");
-    merge_bool_setting(target, source, "codexAppConversationView");
-    merge_bool_setting(target, source, "codexAppThreadScrollRestore");
-    merge_bool_setting(target, source, "codexAppZedRemoteOpen");
-    merge_bool_setting(target, source, "codexAppUpstreamWorktreeCreate");
-    merge_bool_setting(target, source, "codexAppNativeMenuPlacement");
-    merge_bool_setting(target, source, "codexAppServiceTierControls");
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientPluginEntryUnlock",
+        "codexAppPluginEntryUnlock",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientPluginMarketplaceUnlock",
+        "codexAppPluginMarketplaceUnlock",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientForcePluginInstall",
+        "codexAppForcePluginInstall",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientModelWhitelistUnlock",
+        "codexAppModelWhitelistUnlock",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientSessionDelete",
+        "codexAppSessionDelete",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientMarkdownExport",
+        "codexAppMarkdownExport",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientProjectMove",
+        "codexAppProjectMove",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientConversationTimeline",
+        "codexAppConversationTimeline",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientConversationView",
+        "codexAppConversationView",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientThreadScrollRestore",
+        "codexAppThreadScrollRestore",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientZedRemoteOpen",
+        "codexAppZedRemoteOpen",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientUpstreamWorktreeCreate",
+        "codexAppUpstreamWorktreeCreate",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientNativeMenuPlacement",
+        "codexAppNativeMenuPlacement",
+    );
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientServiceTierControls",
+        "codexAppServiceTierControls",
+    );
     if let Some(value) = source.get("codexGoalsEnabled").and_then(Value::as_bool) {
         target.insert("codexGoalsEnabled".to_string(), Value::Bool(value));
     }
@@ -722,8 +848,20 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
     }
 }
 
-fn merge_bool_setting(target: &mut Map<String, Value>, source: &Map<String, Value>, key: &str) {
-    if let Some(value) = source.get(key).and_then(Value::as_bool) {
+fn merge_bool_setting_alias(
+    target: &mut Map<String, Value>,
+    source: &Map<String, Value>,
+    key: &str,
+    legacy_key: &str,
+) {
+    let value = source
+        .get(key)
+        .or_else(|| source.get(legacy_key))
+        .or_else(|| target.get(key))
+        .or_else(|| target.get(legacy_key))
+        .and_then(Value::as_bool);
+    target.remove(legacy_key);
+    if let Some(value) = value {
         target.insert(key.to_string(), Value::Bool(value));
     }
 }
@@ -990,9 +1128,9 @@ mod tests {
     fn settings_deserialize_keeps_plugin_unlock_switches_independent() {
         let settings: BackendSettings = serde_json::from_str(
             r#"{
-                "codexAppPluginEntryUnlock": false,
-                "codexAppPluginMarketplaceUnlock": true,
-                "codexAppForcePluginInstall": false
+                "desktopClientPluginEntryUnlock": false,
+                "desktopClientPluginMarketplaceUnlock": true,
+                "desktopClientForcePluginInstall": false
             }"#,
         )
         .unwrap();
@@ -1012,6 +1150,16 @@ mod tests {
         assert!(!legacy_settings.codex_app_plugin_entry_unlock);
         assert!(legacy_settings.codex_app_plugin_marketplace_unlock);
         assert!(!legacy_settings.codex_app_force_plugin_install);
+    }
+
+    #[test]
+    fn settings_serializes_desktop_client_feature_keys() {
+        let value = serde_json::to_value(BackendSettings::default()).unwrap();
+
+        assert!(value.get("desktopClientPluginEntryUnlock").is_some());
+        assert!(value.get("desktopClientServiceTierControls").is_some());
+        assert!(value.get("codexAppPluginEntryUnlock").is_none());
+        assert!(value.get("codexAppServiceTierControls").is_none());
     }
 
     #[test]
@@ -1428,10 +1576,10 @@ experimental_bearer_token = "sk-existing""#));
             "providerSyncEnabled": true,
             "codexAppPath": "C:\\Portable\\Codex\\Codex.exe",
             "enhancementsEnabled": false,
-            "codexAppPluginEntryUnlock": false,
-            "codexAppSessionDelete": false,
-            "codexAppConversationView": true,
-            "codexAppServiceTierControls": true,
+            "desktopClientPluginEntryUnlock": false,
+            "desktopClientSessionDelete": false,
+            "desktopClientConversationView": true,
+            "desktopClientServiceTierControls": true,
             "codexGoalsEnabled": true,
             "relayBaseUrl": "https://relay.example.test/v1",
             "relayApiKey": "sk-relay",
@@ -1477,6 +1625,35 @@ experimental_bearer_token = "sk-existing""#));
         assert_eq!(updated.claude_code_model, "claude-sonnet-4-5");
         assert!(!updated.claude_code_disable_nonessential_traffic);
         assert_eq!(store.load().unwrap(), updated);
+        let saved: Value =
+            serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
+                .unwrap();
+        assert_eq!(saved["desktopClientPluginEntryUnlock"], json!(false));
+        assert_eq!(saved["desktopClientServiceTierControls"], json!(true));
+        assert!(saved.get("codexAppPluginEntryUnlock").is_none());
+        assert!(saved.get("codexAppServiceTierControls").is_none());
+    }
+
+    #[test]
+    fn settings_store_update_canonicalizes_legacy_desktop_client_keys() {
+        let dir = temp_dir();
+        let path = dir.join("settings.json");
+        std::fs::write(
+            &path,
+            r#"{"codexAppPluginEntryUnlock":false,"codexAppServiceTierControls":true}"#,
+        )
+        .unwrap();
+        let store = SettingsStore::new(path.clone());
+
+        let updated = store.update(json!({})).unwrap();
+        let saved: Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+
+        assert!(!updated.codex_app_plugin_entry_unlock);
+        assert!(updated.codex_app_service_tier_controls);
+        assert_eq!(saved["desktopClientPluginEntryUnlock"], json!(false));
+        assert_eq!(saved["desktopClientServiceTierControls"], json!(true));
+        assert!(saved.get("codexAppPluginEntryUnlock").is_none());
+        assert!(saved.get("codexAppServiceTierControls").is_none());
     }
 
     #[test]
