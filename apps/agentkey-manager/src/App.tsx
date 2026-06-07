@@ -4656,8 +4656,8 @@ function relayProtocolLabel(protocol: RelayProtocol): string {
 }
 
 function normalizeRelayMode(mode: RelayMode | undefined): RelayMode {
-  if (mode === "pureApi") return mode;
-  return "official";
+  if (mode === "official" || mode === "mixedApi") return "official";
+  return "pureApi";
 }
 
 function normalizeContextSelection(

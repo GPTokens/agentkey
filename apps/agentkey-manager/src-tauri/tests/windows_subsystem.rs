@@ -127,6 +127,8 @@ fn manager_defaults_new_profiles_to_pure_api_mode() {
     assert!(app_tsx.contains("relayMode: \"pureApi\""));
     assert!(app_tsx.contains("relayMode: \"pureApi\" as RelayMode"));
     assert!(app_tsx.contains("normalized = withGeneratedRelayFiles(normalized);"));
+    assert!(app_tsx.contains("if (mode === \"official\" || mode === \"mixedApi\") return \"official\";"));
+    assert!(app_tsx.contains("return \"pureApi\";"));
     assert!(!app_tsx.contains("relayMode: \"official\""));
 }
 

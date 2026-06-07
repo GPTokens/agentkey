@@ -141,8 +141,8 @@ pub enum RelayProtocol {
 #[serde(rename_all = "camelCase")]
 pub enum RelayMode {
     Official,
-    #[default]
     MixedApi,
+    #[default]
     PureApi,
 }
 
@@ -1285,6 +1285,15 @@ mod tests {
         assert_eq!(profile.relay_mode, RelayMode::Official);
         assert!(!profile.official_mix_api_key);
         assert!(profile.test_model.is_empty());
+    }
+
+    #[test]
+    fn relay_profile_missing_mode_defaults_to_pure_api() {
+        let profile: RelayProfile =
+            serde_json::from_str(r#"{"id":"api","name":"API 供应商"}"#).unwrap();
+
+        assert_eq!(profile.relay_mode, RelayMode::PureApi);
+        assert!(!profile.official_mix_api_key);
     }
 
     #[test]
