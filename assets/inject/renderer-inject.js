@@ -49,7 +49,7 @@
   const agentKeyDeleteVersion = "7";
   const agentKeyExportVersion = "1";
   const agentKeyProjectMoveVersion = "1";
-  const codexActionGroupVersion = "5";
+  const agentKeyActionGroupVersion = "5";
   const agentKeyArchiveRowActionsVersion = "1";
   const agentKeyArchiveDeleteAllVersion = "2";
   const agentKeyConversationTimelineVersion = "2";
@@ -1727,7 +1727,7 @@
     if (!indicator) {
       indicator = document.createElement("span");
       indicator.className = "agentkey-backend-indicator";
-      indicator.dataset.codexBackendIndicator = "true";
+      indicator.dataset.agentkeyBackendIndicator = "true";
       trigger.prepend(indicator);
     }
     return indicator;
@@ -2916,9 +2916,9 @@
   function sessionRefFromRow(row) {
     const href = row.getAttribute("href") || row.querySelector("a")?.getAttribute("href") || "";
     const idMatch = href.match(/(?:session|conversation|thread)[=/:-]([A-Za-z0-9_.-]+)/i) || href.match(/([A-Za-z0-9_-]{8,})$/);
-    const codexThreadId = row.getAttribute("data-app-action-sidebar-thread-id") || "";
+    const desktopClientThreadId = row.getAttribute("data-app-action-sidebar-thread-id") || "";
     const fallbackId = row.getAttribute("data-session-id") || row.getAttribute("data-testid") || "";
-    const sessionId = codexThreadId || (idMatch && idMatch[1]) || fallbackId;
+    const sessionId = desktopClientThreadId || (idMatch && idMatch[1]) || fallbackId;
     const titleNode = row.querySelector(`${selectors.threadTitle}, .truncate.select-none, .truncate.text-base`);
     const rawTitle = (titleNode?.textContent || (titleNode ? "" : (row.textContent || "Untitled session")));
     const title = (titleNode ? rawTitle : rawTitle.replace(/\s*(导出|删除|移动|移出项目)(\s*(导出|删除|移动|移出项目))*$/g, "")).trim().slice(0, 160);
@@ -6169,7 +6169,7 @@
   }
 
   function installSessionMoreMenuAutoClose(row, menu) {
-    const group = menu.__codexSessionMoreGroup || menu.closest?.(`.${actionGroupClass}`);
+    const group = menu.__agentKeySessionMoreGroup || menu.__codexSessionMoreGroup || menu.closest?.(`.${actionGroupClass}`);
     const closeIfOutside = () => {
       window.setTimeout(() => {
         if (menu.hidden) return;
@@ -6212,7 +6212,7 @@
   }
 
   function showActionButtonTooltip(button) {
-    const label = button.dataset.codexActionLabel || button.getAttribute("aria-label") || "";
+    const label = button.dataset.agentKeyActionLabel || button.dataset.codexActionLabel || button.getAttribute("aria-label") || "";
     if (!label) return;
     hideActionButtonTooltip();
     const tooltip = document.createElement("div");
@@ -6244,7 +6244,8 @@
 
   function configureActionButton(button, label, icon) {
     button.setAttribute("aria-label", label);
-    button.dataset.codexActionLabel = label;
+    button.dataset.agentKeyActionLabel = label;
+    delete button.dataset.codexActionLabel;
     button.removeAttribute("title");
     button.textContent = icon;
   }
@@ -6263,7 +6264,8 @@
 
   function configureSvgActionButton(button, label, svg) {
     button.setAttribute("aria-label", label);
-    button.dataset.codexActionLabel = label;
+    button.dataset.agentKeyActionLabel = label;
+    delete button.dataset.codexActionLabel;
     button.removeAttribute("title");
     button.innerHTML = svg;
   }
@@ -6289,7 +6291,8 @@
     const missingDelete = settings.sessionDelete && !existingDeleteButton;
     const missingMore = needsMoreMenu && !existingMoreButton;
     const deleteReady = !settings.sessionDelete || existingDeleteButton?.dataset.agentKeyDeleteVersion === agentKeyDeleteVersion;
-    const groupReady = existingGroup?.dataset.codexActionGroupVersion === codexActionGroupVersion;
+    const groupReady = existingGroup?.dataset.agentKeyActionGroupVersion === agentKeyActionGroupVersion
+      || existingGroup?.dataset.codexActionGroupVersion === agentKeyActionGroupVersion;
     if (groupReady && deleteReady && !hasUnexpectedDelete && !hasUnexpectedMore && !hasUnexpectedExport && !hasUnexpectedMove && !missingDelete && !missingMore) {
       syncActionGroupLayout(row, existingGroup);
       return;
@@ -6303,7 +6306,7 @@
     row.dataset.agentKeyProjectMoveRow = String(!!settings.projectMove);
     const group = document.createElement("div");
     group.className = actionGroupClass;
-    group.dataset.codexActionGroupVersion = codexActionGroupVersion;
+    group.dataset.agentKeyActionGroupVersion = agentKeyActionGroupVersion;
     if (settings.markdownExport || settings.projectMove) {
       const moreButton = document.createElement("button");
       moreButton.type = "button";
@@ -6341,7 +6344,8 @@
       installMoreButtonEvents(row, moreButton, openMoreMenu);
       group.appendChild(moreButton);
       moreMenu.__agentKeySessionMoreRow = row;
-      moreMenu.__codexSessionMoreGroup = group;
+      moreMenu.__agentKeySessionMoreGroup = group;
+      delete moreMenu.__codexSessionMoreGroup;
       document.body.appendChild(moreMenu);
       installSessionMoreMenuAutoClose(row, moreMenu);
     }

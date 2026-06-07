@@ -46,6 +46,8 @@ fn injection_script_prefixes_helper_url_and_session_metadata() {
     assert!(script.contains("window.__AGENTKEY_VERSION__"));
     assert!(script.contains(agentkey_core::version::VERSION));
     assert!(script.contains("https://github.com/GPTokens/agentkey"));
+    assert!(script.contains("dataset.agentkeyBackendIndicator"));
+    assert!(!script.contains("dataset.codexBackendIndicator"));
 }
 
 #[test]
@@ -304,6 +306,15 @@ fn injection_script_keeps_session_action_buttons_in_pr_style() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("actionButtonClass = \"agentkey-session-action-button\""));
+    assert!(script.contains("agentKeyActionGroupVersion"));
+    assert!(script.contains("dataset.agentKeyActionLabel"));
+    assert!(script.contains("dataset.agentKeyActionGroupVersion"));
+    assert!(script.contains("__agentKeySessionMoreGroup"));
+    assert!(script.contains("dataset.codexActionLabel"));
+    assert!(!script.contains("const codexActionGroupVersion"));
+    assert!(!script.contains("dataset.codexActionLabel ="));
+    assert!(!script.contains("dataset.codexActionGroupVersion ="));
+    assert!(!script.contains(".__codexSessionMoreGroup ="));
     assert!(script.contains("background: transparent;"));
     assert!(script.contains("background: #363839;"));
     assert!(script.contains("cursor: default;"));
