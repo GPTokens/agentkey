@@ -120,7 +120,7 @@
 
   function helperJsonHeaders() {
     const headers = { "Content-Type": "application/json" };
-    if (helperToken) headers["X-Codex-Plus-Token"] = helperToken;
+    if (helperToken) headers["X-AgentKey-Token"] = helperToken;
     return headers;
   }
 

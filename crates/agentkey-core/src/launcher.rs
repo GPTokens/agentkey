@@ -1235,7 +1235,7 @@ fn http_header_value(request: &str, header_name: &str) -> Option<String> {
 }
 
 fn helper_request_authorized(request: &str, helper_token: &str, allow_relay_token: bool) -> bool {
-    let header_token = http_header_value(request, "X-Codex-Plus-Token")
+    let header_token = http_header_value(request, "X-AgentKey-Token")
         .filter(|value| !value.trim().is_empty());
     if header_token.as_deref() == Some(helper_token) {
         return true;
@@ -1354,7 +1354,7 @@ fn helper_origin_allowed(origin: &str) -> bool {
 fn helper_cors_headers(cors_origin: Option<&str>) -> String {
     match cors_origin {
         Some(origin) => format!(
-            "Access-Control-Allow-Origin: {origin}\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-Codex-Plus-Token\r\n"
+            "Access-Control-Allow-Origin: {origin}\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization, X-AgentKey-Token\r\n"
         ),
         None => String::new(),
     }

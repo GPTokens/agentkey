@@ -232,6 +232,17 @@ fn manager_window_and_relay_detail_header_stay_usable() {
 }
 
 #[test]
+fn manager_csp_blocks_broad_loopback_connections() {
+    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let tauri_conf =
+        std::fs::read_to_string(manifest_dir.join("tauri.conf.json")).expect("read tauri config");
+
+    assert!(tauri_conf.contains("connect-src 'self'"));
+    assert!(!tauri_conf.contains(concat!("http://127.0.0.1:", "*")));
+    assert!(!tauri_conf.contains(concat!("http://localhost:", "*")));
+}
+
+#[test]
 fn relay_preview_deduplicates_root_keys_when_merging_common_config() {
     let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     let app_tsx = manifest_dir.parent().unwrap().join("src/App.tsx");
