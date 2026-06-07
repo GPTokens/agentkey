@@ -486,7 +486,7 @@ async fn launch_lifecycle_runs_sync_before_launch_writes_success_and_shutdowns_o
             .load_latest()
             .unwrap()
             .unwrap()
-            .codex_app
+            .desktop_client
             .as_deref(),
         Some(app_dir.to_string_lossy().as_ref())
     );

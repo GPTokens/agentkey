@@ -10,7 +10,8 @@ pub struct LaunchStatus {
     pub started_at_ms: u64,
     pub debug_port: Option<u16>,
     pub helper_port: Option<u16>,
-    pub codex_app: Option<String>,
+    #[serde(rename = "desktop_client", alias = "codex_app")]
+    pub desktop_client: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -76,12 +77,39 @@ mod tests {
             started_at_ms: 12345,
             debug_port: Some(9222),
             helper_port: Some(4545),
-            codex_app: Some("Codex".to_string()),
+            desktop_client: Some("desktop-client".to_string()),
         };
 
         store.save_latest(&status).unwrap();
 
         assert_eq!(store.load_latest().unwrap(), Some(status));
+        let saved = std::fs::read_to_string(dir.join("nested").join("latest-status.json")).unwrap();
+        assert!(saved.contains("\"desktop_client\""));
+        assert!(!saved.contains("\"codex_app\""));
+    }
+
+    #[test]
+    fn status_store_load_latest_accepts_legacy_client_path_key() {
+        let dir = temp_dir();
+        let path = dir.join("latest-status.json");
+        std::fs::write(
+            &path,
+            r#"{
+  "status": "running",
+  "message": "ready",
+  "started_at_ms": 12345,
+  "debug_port": 9222,
+  "helper_port": 4545,
+  "codex_app": "legacy-client"
+}"#,
+        )
+        .unwrap();
+        let store = StatusStore::new(path);
+
+        assert_eq!(
+            store.load_latest().unwrap().unwrap().desktop_client.as_deref(),
+            Some("legacy-client")
+        );
     }
 
     #[test]

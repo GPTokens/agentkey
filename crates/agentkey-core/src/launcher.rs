@@ -1739,7 +1739,7 @@ fn launch_status(
         started_at_ms: now_ms(),
         debug_port: Some(debug_port),
         helper_port: Some(helper_port),
-        codex_app: Some(app_dir.to_string_lossy().to_string()),
+        desktop_client: Some(app_dir.to_string_lossy().to_string()),
     }
 }
 

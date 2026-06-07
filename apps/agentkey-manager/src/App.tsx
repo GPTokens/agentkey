@@ -76,12 +76,12 @@ type LaunchStatus = {
   started_at_ms: number;
   debug_port: number | null;
   helper_port: number | null;
-  codex_app: string | null;
+  desktop_client: string | null;
 };
 
 type OverviewResult = CommandResult<{
-  codex_app: PathState;
-  codex_version: string | null;
+  desktop_client: PathState;
+  desktop_client_version: string | null;
   silent_shortcut: PathState;
   management_shortcut: PathState;
   latest_launch: LaunchStatus | null;
@@ -90,6 +90,12 @@ type OverviewResult = CommandResult<{
   settings_path: string;
   logs_path: string;
 }>;
+
+type RawOverviewResult = OverviewResult & {
+  codex_app?: PathState;
+  codex_version?: string | null;
+  latest_launch: (LaunchStatus & { codex_app?: string | null }) | null;
+};
 
 type BackendSettings = {
   codexAppPath: string;
@@ -624,9 +630,9 @@ export function App() {
   };
 
   const refreshOverview = async (silent = false) => {
-    const result = await run(() => call<OverviewResult>("load_overview"));
+    const result = await run(() => call<RawOverviewResult>("load_overview"));
     if (result) {
-      setOverview(result);
+      setOverview(normalizeOverview(result));
       if (!silent) showResultNotice("概览已检查", result, { silentSuccess: true });
     }
   };
@@ -1769,13 +1775,13 @@ function OverviewScreen({
         <CardHead title="健康检查" detail="概览只展示关键问题，具体配置在对应页面处理" />
         <CardContent>
           <div className="health-grid">
-            <div className={`health-item ${overview?.codex_version ? "ok" : "needs-fix"}`}>
-              {overview?.codex_version ? <CheckCircle2 className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+            <div className={`health-item ${overview?.desktop_client_version ? "ok" : "needs-fix"}`}>
+              {overview?.desktop_client_version ? <CheckCircle2 className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
               <div>
-                <strong>Codex 版本</strong>
-                <span>{overview?.codex_version ?? "未检测到 Codex 应用版本。"}</span>
+                <strong>客户端版本</strong>
+                <span>{overview?.desktop_client_version ?? "未检测到桌面客户端版本。"}</span>
               </div>
-              <Badge status={overview?.codex_version ? "ok" : "not_checked"} />
+              <Badge status={overview?.desktop_client_version ? "ok" : "not_checked"} />
             </div>
             {health.map((item) => (
               <div className={`health-item ${item.ok ? "ok" : "needs-fix"}`} key={item.title}>
@@ -2389,10 +2395,10 @@ function MaintenanceScreen({
   return (
     <>
       <Panel>
-        <CardHead title="检查与修复" detail="检查入口、Codex 应用和 Watcher 状态" />
+        <CardHead title="检查与修复" detail="检查入口、桌面客户端和 Watcher 状态" />
         <CardContent>
           <div className="status-table">
-            <StatusRow title="Codex 应用" status={overview?.codex_app.status} path={overview?.codex_app.path} />
+            <StatusRow title="桌面客户端" status={overview?.desktop_client.status} path={overview?.desktop_client.path} />
             <StatusRow title="静默启动入口" status={overview?.silent_shortcut.status} path={overview?.silent_shortcut.path} />
             <StatusRow title="管理控制台入口" status={overview?.management_shortcut.status} path={overview?.management_shortcut.path} />
             <StatusRow title="Watcher 自动接管" status={watcher?.enabled ? "ok" : "disabled"} path={watcher?.disabled_flag} />
@@ -2430,16 +2436,16 @@ function MaintenanceScreen({
         </CardContent>
       </Panel>
       <Panel>
-        <CardHead title="Codex 应用路径" detail="免安装版或解包版只需要选择一次，之后静默启动会自动复用" />
+        <CardHead title="桌面客户端路径" detail="免安装版或解包版只需要选择一次，之后静默启动会自动复用" />
         <CardContent>
           <div className="status-table">
             <StatusRow title="保存路径" status={savedCodexAppPath ? "ok" : "not_checked"} path={savedCodexAppPath || null} />
-            <StatusRow title="当前识别" status={overview?.codex_app.status} path={overview?.codex_app.path} />
+            <StatusRow title="当前识别" status={overview?.desktop_client.status} path={overview?.desktop_client.path} />
           </div>
           <Field label="保存的应用路径">
             <Input
               value={settings?.settings.codexAppPath ?? ""}
-              placeholder="选择 Codex.exe、Codex.app、app 目录或解包目录"
+              placeholder="选择桌面客户端可执行文件、应用包、app 目录或解包目录"
               readOnly
             />
           </Field>
@@ -2506,7 +2512,7 @@ function AboutScreen({
         <CardContent>
           <div className="metric-list">
             <Metric label="AgentKey 版本" value={overview?.current_version ?? update?.currentVersion ?? "-"} />
-            <Metric label="Codex 版本" value={overview?.codex_version ?? "未检测到"} />
+            <Metric label="客户端版本" value={overview?.desktop_client_version ?? "未检测到"} />
             <Metric label="项目地址" value="github.com/GPTokens/agentkey" />
           </div>
           <Toolbar>
@@ -4470,10 +4476,10 @@ function isSuccessStatus(status?: Status) {
 function healthItems(overview: OverviewResult | null) {
   return [
     {
-      title: "Codex 应用",
-      status: overview?.codex_app.status ?? "not_checked",
-      ok: overview?.codex_app.status === "found",
-      detail: overview?.codex_app.path || "尚未检查 Codex 应用路径。",
+      title: "桌面客户端",
+      status: overview?.desktop_client.status ?? "not_checked",
+      ok: overview?.desktop_client.status === "found",
+      detail: overview?.desktop_client.path || "尚未检查桌面客户端路径。",
     },
     {
       title: "静默启动入口",
@@ -4488,6 +4494,25 @@ function healthItems(overview: OverviewResult | null) {
       detail: overview?.management_shortcut.path || "缺少管理工具快捷方式时可在安装维护页修复。",
     },
   ];
+}
+
+function normalizeOverview(result: RawOverviewResult): OverviewResult {
+  const { codex_app: legacyClient, codex_version: legacyClientVersion, ...overview } = result;
+  const latestLaunch = result.latest_launch
+    ? (() => {
+        const { codex_app: legacyLaunchClient, ...launch } = result.latest_launch;
+        return {
+          ...launch,
+          desktop_client: launch.desktop_client ?? legacyLaunchClient ?? null,
+        };
+      })()
+    : null;
+  return {
+    ...overview,
+    desktop_client: result.desktop_client ?? legacyClient ?? { status: "not_checked", path: null },
+    desktop_client_version: result.desktop_client_version ?? legacyClientVersion ?? null,
+    latest_launch: latestLaunch,
+  };
 }
 
 function normalizeSettings(settings: BackendSettings): BackendSettings {

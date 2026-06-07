@@ -38,8 +38,8 @@ pub struct PathState {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct OverviewPayload {
-    pub codex_app: PathState,
-    pub codex_version: Option<String>,
+    pub desktop_client: PathState,
+    pub desktop_client_version: Option<String>,
     pub silent_shortcut: PathState,
     pub management_shortcut: PathState,
     pub latest_launch: Option<LaunchStatus>,
@@ -293,8 +293,8 @@ pub async fn load_overview() -> CommandResult<OverviewPayload> {
         return failed(
             "概览后台任务失败。",
             OverviewPayload {
-                codex_app: path_state(None),
-                codex_version: None,
+                desktop_client: path_state(None),
+                desktop_client_version: None,
                 silent_shortcut: path_state(None),
                 management_shortcut: path_state(None),
                 latest_launch: None,
@@ -312,10 +312,10 @@ pub async fn load_overview() -> CommandResult<OverviewPayload> {
     ok(
         "概览已加载。",
         OverviewPayload {
-            codex_version: codex_app_path
+            desktop_client_version: codex_app_path
                 .as_deref()
                 .and_then(agentkey_core::app_paths::codex_app_version),
-            codex_app: path_state(codex_app_path),
+            desktop_client: path_state(codex_app_path),
             silent_shortcut: shortcut_state(entrypoints.silent_shortcut),
             management_shortcut: shortcut_state(entrypoints.management_shortcut),
             latest_launch,
@@ -2355,10 +2355,10 @@ fn diagnostics_report() -> String {
     let overview = ok(
         "概览已加载。",
         OverviewPayload {
-            codex_version: codex_app_path
+            desktop_client_version: codex_app_path
                 .as_deref()
                 .and_then(agentkey_core::app_paths::codex_app_version),
-            codex_app: path_state(codex_app_path),
+            desktop_client: path_state(codex_app_path),
             silent_shortcut: shortcut_state(entrypoints.silent_shortcut),
             management_shortcut: shortcut_state(entrypoints.management_shortcut),
             latest_launch,
@@ -2542,15 +2542,15 @@ mod tests {
         assert_eq!(result.status, "ok");
         assert!(!result.payload.current_version.is_empty());
         assert!(
-            result.payload.codex_version.is_none()
+            result.payload.desktop_client_version.is_none()
                 || result
                     .payload
-                    .codex_version
+                    .desktop_client_version
                     .as_deref()
                     .is_some_and(|version| !version.is_empty())
         );
         assert!(matches!(
-            result.payload.codex_app.status.as_str(),
+            result.payload.desktop_client.status.as_str(),
             "found" | "missing"
         ));
         assert!(matches!(
