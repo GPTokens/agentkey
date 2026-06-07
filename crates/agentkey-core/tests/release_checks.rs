@@ -1,7 +1,7 @@
 use agentkey_core::update::{
     Release, download_asset_to, is_newer_version, parse_version_tag, release_from_github_payload,
     release_from_latest_json_payload, safe_asset_name, select_update_asset, sha256_hex,
-    update_url_allowed, verify_release_asset_sha256,
+    update_asset_url_allowed, update_url_allowed, verify_release_asset_sha256,
 };
 use serde_json::json;
 
@@ -28,8 +28,8 @@ fn github_payload_selects_platform_installer() {
         "assets": [
             {"name": "source.zip", "browser_download_url": "https://example.test/source.zip"},
             {"name": "agentkey-manager.exe", "browser_download_url": "https://example.test/manager.exe"},
-            {"name": "AgentKey_1.0.9_x64-setup.exe", "browser_download_url": "https://example.test/setup.exe", "digest": "sha256:bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721"},
-            {"name": "AgentKey_1.0.9_x64.dmg", "browser_download_url": "https://example.test/app.dmg"}
+            {"name": "AgentKey_1.0.9_x64-setup.exe", "browser_download_url": "https://github.com/GPTokens/agentkey/releases/download/v1.0.9/setup.exe", "digest": "sha256:bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721"},
+            {"name": "AgentKey_1.0.9_x64.dmg", "browser_download_url": "https://github.com/GPTokens/agentkey/releases/download/v1.0.9/app.dmg"}
         ]
     }))
     .unwrap();
@@ -62,8 +62,8 @@ fn latest_json_payload_selects_platform_installer_without_github_api_shape() {
         "body": "静态更新描述",
         "assets": [
             {"name": "source.zip", "url": "https://example.test/source.zip"},
-            {"name": "AgentKey-1.1.6-windows-x64-setup.exe", "url": "https://example.test/setup.exe", "sha256": "bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721"},
-            {"name": "AgentKey-1.1.6-macos-x64.dmg", "url": "https://example.test/app.dmg"}
+            {"name": "AgentKey-1.1.6-windows-x64-setup.exe", "url": "https://github.com/GPTokens/agentkey/releases/download/v1.1.6/setup.exe", "sha256": "bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721"},
+            {"name": "AgentKey-1.1.6-macos-x64.dmg", "url": "https://github.com/GPTokens/agentkey/releases/download/v1.1.6/app.dmg"}
         ]
     }))
     .unwrap();
@@ -102,11 +102,11 @@ fn asset_selection_prefers_current_platform_artifacts() {
         ),
         (
             "AgentKey_1.0.9_x64-setup.exe".to_string(),
-            "https://example.test/setup.exe".to_string(),
+            "https://github.com/GPTokens/agentkey/releases/download/v1.0.9/setup.exe".to_string(),
         ),
         (
             "AgentKey_1.0.9_x64.dmg".to_string(),
-            "https://example.test/app.dmg".to_string(),
+            "https://github.com/GPTokens/agentkey/releases/download/v1.0.9/app.dmg".to_string(),
         ),
     ];
 
@@ -132,6 +132,26 @@ fn update_urls_must_use_https() {
 }
 
 #[test]
+fn update_asset_urls_must_use_agentkey_github_release() {
+    assert!(update_asset_url_allowed(
+        "https://github.com/GPTokens/agentkey/releases/download/v1.0.9/setup.exe"
+    ));
+    assert!(update_asset_url_allowed(
+        "https://github.com/gptokens/agentkey/releases/download/v1.0.9/setup.exe"
+    ));
+    assert!(!update_asset_url_allowed("https://example.test/setup.exe"));
+    assert!(!update_asset_url_allowed(
+        "https://github.com/other/agentkey/releases/download/v1.0.9/setup.exe"
+    ));
+    assert!(!update_asset_url_allowed(
+        "https://github.com/GPTokens/agentkey/archive/refs/tags/v1.0.9.zip"
+    ));
+    assert!(!update_asset_url_allowed(
+        "https://token@github.com/GPTokens/agentkey/releases/download/v1.0.9/setup.exe"
+    ));
+}
+
+#[test]
 fn asset_selection_ignores_non_https_urls() {
     let insecure_prefix = concat!("http", "://");
     let assets = vec![
@@ -146,6 +166,10 @@ fn asset_selection_ignores_non_https_urls() {
         (
             "AgentKey-1.0.9-windows-x64-setup.exe".to_string(),
             "https:///missing-host/setup.exe".to_string(),
+        ),
+        (
+            "AgentKey-1.0.9-windows-x64-setup.exe".to_string(),
+            "https://example.test/setup.exe".to_string(),
         ),
     ];
 

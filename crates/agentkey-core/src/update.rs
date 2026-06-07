@@ -169,6 +169,25 @@ pub fn update_url_allowed(url: &str) -> bool {
     crate::url_policy::https_url_allowed(url)
 }
 
+pub fn update_asset_url_allowed(url: &str) -> bool {
+    if !update_url_allowed(url) {
+        return false;
+    }
+    let Ok(parsed) = reqwest::Url::parse(url.trim()) else {
+        return false;
+    };
+    let Some(host) = parsed.host_str() else {
+        return false;
+    };
+    if !host.eq_ignore_ascii_case("github.com") {
+        return false;
+    }
+    parsed
+        .path()
+        .to_ascii_lowercase()
+        .starts_with("/gptokens/agentkey/releases/download/")
+}
+
 fn ensure_https_update_url(url: &str, label: &str) -> anyhow::Result<()> {
     if update_url_allowed(url) {
         Ok(())
@@ -177,10 +196,20 @@ fn ensure_https_update_url(url: &str, label: &str) -> anyhow::Result<()> {
     }
 }
 
-fn select_update_asset_with_hash(assets: &[(String, String, Option<String>)]) -> Option<ReleaseAsset> {
+fn ensure_update_asset_url(url: &str) -> anyhow::Result<()> {
+    if update_asset_url_allowed(url) {
+        Ok(())
+    } else {
+        anyhow::bail!("Release asset URL 必须来自 AgentKey GitHub Release")
+    }
+}
+
+fn select_update_asset_with_hash(
+    assets: &[(String, String, Option<String>)],
+) -> Option<ReleaseAsset> {
     let named = assets
         .iter()
-        .filter(|(name, url, _)| !name.trim().is_empty() && update_url_allowed(url))
+        .filter(|(name, url, _)| !name.trim().is_empty() && update_asset_url_allowed(url))
         .collect::<Vec<_>>();
     for (name, url, sha256) in &named {
         let lower = name.to_ascii_lowercase();
@@ -232,7 +261,7 @@ pub async fn perform_update(
         .asset_url
         .as_ref()
         .ok_or_else(|| anyhow::anyhow!("没有可下载的 Release asset"))?;
-    ensure_https_update_url(url, "Release asset")?;
+    ensure_update_asset_url(url)?;
     let bytes =
         crate::http_client::proxied_client(&format!("AgentKey/{}", crate::version::VERSION))?
             .get(url)
