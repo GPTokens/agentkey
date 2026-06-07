@@ -71,6 +71,12 @@ pub fn install_cli_wrapper_to(
     codex_home: &Path,
     settings: &BackendSettings,
 ) -> anyhow::Result<WrapperInstall> {
+    if !settings.cli_wrapper_base_url.trim().is_empty() {
+        crate::url_policy::validate_api_base_url(
+            "Codex CLI Wrapper Base URL",
+            &settings.cli_wrapper_base_url,
+        )?;
+    }
     std::fs::create_dir_all(wrapper_dir)
         .with_context(|| format!("failed to create wrapper dir {}", wrapper_dir.display()))?;
     std::fs::create_dir_all(codex_home)
@@ -169,14 +175,17 @@ pub fn build_wrapper_source(
     codex_home: &Path,
     settings: &BackendSettings,
 ) -> String {
-    let base_url_line = if settings.cli_wrapper_base_url.trim().is_empty() {
-        String::new()
-    } else {
-        format!(
-            r#"        startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = @{};"#,
-            cs_string_literal(settings.cli_wrapper_base_url.trim())
-        )
-    };
+    let base_url_line =
+        match crate::url_policy::validate_optional_api_base_url(
+            "Codex CLI Wrapper Base URL",
+            &settings.cli_wrapper_base_url,
+        ) {
+            Ok(Some(base_url)) => format!(
+                r#"        startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = @{};"#,
+                cs_string_literal(&base_url)
+            ),
+            Ok(None) | Err(_) => String::new(),
+        };
     let api_key_line = if settings.cli_wrapper_api_key.trim().is_empty() {
         String::new()
     } else {

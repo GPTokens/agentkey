@@ -125,10 +125,7 @@ fn optional_url(label: &str, value: &str) -> anyhow::Result<Option<String>> {
         return Ok(None);
     }
     validate_process_value(label, trimmed)?;
-    if !(trimmed.starts_with("https://") || trimmed.starts_with("http://")) {
-        anyhow::bail!("{label} 必须以 http:// 或 https:// 开头");
-    }
-    Ok(Some(trimmed.trim_end_matches('/').to_string()))
+    crate::url_policy::validate_optional_api_base_url(label, trimmed)
 }
 
 fn optional_env_value(name: &str, value: &str) -> anyhow::Result<Option<String>> {
@@ -198,6 +195,20 @@ mod tests {
     #[test]
     fn optional_url_requires_http_scheme() {
         let error = optional_url("Base URL", "ftp://example.test").unwrap_err();
-        assert!(error.to_string().contains("http://"));
+        assert!(error.to_string().contains("HTTPS"));
+    }
+
+    #[test]
+    fn optional_url_allows_local_http() {
+        assert_eq!(
+            optional_url("Base URL", "http://127.0.0.1:4000/v1/").unwrap(),
+            Some("http://127.0.0.1:4000/v1".to_string())
+        );
+    }
+
+    #[test]
+    fn optional_url_rejects_remote_http() {
+        let error = optional_url("Base URL", "http://gateway.example.test/v1").unwrap_err();
+        assert!(error.to_string().contains("HTTP 仅允许"));
     }
 }

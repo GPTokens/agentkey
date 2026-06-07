@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
 use agentkey_core::cli_wrapper::{
-    build_wrapper_source, parse_wrapper_source_settings, resolve_real_codex_from_candidates,
-    should_refresh_cli_wrapper, wrapper_dir_from_roaming, wrapper_settings_for_refresh,
+    build_wrapper_source, install_cli_wrapper_to, parse_wrapper_source_settings,
+    resolve_real_codex_from_candidates, should_refresh_cli_wrapper, wrapper_dir_from_roaming,
+    wrapper_settings_for_refresh,
 };
 use agentkey_core::settings::BackendSettings;
 
@@ -30,6 +31,47 @@ fn wrapper_source_embeds_absolute_real_codex_path() {
         r#"startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = @"https://proxy.example/v1";"#
     ));
     assert!(source.contains(r#"startInfo.EnvironmentVariables[apiKeyEnv] = @"sk-test";"#));
+}
+
+#[test]
+fn wrapper_source_omits_remote_http_base_url() {
+    let settings = BackendSettings {
+        cli_wrapper_enabled: true,
+        cli_wrapper_base_url: "http://gateway.example.test/v1".to_string(),
+        cli_wrapper_api_key: "sk-test".to_string(),
+        ..BackendSettings::default()
+    };
+    let source = build_wrapper_source(
+        &PathBuf::from(r"C:\AgentKey\codex.exe"),
+        &PathBuf::from(r"C:\Users\me\.agentkey-cli"),
+        &settings,
+    );
+
+    assert!(!source.contains("OPENAI_BASE_URL"));
+    assert!(source.contains(r#"startInfo.EnvironmentVariables[apiKeyEnv] = @"sk-test";"#));
+}
+
+#[test]
+fn wrapper_install_rejects_remote_http_base_url_before_compilation() {
+    let temp = tempfile::tempdir().unwrap();
+    let real_codex = temp.path().join("codex.exe");
+    std::fs::write(&real_codex, "").unwrap();
+    let settings = BackendSettings {
+        cli_wrapper_enabled: true,
+        cli_wrapper_base_url: "http://gateway.example.test/v1".to_string(),
+        cli_wrapper_api_key: "sk-test".to_string(),
+        ..BackendSettings::default()
+    };
+
+    let error = install_cli_wrapper_to(
+        &temp.path().join("wrapper"),
+        &real_codex,
+        &temp.path().join("home"),
+        &settings,
+    )
+    .unwrap_err();
+
+    assert!(error.to_string().contains("HTTP 仅允许"));
 }
 
 #[test]

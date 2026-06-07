@@ -11,6 +11,7 @@ AgentKey exposes local desktop-client functionality through a loopback helper. T
 - Restrict CORS to trusted desktop-client origins.
 - Never allow wildcard CORS on privileged helper routes.
 - Redact API keys and bearer tokens from diagnostics.
+- Require HTTPS for API provider base URLs unless the URL is loopback HTTP.
 - Verify downloaded update assets before execution.
 - Require HTTPS for update metadata and release asset downloads.
 - Require HTTPS for script market indexes and script downloads.
@@ -37,6 +38,8 @@ Diagnostics may include environment details, configuration paths, and provider s
 ## Claude Code Launch
 
 Claude Code is started with API credentials in the child process environment. API keys must not be written to command-line arguments or diagnostic events. Extra environment variables are accepted only as `KEY=value` lines with validated variable names.
+
+Claude Code and Codex CLI wrapper provider base URLs must use HTTPS. HTTP is accepted only for loopback development endpoints such as `localhost`, `127.0.0.1`, or `::1`.
 
 ## Script Market
 

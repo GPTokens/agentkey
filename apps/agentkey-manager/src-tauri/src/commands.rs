@@ -446,6 +446,16 @@ pub fn load_settings() -> CommandResult<SettingsPayload> {
 #[tauri::command]
 pub fn save_settings(settings: BackendSettings) -> CommandResult<SettingsPayload> {
     let mut settings = normalize_settings_before_save(settings);
+    if let Err(error) = validate_settings_before_save(&settings) {
+        let payload = SettingsPayload {
+            settings,
+            settings_path: agentkey_core::paths::default_settings_path()
+                .to_string_lossy()
+                .to_string(),
+            user_scripts: user_script_inventory(),
+        };
+        return failed(&format!("保存设置失败：{error}"), payload);
+    }
     if settings.ccs_link_enabled {
         if let Err(error) = agentkey_core::ccs_import::write_linked_profiles_to_default_db(
             &settings.relay_profiles,
@@ -712,6 +722,22 @@ fn normalize_provider_sync_provider_list(values: Vec<String>) -> Vec<String> {
     }
     result.sort();
     result
+}
+
+fn validate_settings_before_save(settings: &BackendSettings) -> anyhow::Result<()> {
+    if !settings.cli_wrapper_base_url.trim().is_empty() {
+        agentkey_core::url_policy::validate_api_base_url(
+            "Codex CLI Wrapper Base URL",
+            &settings.cli_wrapper_base_url,
+        )?;
+    }
+    if !settings.claude_code_base_url.trim().is_empty() {
+        agentkey_core::url_policy::validate_api_base_url(
+            "Claude Code Base URL",
+            &settings.claude_code_base_url,
+        )?;
+    }
+    Ok(())
 }
 
 fn settings_with_live_ccs_profiles(mut settings: BackendSettings) -> BackendSettings {
@@ -2564,6 +2590,38 @@ mod tests {
 
         assert!(!text.contains("sk-"));
         assert!(text.contains("hasBearerToken"));
+    }
+
+    #[test]
+    fn settings_validation_rejects_remote_http_api_base_urls() {
+        let cli_settings = BackendSettings {
+            cli_wrapper_base_url: "http://gateway.example.test/v1".to_string(),
+            ..BackendSettings::default()
+        };
+        let claude_settings = BackendSettings {
+            claude_code_base_url: "http://gateway.example.test/v1".to_string(),
+            ..BackendSettings::default()
+        };
+
+        assert!(validate_settings_before_save(&cli_settings).is_err());
+        assert!(validate_settings_before_save(&claude_settings).is_err());
+    }
+
+    #[test]
+    fn settings_validation_allows_https_and_loopback_http_api_base_urls() {
+        let https_settings = BackendSettings {
+            cli_wrapper_base_url: "https://gateway.example.test/v1".to_string(),
+            claude_code_base_url: "https://claude-gateway.example.test/v1".to_string(),
+            ..BackendSettings::default()
+        };
+        let loopback_settings = BackendSettings {
+            cli_wrapper_base_url: "http://127.0.0.1:4000/v1".to_string(),
+            claude_code_base_url: "http://localhost:4001/v1".to_string(),
+            ..BackendSettings::default()
+        };
+
+        assert!(validate_settings_before_save(&https_settings).is_ok());
+        assert!(validate_settings_before_save(&loopback_settings).is_ok());
     }
 
     #[test]

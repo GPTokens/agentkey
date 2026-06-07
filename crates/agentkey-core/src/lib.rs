@@ -23,6 +23,7 @@ pub mod settings;
 pub mod status;
 pub mod update;
 pub mod upstream_worktree;
+pub mod url_policy;
 pub mod user_scripts;
 pub mod version;
 pub mod watcher;
