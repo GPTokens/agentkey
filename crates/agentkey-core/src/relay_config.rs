@@ -114,7 +114,7 @@ pub fn set_codex_goals_feature_in_home(home: &Path, enabled: bool) -> anyhow::Re
         }
         Err(_) => set_codex_goals_feature_text_fallback(&existing, enabled),
     };
-    crate::settings::atomic_write(&config_path, updated.as_bytes())
+    write_sensitive_codex_file(&config_path, updated.as_bytes())
 }
 
 fn set_codex_goals_feature_text_fallback(existing: &str, enabled: bool) -> String {
@@ -828,20 +828,28 @@ fn write_codex_live_atomic(
     let mut auth_written = false;
 
     if let Some(auth_bytes) = auth_bytes {
-        if let Err(error) = crate::settings::atomic_write(&auth_path, auth_bytes) {
+        if let Err(error) = write_sensitive_codex_file(&auth_path, auth_bytes) {
             return Err(error.context("写入 auth.json 失败"));
         }
         auth_written = true;
     }
 
     if let Some(config_text) = config_text {
-        if let Err(error) = crate::settings::atomic_write(&config_path, config_text.as_bytes()) {
+        if let Err(error) = write_sensitive_codex_file(&config_path, config_text.as_bytes()) {
             if auth_written {
                 let _ = restore_optional_file(&auth_path, old_auth.as_deref());
             }
             let _ = restore_optional_file(&config_path, old_config.as_deref());
             return Err(error.context("写入 config.toml 失败"));
         }
+    }
+
+    if auth_bytes.is_none() && old_auth.is_some() {
+        crate::restrict_sensitive_file_access(&auth_path).context("收紧现有 auth.json 权限失败")?;
+    }
+    if config_text.is_none() && old_config.is_some() {
+        crate::restrict_sensitive_file_access(&config_path)
+            .context("收紧现有 config.toml 权限失败")?;
     }
 
     Ok(backup_path)
@@ -1806,7 +1814,7 @@ fn read_optional_bytes(path: &Path) -> anyhow::Result<Option<Vec<u8>>> {
 
 fn restore_optional_file(path: &Path, contents: Option<&[u8]>) -> anyhow::Result<()> {
     match contents {
-        Some(contents) => crate::settings::atomic_write(path, contents),
+        Some(contents) => write_sensitive_codex_file(path, contents),
         None => match std::fs::remove_file(path) {
             Ok(()) => Ok(()),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
@@ -1829,12 +1837,17 @@ fn create_live_backup(
         .join(format!("agentkey-live-{}", timestamp_millis()));
     std::fs::create_dir_all(&backup_dir)?;
     if let Some(config) = config {
-        std::fs::write(backup_dir.join("config.toml"), config)?;
+        write_sensitive_codex_file(&backup_dir.join("config.toml"), config)?;
     }
     if let Some(auth) = auth {
-        std::fs::write(backup_dir.join("auth.json"), auth)?;
+        write_sensitive_codex_file(&backup_dir.join("auth.json"), auth)?;
     }
     Ok(Some(backup_dir.to_string_lossy().to_string()))
+}
+
+fn write_sensitive_codex_file(path: &Path, contents: &[u8]) -> anyhow::Result<()> {
+    crate::settings::atomic_write(path, contents)?;
+    crate::restrict_sensitive_file_access(path)
 }
 
 fn timestamp_millis() -> u128 {
@@ -1849,6 +1862,43 @@ fn ensure_trailing_newline(mut contents: String) -> String {
         contents.push('\n');
     }
     contents
+}
+
+#[cfg(test)]
+mod sensitive_file_tests {
+    use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn sensitive_codex_file_write_restricts_unix_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("auth.json");
+
+        write_sensitive_codex_file(&path, br#"{"OPENAI_API_KEY":"sk-test"}"#).unwrap();
+
+        assert_eq!(
+            std::fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        assert_eq!(
+            std::fs::metadata(temp.path()).unwrap().permissions().mode() & 0o777,
+            0o700
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn sensitive_codex_file_write_restricts_windows_acl() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("auth.json");
+
+        write_sensitive_codex_file(&path, br#"{"OPENAI_API_KEY":"sk-test"}"#).unwrap();
+
+        assert!(path.exists());
+        assert!(crate::windows_integration::current_user_sid().is_ok());
+    }
 }
 
 fn move_model_providers_before_profiles(contents: &str) -> String {

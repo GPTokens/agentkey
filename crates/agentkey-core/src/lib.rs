@@ -31,7 +31,7 @@ pub mod watcher;
 mod windows_integration;
 pub mod zed_remote;
 
-pub fn harden_sensitive_file(path: &std::path::Path) -> anyhow::Result<()> {
+pub fn restrict_sensitive_file_access(path: &std::path::Path) -> anyhow::Result<()> {
     #[cfg(unix)]
     {
         use anyhow::Context;
@@ -53,6 +53,17 @@ pub fn harden_sensitive_file(path: &std::path::Path) -> anyhow::Result<()> {
     {
         use anyhow::Context;
 
+        windows_integration::restrict_path_to_current_user(path)
+            .with_context(|| format!("failed to restrict sensitive file {}", path.display()))?;
+    }
+    Ok(())
+}
+
+pub fn harden_sensitive_file(path: &std::path::Path) -> anyhow::Result<()> {
+    #[cfg(windows)]
+    {
+        use anyhow::Context;
+
         if let Some(parent) = path.parent() {
             windows_integration::restrict_path_to_current_user(parent).with_context(|| {
                 format!(
@@ -61,8 +72,12 @@ pub fn harden_sensitive_file(path: &std::path::Path) -> anyhow::Result<()> {
                 )
             })?;
         }
-        windows_integration::restrict_path_to_current_user(path)
-            .with_context(|| format!("failed to restrict sensitive file {}", path.display()))?;
+    }
+    restrict_sensitive_file_access(path)?;
+    #[cfg(windows)]
+    {
+        use anyhow::Context;
+
         windows_integration::hide_file(path)
             .with_context(|| format!("failed to hide sensitive file {}", path.display()))?;
     }
