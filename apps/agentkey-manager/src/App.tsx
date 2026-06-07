@@ -955,6 +955,11 @@ export function App() {
   };
 
   const launchClaudeCode = async () => {
+    const blockedReason = claudeCodeLaunchBlockedReason(settingsForm);
+    if (blockedReason) {
+      showNotice("Claude Code", blockedReason, "failed");
+      return;
+    }
     const next = await settingsForSave(settingsForm, false);
     const saved = await run(() => call<SettingsResult>("save_settings", { settings: next }));
     if (!saved) return;
@@ -1971,6 +1976,7 @@ function ClaudeCodeScreen({
   actions: Actions;
 }) {
   const authEnv = form.claudeCodeAuthMode === "authToken" ? "ANTHROPIC_AUTH_TOKEN" : "ANTHROPIC_API_KEY";
+  const launchBlockedReason = claudeCodeLaunchBlockedReason(form);
   return (
     <>
       <Panel>
@@ -2073,7 +2079,7 @@ function ClaudeCodeScreen({
             />
           </Field>
           <Toolbar>
-            <Button disabled={!form.claudeCodeEnabled} onClick={() => void actions.launchClaudeCode()}>
+            <Button disabled={!!launchBlockedReason} title={launchBlockedReason || undefined} onClick={() => void actions.launchClaudeCode()}>
               <Rocket className="h-4 w-4" />
               保存并启动 Claude Code
             </Button>
@@ -2085,6 +2091,13 @@ function ClaudeCodeScreen({
       </Panel>
     </>
   );
+}
+
+function claudeCodeLaunchBlockedReason(form: BackendSettings): string {
+  if (!form.claudeCodeEnabled) return "启用 Claude Code 配置后才能启动。";
+  if (!form.claudeCodeCommand.trim()) return "Claude Code 启动命令不能为空。";
+  if (!form.claudeCodeApiKey.trim()) return "Claude Code API Key 不能为空。";
+  return "";
 }
 
 function EnhanceScreen({

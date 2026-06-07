@@ -131,6 +131,20 @@ fn manager_defaults_new_profiles_to_pure_api_mode() {
 }
 
 #[test]
+fn claude_code_launch_requires_enabled_config_command_and_key() {
+    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let app_tsx = manifest_dir.parent().unwrap().join("src/App.tsx");
+    let app_tsx = std::fs::read_to_string(&app_tsx).expect("read manager App.tsx");
+
+    assert!(app_tsx.contains("function claudeCodeLaunchBlockedReason"));
+    assert!(app_tsx.contains("if (!form.claudeCodeEnabled)"));
+    assert!(app_tsx.contains("if (!form.claudeCodeCommand.trim())"));
+    assert!(app_tsx.contains("if (!form.claudeCodeApiKey.trim())"));
+    assert!(app_tsx.contains("const blockedReason = claudeCodeLaunchBlockedReason(settingsForm);"));
+    assert!(app_tsx.contains("disabled={!!launchBlockedReason}"));
+}
+
+#[test]
 fn macos_packager_hides_silent_launcher_but_not_manager() {
     let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     let packager = manifest_dir
