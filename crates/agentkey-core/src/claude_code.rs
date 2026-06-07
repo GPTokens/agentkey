@@ -117,6 +117,7 @@ fn validated_command(value: &str) -> anyhow::Result<String> {
         anyhow::bail!("Claude Code 命令不能为空");
     }
     validate_process_value("Claude Code 命令", trimmed)?;
+    reject_shell_control_command("Claude Code 命令", trimmed)?;
     reject_secret_like_command("Claude Code 命令", trimmed)?;
     Ok(trimmed.to_string())
 }
@@ -176,6 +177,19 @@ fn reject_secret_like_command(label: &str, value: &str) -> anyhow::Result<()> {
         anyhow::bail!(
             "{label} 不能包含 API Key、token、password 或 authorization 参数；请使用 AgentKey 的环境变量配置"
         );
+    }
+    Ok(())
+}
+
+fn reject_shell_control_command(label: &str, value: &str) -> anyhow::Result<()> {
+    if value.contains("$(") || value.contains('`') {
+        anyhow::bail!("{label} 不能包含命令替换语法");
+    }
+    if value
+        .chars()
+        .any(|ch| matches!(ch, '&' | '|' | ';' | '<' | '>'))
+    {
+        anyhow::bail!("{label} 不能包含 shell 链接、管道或重定向符号");
     }
     Ok(())
 }
@@ -298,6 +312,20 @@ mod tests {
             claude_code_command_for_display("claude --token plain-secret"),
             "[REDACTED_COMMAND]"
         );
+    }
+
+    #[test]
+    fn command_rejects_shell_control_operators() {
+        for command in [
+            "claude && curl https://example.test",
+            "claude | tee out.log",
+            "claude > out.log",
+            "claude `whoami`",
+            "claude $(whoami)",
+        ] {
+            let error = validated_command(command).unwrap_err();
+            assert!(error.to_string().contains("Claude Code 命令"));
+        }
     }
 
     #[test]
