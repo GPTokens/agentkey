@@ -1782,7 +1782,7 @@
     renderBackendStatus();
   }
 
-  async function openManagerFromCodex() {
+  async function openManagerFromDesktopClient() {
     const result = await postJson("/manager/open", {});
     if (result.status === "ok") {
       showToast("管理工具已打开", null);
@@ -2137,7 +2137,7 @@
         return;
       }
       if (target?.closest("[data-agentkey-open-manager]")) {
-        openManagerFromCodex();
+        openManagerFromDesktopClient();
         return;
       }
       if (target?.closest("[data-agentkey-discord]")) {
@@ -3693,12 +3693,12 @@
     return await call(method, params);
   }
 
-  async function getCodexGlobalState(key) {
+  async function getDesktopClientGlobalState(key) {
     const result = await desktopClientStateCall("get-global-state", { params: { key } });
     return result && Object.prototype.hasOwnProperty.call(result, "value") ? result.value : result;
   }
 
-  async function setCodexGlobalState(key, value) {
+  async function setDesktopClientGlobalState(key, value) {
     return await desktopClientStateCall("set-global-state", { params: { key, value } });
   }
 
@@ -3735,7 +3735,7 @@
         desktopClientModelCatalog = result && typeof result === "object" ? result : { status: "failed", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
         desktopClientModelCatalogLoadedAt = Date.now();
         renderAgentKeyMenu();
-        patchCodexModelWhitelist();
+        patchDesktopClientModelWhitelist();
         return desktopClientModelCatalog;
       })
       .catch((error) => {
@@ -4107,7 +4107,7 @@
     void patch();
   }
 
-  function patchCodexModelWhitelist() {
+  function patchDesktopClientModelWhitelist() {
     if (!agentKeyModelUnlockEnabled()) return;
     installModelJsonResponsePatch();
     patchAppServerModelMessages();
@@ -4865,21 +4865,21 @@
   async function setProjectlessThreadIds(ref, mode) {
     const variants = threadIdVariants(ref.session_id);
     if (variants.length === 0) throw new Error("未找到会话 ID");
-    const existingIds = await getCodexGlobalState("projectless-thread-ids").catch(() => []);
+    const existingIds = await getDesktopClientGlobalState("projectless-thread-ids").catch(() => []);
     const ids = Array.isArray(existingIds) ? existingIds : [];
     const variantSet = new Set(variants);
     const nextIds = mode === "add" ? uniqueValues([...ids, ...variants]) : ids.filter((id) => !variantSet.has(id));
-    if (nextIds.length !== ids.length || nextIds.some((id, index) => id !== ids[index])) await setCodexGlobalState("projectless-thread-ids", nextIds);
+    if (nextIds.length !== ids.length || nextIds.some((id, index) => id !== ids[index])) await setDesktopClientGlobalState("projectless-thread-ids", nextIds);
   }
 
   async function clearThreadWorkspaceHints(ref) {
     const variants = threadIdVariants(ref.session_id);
     if (variants.length === 0) return;
-    const hints = objectGlobalState(await getCodexGlobalState("thread-workspace-root-hints").catch(() => ({})));
+    const hints = objectGlobalState(await getDesktopClientGlobalState("thread-workspace-root-hints").catch(() => ({})));
     const hintKeys = variants.filter((id) => Object.prototype.hasOwnProperty.call(hints, id));
     if (hintKeys.length > 0) {
       hintKeys.forEach((id) => delete hints[id]);
-      await setCodexGlobalState("thread-workspace-root-hints", hints);
+      await setDesktopClientGlobalState("thread-workspace-root-hints", hints);
     }
   }
 
@@ -6490,7 +6490,7 @@
     ].join(", ");
   }
 
-  function nodeOrAncestorLooksLikeCodexUserBubble(node) {
+  function nodeOrAncestorLooksLikeUserBubble(node) {
     if (node.nodeType !== 1) return false;
     const className = String(node.className || "");
     if (className.includes("bg-token-foreground/5") && node.parentElement?.classList?.contains("items-end")) return true;
@@ -6498,15 +6498,15 @@
     return !!bubble?.parentElement?.classList?.contains("items-end");
   }
 
-  function nodeLooksLikeCodexUserBubble(node) {
-    if (nodeOrAncestorLooksLikeCodexUserBubble(node)) return true;
+  function nodeLooksLikeUserBubble(node) {
+    if (nodeOrAncestorLooksLikeUserBubble(node)) return true;
     return !!node.querySelector?.(".group.flex.w-full.flex-col.items-end.justify-end.gap-1 > [class*='bg-token-foreground/5']");
   }
 
   function nodeLooksLikeTimelineQuestion(node) {
     if (node.nodeType !== 1 || isExtensionUiNode(node)) return false;
     const questionSelector = timelineQuestionSelector();
-    return !!node.matches?.(questionSelector) || !!node.closest?.(questionSelector) || !!node.querySelector?.(questionSelector) || nodeLooksLikeCodexUserBubble(node);
+    return !!node.matches?.(questionSelector) || !!node.closest?.(questionSelector) || !!node.querySelector?.(questionSelector) || nodeLooksLikeUserBubble(node);
   }
 
   function conversationTimelineQuestionCandidates(root) {
@@ -7758,7 +7758,7 @@
     refreshConversationView();
     installAgentKeyServiceTierBadge();
     scheduleThreadScrollSync();
-    patchCodexModelWhitelist();
+    patchDesktopClientModelWhitelist();
   }
 
   function runScanStep(step) {
@@ -7807,7 +7807,7 @@
       !!node.closest?.(relevantSelector) ||
       !!node.matches?.(questionSelector) ||
       !!node.closest?.(questionSelector) ||
-      nodeOrAncestorLooksLikeCodexUserBubble(node);
+      nodeOrAncestorLooksLikeUserBubble(node);
   }
 
   function isScanRelevantNode(node) {

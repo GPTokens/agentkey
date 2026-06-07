@@ -51,6 +51,18 @@ fn injection_script_prefixes_helper_url_and_session_metadata() {
 }
 
 #[test]
+fn injection_script_uses_agentkey_internal_helper_names() {
+    let script = assets::injection_script(57321, "test-token");
+
+    assert!(!script.contains("openManagerFromCodex"));
+    assert!(!script.contains("getCodexGlobalState"));
+    assert!(!script.contains("setCodexGlobalState"));
+    assert!(!script.contains("patchCodexModelWhitelist"));
+    assert!(!script.contains("nodeOrAncestorLooksLikeCodexUserBubble"));
+    assert!(!script.contains("nodeLooksLikeCodexUserBubble"));
+}
+
+#[test]
 fn injection_script_marks_diagnostic_build_and_reports_script_loaded() {
     let script = assets::injection_script(57321, "test-token");
 
