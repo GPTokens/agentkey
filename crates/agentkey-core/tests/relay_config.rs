@@ -103,7 +103,7 @@ OPENAI_API_KEY = "sk-should-be-removed"
 name = "custom"
 wire_api = "responses"
 requires_openai_auth = true
-base_url = "http://192.168.188.245:3001/v1"
+base_url = "https://lan-relay.example.test/v1"
 experimental_bearer_token = "sk-test-redacted"
 "#,
     )
@@ -157,7 +157,7 @@ model_provider = "custom1"
 name = "custom1"
 wire_api = "responses"
 requires_openai_auth = true
-base_url = "http://192.168.188.245:3001/v1"
+base_url = "https://lan-relay.example.test/v1"
 [profiles.default]
 model = "gpt-5-mini"
 "#,
@@ -337,7 +337,7 @@ fn apply_pure_api_config_switches_auth_json_and_writes_provider_token() {
 
     let result = apply_pure_api_config_to_home(
         temp.path(),
-        "http://192.168.188.245:3001/v1",
+        "https://lan-relay.example.test/v1",
         "sk-test-redacted",
     )
     .unwrap();
@@ -357,7 +357,7 @@ fn apply_pure_api_config_switches_auth_json_and_writes_provider_token() {
     assert!(config.contains(r#"name = "custom""#));
     assert!(config.contains(r#"wire_api = "responses""#));
     assert!(config.contains("requires_openai_auth = true"));
-    assert!(config.contains(r#"base_url = "http://192.168.188.245:3001/v1""#));
+    assert!(config.contains(r#"base_url = "https://lan-relay.example.test/v1""#));
     assert!(config.contains(r#"experimental_bearer_token = "sk-test-redacted""#));
 }
 
@@ -1184,6 +1184,30 @@ experimental_bearer_token = "sk-new"
         std::fs::read_to_string(temp.path().join("auth.json")).unwrap(),
         r#"{"old":true}"#
     );
+}
+
+#[test]
+fn apply_relay_config_rejects_remote_http_base_url() {
+    let temp = tempfile::tempdir().unwrap();
+    let remote_http = format!("{}{}", concat!("http", "://"), "relay.example.test/v1");
+
+    let error = apply_relay_config_to_home(temp.path(), &remote_http, "sk-test-redacted")
+        .unwrap_err();
+
+    assert!(error.to_string().contains("HTTP 仅允许"));
+}
+
+#[test]
+fn apply_relay_files_rejects_remote_http_provider_base_url() {
+    let temp = tempfile::tempdir().unwrap();
+    let remote_http = format!("{}{}", concat!("http", "://"), "relay.example.test/v1");
+    let config = format!(
+        "model_provider = \"custom\"\n\n[model_providers.custom]\nbase_url = \"{remote_http}\"\n"
+    );
+
+    let error = apply_relay_files_to_home(temp.path(), &config, "{}").unwrap_err();
+
+    assert!(error.to_string().contains("HTTP 仅允许"));
 }
 
 #[test]
@@ -2076,7 +2100,7 @@ model_provider = "custom"
 name = "custom"
 wire_api = "responses"
 requires_openai_auth = true
-base_url = "http://192.168.188.245:3001/v1"
+base_url = "https://lan-relay.example.test/v1"
 "#
         .to_string(),
         auth_contents: "{}".to_string(),
@@ -2089,7 +2113,7 @@ base_url = "http://192.168.188.245:3001/v1"
     assert!(config.contains(r#"model = "gpt-5.5""#));
     assert!(config.contains(r#"model_provider = "custom""#));
     assert!(config.contains("[model_providers.custom]"));
-    assert!(config.contains(r#"base_url = "http://192.168.188.245:3001/v1""#));
+    assert!(config.contains(r#"base_url = "https://lan-relay.example.test/v1""#));
 }
 
 #[test]
@@ -2110,7 +2134,7 @@ model_provider = "custom"
 name = "custom"
 wire_api = "responses"
 requires_openai_auth = true
-base_url = "http://192.168.188.245:3001/v1"
+base_url = "https://lan-relay.example.test/v1"
 experimental_bearer_token = "sk-provider-token"
 "#
         .to_string(),
@@ -2209,7 +2233,7 @@ model_provider = "custom"
 name = "custom"
 wire_api = "responses"
 requires_openai_auth = true
-base_url = "http://192.168.188.245:3001/v1"
+base_url = "https://lan-relay.example.test/v1"
 "#;
     let common = r#"model_reasoning_effort = "high"
 
@@ -2229,7 +2253,7 @@ command = "python"
     assert!(stripped.contains(r#"model = "gpt-5.5""#));
     assert!(stripped.contains(r#"model_provider = "custom""#));
     assert!(stripped.contains("[model_providers.custom]"));
-    assert!(stripped.contains(r#"base_url = "http://192.168.188.245:3001/v1""#));
+    assert!(stripped.contains(r#"base_url = "https://lan-relay.example.test/v1""#));
 }
 
 #[test]

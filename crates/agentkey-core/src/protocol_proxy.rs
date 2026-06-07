@@ -432,6 +432,10 @@ pub async fn open_responses_proxy_request(body: &str) -> anyhow::Result<Upstream
     if relay.base_url.trim().is_empty() {
         anyhow::bail!("Chat Completions 上游 Base URL 不能为空");
     }
+    let base_url = crate::url_policy::validate_api_base_url(
+        "Chat Completions 上游 Base URL",
+        &relay.base_url,
+    )?;
     if relay.api_key.trim().is_empty() {
         anyhow::bail!("Chat Completions 上游 Key 不能为空");
     }
@@ -444,7 +448,7 @@ pub async fn open_responses_proxy_request(body: &str) -> anyhow::Result<Upstream
     let chat_request = responses_to_chat_completions(request_json.clone())?;
     let client = crate::http_client::proxied_client(&relay.user_agent)?;
     let upstream = client
-        .post(chat_completions_url(&relay.base_url))
+        .post(chat_completions_url(&base_url))
         .bearer_auth(relay.api_key.trim())
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .json(&chat_request)
@@ -475,13 +479,17 @@ pub async fn open_models_proxy_request() -> anyhow::Result<UpstreamProxyResponse
     if relay.base_url.trim().is_empty() {
         anyhow::bail!("Chat Completions 上游 Base URL 不能为空");
     }
+    let base_url = crate::url_policy::validate_api_base_url(
+        "Chat Completions 上游 Base URL",
+        &relay.base_url,
+    )?;
     if relay.api_key.trim().is_empty() {
         anyhow::bail!("Chat Completions 上游 Key 不能为空");
     }
 
     let client = crate::http_client::proxied_client(&relay.user_agent)?;
     let upstream = client
-        .get(models_url(&relay.base_url))
+        .get(models_url(&base_url))
         .bearer_auth(relay.api_key.trim())
         .send()
         .await?;
@@ -512,6 +520,10 @@ pub async fn open_chat_completions_proxy_request(
     if relay.base_url.trim().is_empty() {
         anyhow::bail!("Chat Completions 上游 Base URL 不能为空");
     }
+    let base_url = crate::url_policy::validate_api_base_url(
+        "Chat Completions 上游 Base URL",
+        &relay.base_url,
+    )?;
     if relay.api_key.trim().is_empty() {
         anyhow::bail!("Chat Completions 上游 Key 不能为空");
     }
@@ -522,7 +534,7 @@ pub async fn open_chat_completions_proxy_request(
         .and_then(Value::as_bool)
         .unwrap_or(false);
     let upstream = reqwest::Client::new()
-        .post(chat_completions_url(&relay.base_url))
+        .post(chat_completions_url(&base_url))
         .bearer_auth(relay.api_key.trim())
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .json(&request_json)

@@ -725,6 +725,15 @@ fn normalize_provider_sync_provider_list(values: Vec<String>) -> Vec<String> {
 }
 
 fn validate_settings_before_save(settings: &BackendSettings) -> anyhow::Result<()> {
+    if !settings.relay_base_url.trim().is_empty() {
+        agentkey_core::url_policy::validate_api_base_url(
+            "Relay Base URL",
+            &settings.relay_base_url,
+        )?;
+    }
+    for profile in &settings.relay_profiles {
+        agentkey_core::relay_config::validate_relay_profile_api_base_urls(profile)?;
+    }
     if !settings.cli_wrapper_base_url.trim().is_empty() {
         agentkey_core::url_policy::validate_api_base_url(
             "Codex CLI Wrapper Base URL",
@@ -2602,9 +2611,25 @@ mod tests {
             claude_code_base_url: "http://gateway.example.test/v1".to_string(),
             ..BackendSettings::default()
         };
+        let remote_http = format!("{}{}", concat!("http", "://"), "relay.example.test/v1");
+        let relay_settings = BackendSettings {
+            relay_base_url: remote_http.clone(),
+            ..BackendSettings::default()
+        };
+        let relay_profile_settings = BackendSettings {
+            relay_profiles: vec![RelayProfile {
+                relay_mode: agentkey_core::settings::RelayMode::PureApi,
+                base_url: remote_http,
+                api_key: "sk-test".to_string(),
+                ..RelayProfile::default()
+            }],
+            ..BackendSettings::default()
+        };
 
         assert!(validate_settings_before_save(&cli_settings).is_err());
         assert!(validate_settings_before_save(&claude_settings).is_err());
+        assert!(validate_settings_before_save(&relay_settings).is_err());
+        assert!(validate_settings_before_save(&relay_profile_settings).is_err());
     }
 
     #[test]

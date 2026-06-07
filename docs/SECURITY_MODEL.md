@@ -39,7 +39,7 @@ Diagnostics may include environment details, configuration paths, and provider s
 
 Claude Code is started with API credentials in the child process environment. API keys must not be written to command-line arguments or diagnostic events. Extra environment variables are accepted only as `KEY=value` lines with validated variable names.
 
-Claude Code and Codex CLI wrapper provider base URLs must use HTTPS. HTTP is accepted only for loopback development endpoints such as `localhost`, `127.0.0.1`, or `::1`.
+Relay providers, Claude Code, model-catalog fetches, Chat Completions proxy upstreams, and Codex CLI wrapper provider base URLs must use HTTPS. HTTP is accepted only for loopback development endpoints such as `localhost`, `127.0.0.1`, or `::1`.
 
 The Codex CLI wrapper must not write raw command arguments that look like keys, tokens, secrets, passwords, or authorization values to its log file.
 

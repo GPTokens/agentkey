@@ -249,15 +249,12 @@ pub fn apply_relay_config_to_home_with_protocol(
     protocol: RelayProtocol,
     proxy_port: u16,
 ) -> anyhow::Result<RelayApplyResult> {
-    let base_url = base_url.trim();
-    if base_url.is_empty() {
-        anyhow::bail!("中转 Base URL 不能为空");
-    }
+    let base_url = crate::url_policy::validate_api_base_url("中转 Base URL", base_url)?;
     let bearer_token = bearer_token.trim();
     if bearer_token.is_empty() {
         anyhow::bail!("中转 Key 不能为空");
     }
-    let codex_base_url = codex_base_url_for_protocol(base_url, protocol, proxy_port);
+    let codex_base_url = codex_base_url_for_protocol(&base_url, protocol, proxy_port);
     let updated = upsert_model_provider_config("", &codex_base_url, bearer_token)?;
     let auth_contents = serde_json::to_string_pretty(&json!({
         "OPENAI_API_KEY": bearer_token
@@ -294,6 +291,7 @@ pub fn apply_relay_files_to_home(
     if config_contents.trim().is_empty() {
         anyhow::bail!("config.toml 内容不能为空");
     }
+    validate_relay_config_base_urls(config_contents)?;
     std::fs::create_dir_all(home)?;
 
     let backup_path =
@@ -406,6 +404,7 @@ pub fn apply_relay_config_file_to_home(
     if config_contents.trim().is_empty() {
         anyhow::bail!("config.toml 内容不能为空");
     }
+    validate_relay_config_base_urls(config_contents)?;
     std::fs::create_dir_all(home)?;
 
     let backup_path = write_codex_live_atomic(home, Some(config_contents), None)?;
@@ -418,6 +417,32 @@ pub fn apply_relay_config_file_to_home(
     })
 }
 
+pub fn validate_relay_config_base_urls(config_contents: &str) -> anyhow::Result<()> {
+    let doc = parse_toml_document(config_contents)?;
+    validate_relay_config_url_item(doc.get("base_url"), "Root Base URL")?;
+    if let Some(providers) = doc.get("model_providers").and_then(Item::as_table) {
+        for (provider_id, provider) in providers.iter() {
+            let label = format!("Provider {provider_id} Base URL");
+            validate_relay_config_url_item(
+                provider.as_table().and_then(|table| table.get("base_url")),
+                &label,
+            )?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_relay_config_url_item(item: Option<&Item>, label: &str) -> anyhow::Result<()> {
+    let Some(base_url) = item.and_then(Item::as_str).map(str::trim) else {
+        return Ok(());
+    };
+    if base_url.is_empty() {
+        return Ok(());
+    }
+    crate::url_policy::validate_api_base_url(label, base_url)?;
+    Ok(())
+}
+
 pub fn apply_pure_api_config_to_home_with_protocol(
     home: &Path,
     base_url: &str,
@@ -425,15 +450,12 @@ pub fn apply_pure_api_config_to_home_with_protocol(
     protocol: RelayProtocol,
     proxy_port: u16,
 ) -> anyhow::Result<RelayApplyResult> {
-    let base_url = base_url.trim();
-    if base_url.is_empty() {
-        anyhow::bail!("中转 Base URL 不能为空");
-    }
+    let base_url = crate::url_policy::validate_api_base_url("中转 Base URL", base_url)?;
     let bearer_token = bearer_token.trim();
     if bearer_token.is_empty() {
         anyhow::bail!("中转 Key 不能为空");
     }
-    let codex_base_url = codex_base_url_for_protocol(base_url, protocol, proxy_port);
+    let codex_base_url = codex_base_url_for_protocol(&base_url, protocol, proxy_port);
     let updated = upsert_model_provider_config("", &codex_base_url, bearer_token)?;
     let auth_contents = serde_json::to_string_pretty(&json!({
         "OPENAI_API_KEY": bearer_token
@@ -454,9 +476,7 @@ pub async fn test_relay_profile(
 ) -> anyhow::Result<RelayProfileTestResult> {
     let base_url = relay_profile_base_url(profile);
     let base_url = base_url.trim().trim_end_matches('/');
-    if base_url.is_empty() {
-        anyhow::bail!("Base URL 不能为空");
-    }
+    let base_url = crate::url_policy::validate_api_base_url("Base URL", base_url)?;
     let api_key = relay_profile_api_key(profile);
     let api_key = api_key.trim();
     if api_key.is_empty() {
@@ -1511,6 +1531,9 @@ fn complete_relay_profile_config(profile: &RelayProfile) -> anyhow::Result<Strin
 
     let base_url = relay_profile_base_url(profile);
     let api_key = relay_profile_api_key(profile);
+    if !base_url.trim().is_empty() {
+        crate::url_policy::validate_api_base_url("Relay Profile Base URL", &base_url)?;
+    }
     doc.as_table_mut().remove(CHAT_UPSTREAM_BASE_URL_KEY);
     retain_only_provider_table(&mut doc, &provider_id);
     for legacy_provider in LEGACY_RELAY_PROVIDERS {
@@ -1559,6 +1582,17 @@ fn complete_relay_profile_config(profile: &RelayProfile) -> anyhow::Result<Strin
     Ok(move_model_providers_before_profiles(
         &ensure_trailing_newline(doc.to_string()),
     ))
+}
+
+pub fn validate_relay_profile_api_base_urls(profile: &RelayProfile) -> anyhow::Result<()> {
+    let base_url = relay_profile_base_url(profile);
+    if !base_url.trim().is_empty() {
+        crate::url_policy::validate_api_base_url("Relay Profile Base URL", &base_url)?;
+    }
+    if !profile.config_contents.trim().is_empty() {
+        validate_relay_config_base_urls(&profile.config_contents)?;
+    }
+    Ok(())
 }
 
 pub fn normalize_relay_profile_for_storage(profile: &mut RelayProfile) -> anyhow::Result<()> {

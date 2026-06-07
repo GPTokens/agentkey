@@ -453,11 +453,34 @@ async fn fetch_models_from_source(
     client: &reqwest::Client,
     source: &ModelSource,
 ) -> (Vec<String>, Value) {
-    let endpoint = models_endpoint(&source.base_url);
+    let base_url = match crate::url_policy::validate_api_base_url(
+        "Model catalog Base URL",
+        &source.base_url,
+    ) {
+        Ok(base_url) => base_url,
+        Err(error) => {
+            return (
+                Vec::new(),
+                json!({
+                    "id": &source.source_id,
+                    "type": &source.source_type,
+                    "name": &source.name,
+                    "base_url": safe_url_for_status(&source.base_url),
+                    "endpoint": "",
+                    "auth": if source.api_key.is_empty() { "missing" } else { "present" },
+                    "status": "failed",
+                    "message": error.to_string(),
+                    "models": 0,
+                    "responses_api": responses_api_status("unknown", "", "")
+                }),
+            );
+        }
+    };
+    let endpoint = models_endpoint(&base_url);
     let mut safe_source = json!({
-        "id": source.source_id,
-        "type": source.source_type,
-        "name": source.name,
+        "id": &source.source_id,
+        "type": &source.source_type,
+        "name": &source.name,
         "base_url": safe_url_for_status(&source.base_url),
         "endpoint": safe_url_for_status(&endpoint),
         "auth": if source.api_key.is_empty() { "missing" } else { "present" },
@@ -528,8 +551,10 @@ pub async fn fetch_relay_profile_model_ids(
     if source.base_url.is_empty() {
         anyhow::bail!("Base URL 不能为空");
     }
-    let endpoint = models_endpoint(&source.base_url);
+    let base_url = crate::url_policy::validate_api_base_url("Base URL", &source.base_url)?;
+    let endpoint = models_endpoint(&base_url);
     let client = crate::http_client::proxied_client(&profile.user_agent)?;
+    let source = ModelSource { base_url, ..source };
     let (models, status) = fetch_models_from_source(&client, &source).await;
     if models.is_empty() {
         let message = status
