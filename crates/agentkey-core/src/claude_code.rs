@@ -193,6 +193,7 @@ fn command_contains_secret_marker(value: &str) -> bool {
         "bearer",
         "password",
         "secret",
+        "token",
     ]
     .iter()
     .any(|marker| normalized.contains(marker));
@@ -238,7 +239,7 @@ fn parse_extra_env(contents: &str) -> anyhow::Result<Vec<(String, String)>> {
 
 fn is_managed_env_key(value: &str) -> bool {
     matches!(
-        value,
+        value.to_ascii_uppercase().as_str(),
         "ANTHROPIC_API_KEY"
             | "ANTHROPIC_AUTH_TOKEN"
             | "ANTHROPIC_BASE_URL"
@@ -274,11 +275,27 @@ mod tests {
     }
 
     #[test]
+    fn extra_env_rejects_managed_keys_case_insensitively() {
+        let error = parse_extra_env("anthropic_api_key=sk-override").unwrap_err();
+        assert!(error.to_string().contains("anthropic_api_key"));
+    }
+
+    #[test]
     fn command_rejects_secret_like_arguments() {
         let error = validated_command("claude --api-key sk-test").unwrap_err();
         assert!(error.to_string().contains("API Key"));
         assert_eq!(
             claude_code_command_for_display("claude --api-key sk-test"),
+            "[REDACTED_COMMAND]"
+        );
+    }
+
+    #[test]
+    fn command_rejects_generic_token_arguments() {
+        let error = validated_command("claude --token plain-secret").unwrap_err();
+        assert!(error.to_string().contains("token"));
+        assert_eq!(
+            claude_code_command_for_display("claude --token plain-secret"),
             "[REDACTED_COMMAND]"
         );
     }
