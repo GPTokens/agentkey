@@ -35,3 +35,7 @@ Diagnostics may include environment details, configuration paths, and provider s
 ## Claude Code Launch
 
 Claude Code is started with API credentials in the child process environment. API keys must not be written to command-line arguments or diagnostic events. Extra environment variables are accepted only as `KEY=value` lines with validated variable names.
+
+## Script Market
+
+Market scripts must provide a valid SHA-256 checksum before installation. AgentKey verifies the downloaded bytes before writing the script file. Newly installed market scripts are disabled by default and must be enabled explicitly.

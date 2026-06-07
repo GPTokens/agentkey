@@ -12,6 +12,7 @@ use agentkey_core::routes::{
 use agentkey_core::settings::BackendSettings;
 use agentkey_core::status::StatusStore;
 use agentkey_core::user_scripts::UserScriptManager;
+use agentkey_core::update::sha256_hex;
 use serde_json::{Value, json};
 
 #[tokio::test]
@@ -535,7 +536,7 @@ async fn user_script_manager_deletes_market_script_metadata_and_rejects_builtin_
         tags: Vec::new(),
         homepage: "https://example.com/demo".to_string(),
         script_url: "https://example.com/demo.js".to_string(),
-        sha256: String::new(),
+        sha256: sha256_hex(b"window.demo = true;"),
     };
 
     agentkey_core::script_market::install_market_script_content(
@@ -788,7 +789,7 @@ fn install_market_script_writes_file_and_records_metadata() {
         tags: Vec::new(),
         homepage: "https://example.com/demo".to_string(),
         script_url: "https://example.com/demo.js".to_string(),
-        sha256: String::new(),
+        sha256: sha256_hex(b"window.demo = true;"),
     };
 
     agentkey_core::script_market::install_market_script_content(
@@ -804,10 +805,41 @@ fn install_market_script_writes_file_and_records_metadata() {
     );
     let inventory = manager.inventory().unwrap();
     assert_eq!(inventory["scripts"][0]["market_id"], "demo");
+    assert_eq!(inventory["scripts"][0]["enabled"], false);
 }
 
 #[test]
-fn install_market_script_ignores_checksum_mismatch_and_replaces_existing_file() {
+fn install_market_script_rejects_missing_checksum() {
+    let temp = tempfile::tempdir().unwrap();
+    let manager = UserScriptManager::new(
+        temp.path().join("builtin"),
+        temp.path().join("user"),
+        temp.path().join("user_scripts.json"),
+    );
+    let script = agentkey_core::script_market::MarketScript {
+        id: "demo".to_string(),
+        name: "Demo".to_string(),
+        description: String::new(),
+        version: "1.0.0".to_string(),
+        author: String::new(),
+        tags: Vec::new(),
+        homepage: String::new(),
+        script_url: "https://example.com/demo.js".to_string(),
+        sha256: String::new(),
+    };
+
+    let result = agentkey_core::script_market::install_market_script_content(
+        &manager,
+        &script,
+        b"new",
+    );
+
+    assert!(result.is_err());
+    assert!(!temp.path().join("user").join("market-demo.js").exists());
+}
+
+#[test]
+fn install_market_script_rejects_checksum_mismatch_and_keeps_existing_file() {
     let temp = tempfile::tempdir().unwrap();
     let user_dir = temp.path().join("user");
     std::fs::create_dir_all(&user_dir).unwrap();
@@ -826,16 +858,14 @@ fn install_market_script_ignores_checksum_mismatch_and_replaces_existing_file() 
         tags: Vec::new(),
         homepage: String::new(),
         script_url: "https://example.com/demo.js".to_string(),
-        sha256: "0000".to_string(),
+        sha256: "0".repeat(64),
     };
 
-    agentkey_core::script_market::install_market_script_content(&manager, &script, b"new")
-        .unwrap();
+    let result =
+        agentkey_core::script_market::install_market_script_content(&manager, &script, b"new");
 
-    assert_eq!(
-        std::fs::read_to_string(user_dir.join("market-demo.js")).unwrap(),
-        "new"
-    );
+    assert!(result.is_err());
+    assert_eq!(std::fs::read_to_string(user_dir.join("market-demo.js")).unwrap(), "old");
 }
 
 #[tokio::test]

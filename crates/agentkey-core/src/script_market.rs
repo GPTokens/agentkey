@@ -85,6 +85,7 @@ pub fn install_market_script_content(
     script: &MarketScript,
     content: &[u8],
 ) -> anyhow::Result<()> {
+    verify_market_script_sha256(script, content)?;
     let path = manager.user_script_path_for_market_id(&script.id);
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).with_context(|| {
@@ -106,6 +107,20 @@ pub async fn install_market_script(
 ) -> anyhow::Result<()> {
     let content = download_script(&script.script_url).await?;
     install_market_script_content(manager, script, &content)
+}
+
+pub fn verify_market_script_sha256(script: &MarketScript, content: &[u8]) -> anyhow::Result<String> {
+    let expected = normalize_sha256(&script.sha256).ok_or_else(|| {
+        anyhow::anyhow!("市场脚本 {} 缺少 sha256 校验值，拒绝安装", script.id)
+    })?;
+    let actual = crate::update::sha256_hex(content);
+    if actual != expected {
+        anyhow::bail!(
+            "市场脚本 {} sha256 不匹配，拒绝安装：expected {expected}, got {actual}",
+            script.id
+        );
+    }
+    Ok(actual)
 }
 
 fn parse_market_script(raw: Value) -> Option<MarketScript> {
@@ -152,4 +167,17 @@ fn optional_string(raw: &Value, key: &str) -> String {
         .map(str::trim)
         .unwrap_or_default()
         .to_string()
+}
+
+fn normalize_sha256(value: &str) -> Option<String> {
+    let trimmed = value
+        .trim()
+        .strip_prefix("sha256:")
+        .unwrap_or_else(|| value.trim())
+        .to_ascii_lowercase();
+    if trimmed.len() == 64 && trimmed.chars().all(|ch| ch.is_ascii_hexdigit()) {
+        Some(trimmed)
+    } else {
+        None
+    }
 }

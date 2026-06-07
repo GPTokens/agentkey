@@ -159,7 +159,7 @@ impl UserScriptManager {
         let _guard = self.config_lock.lock().unwrap();
         let mut config = self.load_config_unlocked();
         let key = format!("user:{}", market_script_filename(&script.id));
-        config.scripts.entry(key.clone()).or_insert(true);
+        config.scripts.entry(key.clone()).or_insert(false);
         config.market.insert(
             key,
             MarketScriptInstall {
