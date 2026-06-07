@@ -245,6 +245,9 @@ fn parse_extra_env(contents: &str) -> anyhow::Result<Vec<(String, String)>> {
         if is_managed_env_key(key) {
             anyhow::bail!("Claude Code 额外环境变量不能覆盖 AgentKey 托管变量：{key}");
         }
+        if is_process_control_env_key(key) {
+            anyhow::bail!("Claude Code 额外环境变量不能覆盖进程控制变量：{key}");
+        }
         validate_process_value(key, value)?;
         vars.push((key.to_string(), value.trim().to_string()));
     }
@@ -260,6 +263,22 @@ fn is_managed_env_key(value: &str) -> bool {
             | "ANTHROPIC_MODEL"
             | "ANTHROPIC_SMALL_FAST_MODEL"
             | "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"
+    )
+}
+
+fn is_process_control_env_key(value: &str) -> bool {
+    matches!(
+        value.to_ascii_uppercase().as_str(),
+        "PATH"
+            | "PATHEXT"
+            | "COMSPEC"
+            | "SHELL"
+            | "IFS"
+            | "LD_PRELOAD"
+            | "LD_LIBRARY_PATH"
+            | "DYLD_INSERT_LIBRARIES"
+            | "DYLD_LIBRARY_PATH"
+            | "DYLD_FRAMEWORK_PATH"
     )
 }
 
@@ -292,6 +311,21 @@ mod tests {
     fn extra_env_rejects_managed_keys_case_insensitively() {
         let error = parse_extra_env("anthropic_api_key=sk-override").unwrap_err();
         assert!(error.to_string().contains("anthropic_api_key"));
+    }
+
+    #[test]
+    fn extra_env_rejects_process_control_keys() {
+        for key in [
+            "PATH",
+            "Path",
+            "COMSPEC",
+            "SHELL",
+            "LD_PRELOAD",
+            "DYLD_INSERT_LIBRARIES",
+        ] {
+            let error = parse_extra_env(&format!("{key}=value")).unwrap_err();
+            assert!(error.to_string().contains(key));
+        }
     }
 
     #[test]
