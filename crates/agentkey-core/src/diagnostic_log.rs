@@ -22,11 +22,11 @@ pub fn append_diagnostic_log(event: &str, detail: impl Serialize) -> std::io::Re
         std::fs::create_dir_all(parent)?;
     }
 
-    let detail = serde_json::to_value(detail).unwrap_or_else(|error| {
+    let detail = redact_diagnostic_value(serde_json::to_value(detail).unwrap_or_else(|error| {
         json!({
             "serialization_error": error.to_string()
         })
-    });
+    }));
     let record = DiagnosticRecord {
         timestamp_ms: now_ms(),
         pid: std::process::id(),
@@ -75,4 +75,133 @@ fn now_ms() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis() as u64
+}
+
+pub fn redact_diagnostic_value(value: Value) -> Value {
+    match value {
+        Value::Object(map) => Value::Object(
+            map.into_iter()
+                .map(|(key, value)| {
+                    if is_sensitive_key(&key) {
+                        (key, Value::String("[REDACTED]".to_string()))
+                    } else {
+                        (key, redact_diagnostic_value(value))
+                    }
+                })
+                .collect(),
+        ),
+        Value::Array(items) => {
+            Value::Array(items.into_iter().map(redact_diagnostic_value).collect())
+        }
+        Value::String(value) => Value::String(redact_diagnostic_string(&value)),
+        other => other,
+    }
+}
+
+fn is_sensitive_key(key: &str) -> bool {
+    let normalized = key
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect::<String>();
+    normalized.contains("apikey")
+        || normalized.contains("bearertoken")
+        || normalized.contains("authtoken")
+        || normalized.contains("accesstoken")
+        || normalized.contains("refreshtoken")
+        || normalized.contains("authorization")
+        || normalized.contains("token")
+        || normalized == "password"
+        || normalized == "secret"
+}
+
+fn redact_diagnostic_string(value: &str) -> String {
+    let mut redacted = redact_after_markers(value);
+    for prefix in [
+        "sk-", "sk_", "gho_", "ghp_", "github_pat_", "xoxb-", "xoxp-", "AKIA",
+    ] {
+        redacted = redact_prefixed_token(&redacted, prefix);
+    }
+    redacted
+}
+
+fn redact_after_markers(value: &str) -> String {
+    let mut output = value.to_string();
+    for marker in ["Bearer ", "bearer ", "Authorization: ", "authorization: "] {
+        output = redact_marker_value(&output, marker);
+    }
+    output
+}
+
+fn redact_marker_value(value: &str, marker: &str) -> String {
+    let mut output = String::with_capacity(value.len());
+    let mut remaining = value;
+    while let Some(index) = remaining.find(marker) {
+        let (before, after_before) = remaining.split_at(index);
+        output.push_str(before);
+        output.push_str(marker);
+        output.push_str("[REDACTED]");
+        let token_start = marker.len();
+        let after_marker = &after_before[token_start..];
+        let token_end = after_marker
+            .find(|ch: char| ch.is_whitespace() || matches!(ch, '"' | '\'' | ',' | ';' | '}'))
+            .unwrap_or(after_marker.len());
+        remaining = &after_marker[token_end..];
+    }
+    output.push_str(remaining);
+    output
+}
+
+fn redact_prefixed_token(value: &str, prefix: &str) -> String {
+    let mut output = String::with_capacity(value.len());
+    let mut remaining = value;
+    while let Some(index) = remaining.find(prefix) {
+        let (before, after_before) = remaining.split_at(index);
+        output.push_str(before);
+        output.push_str(prefix);
+        output.push_str("[REDACTED]");
+        let after_prefix = &after_before[prefix.len()..];
+        let token_end = after_prefix
+            .find(|ch: char| {
+                !(ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-' | '.' | ':'))
+            })
+            .unwrap_or(after_prefix.len());
+        remaining = &after_prefix[token_end..];
+    }
+    output.push_str(remaining);
+    output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn redacts_sensitive_object_keys_recursively() {
+        let redacted = redact_diagnostic_value(json!({
+            "apiKey": "sk-real",
+            "nested": {
+                "Authorization": "Bearer secret"
+            },
+            "safe": "visible"
+        }));
+
+        assert_eq!(redacted["apiKey"], "[REDACTED]");
+        assert_eq!(redacted["nested"]["Authorization"], "[REDACTED]");
+        assert_eq!(redacted["safe"], "visible");
+    }
+
+    #[test]
+    fn redacts_tokens_embedded_in_strings() {
+        let redacted = redact_diagnostic_value(json!({
+            "message": "Authorization: Bearer abc123 sk-live-token gho_secret"
+        }));
+        let text = redacted["message"].as_str().unwrap();
+
+        assert!(text.contains("[REDACTED]"));
+        assert!(!text.contains("abc123"));
+        assert!(!text.contains("live-token"));
+        assert!(!text.contains("gho_secret"));
+    }
 }

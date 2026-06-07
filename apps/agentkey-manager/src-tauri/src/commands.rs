@@ -2339,7 +2339,7 @@ fn diagnostics_report() -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis();
-    serde_json::to_string_pretty(&json!({
+    let report = agentkey_core::diagnostic_log::redact_diagnostic_value(json!({
         "generatedAtMs": generated_at_ms,
         "version": agentkey_core::version::VERSION,
         "overview": overview.payload,
@@ -2352,7 +2352,8 @@ fn diagnostics_report() -> String {
             "os": std::env::consts::OS,
             "arch": std::env::consts::ARCH
         }
-    }))
+    }));
+    serde_json::to_string_pretty(&report)
     .unwrap_or_else(|error| format!("诊断报告序列化失败：{error}"))
 }
 
