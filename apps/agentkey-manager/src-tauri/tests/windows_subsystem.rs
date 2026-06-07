@@ -119,6 +119,18 @@ fn manager_messages_do_not_require_desktop_account_for_api_key_mode() {
 }
 
 #[test]
+fn manager_defaults_new_profiles_to_pure_api_mode() {
+    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let app_tsx = manifest_dir.parent().unwrap().join("src/App.tsx");
+    let app_tsx = std::fs::read_to_string(&app_tsx).expect("read manager App.tsx");
+
+    assert!(app_tsx.contains("relayMode: \"pureApi\""));
+    assert!(app_tsx.contains("relayMode: \"pureApi\" as RelayMode"));
+    assert!(app_tsx.contains("normalized = withGeneratedRelayFiles(normalized);"));
+    assert!(!app_tsx.contains("relayMode: \"official\""));
+}
+
+#[test]
 fn macos_packager_hides_silent_launcher_but_not_manager() {
     let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     let packager = manifest_dir

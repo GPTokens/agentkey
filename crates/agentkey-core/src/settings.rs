@@ -104,10 +104,10 @@ impl Default for RelayProfile {
             upstream_base_url: String::new(),
             api_key: String::new(),
             protocol: RelayProtocol::Responses,
-            relay_mode: RelayMode::Official,
+            relay_mode: RelayMode::PureApi,
             official_mix_api_key: false,
             test_model: String::new(),
-            config_contents: String::new(),
+            config_contents: default_pure_api_config_contents(),
             auth_contents: String::new(),
             use_common_config: true,
             context_selection: RelayContextSelection::default(),
@@ -439,10 +439,10 @@ impl BackendSettings {
             },
             api_key: self.relay_api_key.clone(),
             protocol: RelayProtocol::Responses,
-            relay_mode: RelayMode::Official,
+            relay_mode: RelayMode::PureApi,
             official_mix_api_key: false,
             test_model: String::new(),
-            config_contents: String::new(),
+            config_contents: default_pure_api_config_contents(),
             auth_contents: String::new(),
             use_common_config: true,
             context_selection: RelayContextSelection::default(),
@@ -470,6 +470,10 @@ pub fn default_true() -> bool {
 
 pub fn default_relay_base_url() -> String {
     String::new()
+}
+
+pub fn default_pure_api_config_contents() -> String {
+    "model_provider = \"custom\"\n\n[model_providers]\n\n[model_providers.custom]\nname = \"custom\"\nwire_api = \"responses\"\nrequires_openai_auth = true\n".to_string()
 }
 
 pub fn default_active_relay_id() -> String {
@@ -1155,7 +1159,7 @@ mod tests {
         assert_eq!(settings.launch_mode, LaunchMode::Patch);
         assert_eq!(settings.relay_base_url, default_relay_base_url());
         assert!(settings.relay_api_key.is_empty());
-        assert_eq!(settings.relay_profiles[0].relay_mode, RelayMode::Official);
+        assert_eq!(settings.relay_profiles[0].relay_mode, RelayMode::PureApi);
         assert!(settings.relay_common_config_contents.is_empty());
         assert_eq!(settings.relay_test_model, default_relay_test_model());
         assert!(!settings.cli_wrapper_enabled);

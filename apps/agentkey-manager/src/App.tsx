@@ -551,7 +551,7 @@ const defaultSettings: BackendSettings = {
       upstreamBaseUrl: "",
       apiKey: "",
       protocol: "responses",
-      relayMode: "official",
+      relayMode: "pureApi",
       officialMixApiKey: false,
       testModel: "",
       configContents: "",
@@ -4549,7 +4549,7 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
             upstreamBaseUrl: settings.relayBaseUrl || defaultSettings.relayBaseUrl,
             apiKey: settings.relayApiKey || "",
             protocol: "responses" as RelayProtocol,
-            relayMode: "official" as RelayMode,
+            relayMode: "pureApi" as RelayMode,
             officialMixApiKey: false,
             testModel: "",
             configContents: "",
@@ -4624,6 +4624,9 @@ function normalizeRelayProfile(profile: RelayProfile, defaultContextSelection = 
     modelList: profile.modelList || "",
     userAgent: profile.userAgent || "",
   };
+  if (normalized.relayMode === "pureApi" && (!normalized.configContents.trim() || !normalized.authContents.trim())) {
+    normalized = withGeneratedRelayFiles(normalized);
+  }
   return deriveRelayProfileFromFiles(normalized);
 }
 
@@ -5139,7 +5142,7 @@ function createRelayProfile(settings: BackendSettings): RelayProfile {
     upstreamBaseUrl: defaultSettings.relayBaseUrl,
     apiKey: "",
     protocol: "responses" as RelayProtocol,
-    relayMode: "official" as RelayMode,
+    relayMode: "pureApi" as RelayMode,
     officialMixApiKey: false,
     testModel: "",
     configContents: "",
