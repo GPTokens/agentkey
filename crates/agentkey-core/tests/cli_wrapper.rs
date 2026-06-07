@@ -86,6 +86,19 @@ fn wrapper_config_contains_api_settings_outside_generated_source() {
 }
 
 #[test]
+fn wrapper_config_rejects_multiline_secret_values() {
+    let settings = BackendSettings {
+        cli_wrapper_enabled: true,
+        cli_wrapper_api_key: "sk-test\nsecond-line".to_string(),
+        ..BackendSettings::default()
+    };
+
+    let error = build_wrapper_config(&settings).unwrap_err();
+
+    assert!(error.to_string().contains("换行"));
+}
+
+#[test]
 fn wrapper_install_rejects_remote_http_base_url_before_compilation() {
     let temp = tempfile::tempdir().unwrap();
     let real_codex = temp.path().join("codex.exe");

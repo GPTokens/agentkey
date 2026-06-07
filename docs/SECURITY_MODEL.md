@@ -43,7 +43,7 @@ Relay providers, Claude Code, model-catalog fetches, Chat Completions proxy upst
 
 The Codex CLI wrapper must not write raw command arguments that look like keys, tokens, secrets, passwords, or authorization values to its log file.
 
-The Codex CLI wrapper source and compiled executable must not embed provider API keys. Runtime API settings are loaded from the wrapper sidecar config file so wrapper rebuilds do not bake secrets into generated C# source or the compiled binary.
+The Codex CLI wrapper source and compiled executable must not embed provider API keys. Runtime API settings are loaded from the wrapper sidecar config file so wrapper rebuilds do not bake secrets into generated C# source or the compiled binary. The sidecar config is hidden on Windows and restricted to owner read/write permissions on Unix-like systems.
 
 ## Script Market
 

@@ -12,6 +12,8 @@ use anyhow::Context;
 #[cfg(windows)]
 use windows::Win32::Foundation::{BOOL, CloseHandle, HANDLE, HWND, LPARAM, MAX_PATH};
 #[cfg(windows)]
+use windows::Win32::Storage::FileSystem::{SetFileAttributesW, FILE_ATTRIBUTE_HIDDEN};
+#[cfg(windows)]
 use windows::Win32::System::Com::{
     CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, CoCreateInstance, CoInitializeEx,
     CoTaskMemFree, CoUninitialize, IPersistFile,
@@ -127,6 +129,19 @@ pub fn create_shortcut(spec: &ShortcutSpec) -> anyhow::Result<()> {
         persist_file
             .Save(PCWSTR(wide_null(spec.path.as_os_str()).as_ptr()), true)
             .context("保存快捷方式失败")?;
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+pub fn hide_file(path: &std::path::Path) -> anyhow::Result<()> {
+    unsafe {
+        SetFileAttributesW(
+            PCWSTR(wide_null(path.as_os_str()).as_ptr()),
+            FILE_ATTRIBUTE_HIDDEN,
+        )
+        .ok()
+        .context("设置隐藏文件属性失败")?;
     }
     Ok(())
 }

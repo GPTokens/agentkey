@@ -143,7 +143,29 @@ pub fn build_wrapper_config(settings: &BackendSettings) -> anyhow::Result<String
 
 fn write_wrapper_config_to(path: &Path, settings: &BackendSettings) -> anyhow::Result<()> {
     let config = build_wrapper_config(settings)?;
-    std::fs::write(path, config).with_context(|| format!("failed to write {}", path.display()))
+    std::fs::write(path, config).with_context(|| format!("failed to write {}", path.display()))?;
+    harden_wrapper_config_file(path)?;
+    Ok(())
+}
+
+fn harden_wrapper_config_file(path: &Path) -> anyhow::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let permissions = std::fs::Permissions::from_mode(0o600);
+        std::fs::set_permissions(path, permissions)
+            .with_context(|| format!("failed to restrict {}", path.display()))?;
+    }
+    #[cfg(windows)]
+    {
+        crate::windows_integration::hide_file(path)
+            .with_context(|| format!("failed to hide {}", path.display()))?;
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = path;
+    }
+    Ok(())
 }
 
 pub fn install_cli_wrapper_to(
