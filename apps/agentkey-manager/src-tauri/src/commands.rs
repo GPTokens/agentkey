@@ -340,7 +340,7 @@ pub fn launch_agentkey(request: LaunchRequest) -> CommandResult<Value> {
 pub fn restart_agentkey(request: LaunchRequest) -> CommandResult<Value> {
     agentkey_core::watcher::stop_launcher_processes();
     agentkey_core::watcher::stop_codex_processes();
-    spawn_agentkey_launch(request, "Codex 已请求重启，启动任务正在后台运行。")
+    spawn_agentkey_launch(request, "桌面客户端已请求重启，启动任务正在后台运行。")
 }
 
 #[tauri::command]
@@ -516,7 +516,7 @@ pub fn load_provider_links() -> CommandResult<ProviderLinksPayload> {
     let db_path = agentkey_core::provider_link::default_provider_link_db_path();
     match agentkey_core::provider_link::list_codex_providers_from_db(&db_path) {
         Ok(providers) => ok(
-            &format!("已读取外部 Codex 供应商配置：{} 个。", providers.len()),
+            &format!("已读取外部桌面客户端供应商配置：{} 个。", providers.len()),
             ProviderLinksPayload {
                 db_path: db_path.to_string_lossy().to_string(),
                 providers,
@@ -549,7 +549,7 @@ pub fn import_provider_links() -> CommandResult<SettingsPayload> {
     remove_linked_provider_profiles_for_local_storage(&mut settings);
 
     if synced == 0 {
-        return settings_payload("没有可联动的外部 Codex 供应商配置。", "设置读取失败");
+        return settings_payload("没有可联动的外部桌面客户端供应商配置。", "设置读取失败");
     }
 
     match store.save(&settings) {
@@ -1613,7 +1613,7 @@ pub fn sync_live_context_entries(
     if let Some(parent) = config_path.parent() {
         if let Err(error) = std::fs::create_dir_all(parent) {
             return failed(
-                &format!("创建 Codex 配置目录失败：{error}"),
+                &format!("创建桌面客户端配置目录失败：{error}"),
                 LiveContextEntriesPayload {
                     entries: empty_context_entries(),
                 },

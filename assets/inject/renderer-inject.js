@@ -1414,7 +1414,7 @@
     const title = [
       `服务模式：${scope}`,
       "Standard：使用标准处理；不在请求上设置 priority。",
-      "Fast：对请求使用 service_tier=\"priority\"，官方说明其延迟更低且更一致，但会按更高价格计费；rate limit 与 Standard 共享，流量快速上涨时可能回落到 Standard。",
+      "Fast：对请求使用 service_tier=\"priority\"，服务说明称其延迟更低且更一致，但会按更高价格计费；rate limit 与 Standard 共享，流量快速上涨时可能回落到 Standard。",
     ].join("\n");
     if (effectiveMode === "fast") return { tier: "fast", label: "fast", title };
     return { tier: "standard", label: "standard", title };
@@ -2409,9 +2409,9 @@
   }
 
   function displayNameForPluginMarketplaceName(name, fallback) {
-    if (name === "openai-bundled" || name === "agentkey-openai-bundled") return "OpenAI插件1(AgentKey)";
-    if (name === "openai-curated" || name === "agentkey-openai-curated") return "OpenAI插件2(AgentKey)";
-    if (name === "openai-primary-runtime" || name === "agentkey-openai-primary-runtime") return "OpenAI插件3(AgentKey)";
+    if (name === "openai-bundled" || name === "agentkey-openai-bundled") return "插件源1(AgentKey)";
+    if (name === "openai-curated" || name === "agentkey-openai-curated") return "插件源2(AgentKey)";
+    if (name === "openai-primary-runtime" || name === "agentkey-openai-primary-runtime") return "插件源3(AgentKey)";
     return fallback;
   }
 
@@ -4898,7 +4898,7 @@
   async function moveSessionToProject(ref, target) {
     if (!ref.session_id) throw new Error("未找到会话 ID");
     if (!target?.path) throw new Error("目标项目路径为空");
-    if (!isNativeProjectTarget(target)) throw new Error("目标项目不在 Codex 项目列表中");
+    if (!isNativeProjectTarget(target)) throw new Error("目标项目不在桌面客户端项目列表中");
     const result = await postJson("/move-thread-workspace", { ...ref, target_cwd: target.path });
     if (result.status !== "moved") throw new Error(result.message || "移动项目失败");
     await setProjectlessThreadIds(ref, "remove");

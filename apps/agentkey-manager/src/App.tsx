@@ -1920,7 +1920,7 @@ function RelayScreen({
             />
             <span>
               <strong>启用供应商配置切换</strong>
-              <small>关闭后本工具不会在手动切换时写入 Codex 的 config.toml / auth.json；启动 Codex 时始终不会自动改这些文件。</small>
+              <small>关闭后本工具不会在手动切换时写入桌面客户端 config.toml / auth.json；启动桌面客户端时始终不会自动改这些文件。</small>
             </span>
           </label>
           <label className="switch-row relay-link-switch">
@@ -2358,7 +2358,7 @@ function RecommendationsScreen({ ads, actions }: { ads: AdsResult | null; action
   return (
     <>
       <Panel>
-        <CardHead title="推荐内容" detail="与 Codex 内插件菜单使用同一个远端广告源" />
+        <CardHead title="推荐内容" detail="与桌面客户端插件菜单使用同一个远端广告源" />
         <CardContent>
           <div className="recommend-hero">
             <div>
@@ -2467,7 +2467,7 @@ function MaintenanceScreen({
           </Field>
           <Toolbar>
             <Button onClick={() => void actions.chooseCodexAppPath("folder")}>选择应用目录</Button>
-            <Button variant="secondary" onClick={() => void actions.chooseCodexAppPath("file")}>选择 Codex.exe</Button>
+            <Button variant="secondary" onClick={() => void actions.chooseCodexAppPath("file")}>选择客户端可执行文件</Button>
             <Button variant="secondary" onClick={() => void actions.clearCodexAppPath()}>清除保存路径</Button>
           </Toolbar>
         </CardContent>
@@ -3244,7 +3244,7 @@ function RelayProfileEditor({
       {showApiFields && profile.protocol === "chatCompletions" ? (
         <div className="hint-line relay-protocol-hint">
           <MessageCircle className="h-4 w-4" />
-          <span>此上游会通过本地 127.0.0.1:57321 转成 Responses API，需要从 AgentKey 启动 Codex。</span>
+          <span>此上游会通过本地 127.0.0.1:57321 转成 Responses API，需要从 AgentKey 启动桌面客户端。</span>
         </div>
       ) : null}
       <div className="hint-line relay-protocol-hint">
@@ -4450,7 +4450,7 @@ function relayProfileSourceLabel(profile: RelayProfile) {
 
 function relayProfileEditorStatus(profile: RelayProfile, form: BackendSettings, isNew: boolean) {
   if (isNew) return "新建供应商需要先保存到列表";
-  if (!form.relayProfilesEnabled) return "供应商配置总开关已关闭；当前只保存配置，不写入 Codex live 文件";
+  if (!form.relayProfilesEnabled) return "供应商配置总开关已关闭；当前只保存配置，不写入桌面客户端 live 文件";
   if (profile.linkedProviderSourceId && form.providerLinkEnabled) return "联动外部供应商数据库；保存后会回写外部供应商数据库";
   if (profile.linkedProviderSourceId) return "联动外部供应商数据库；当前未开启保存回写";
   return profile.id === form.activeRelayId ? "当前正在使用" : "编辑后保存列表，再切换模式时会使用新配置";
