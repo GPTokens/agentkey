@@ -769,7 +769,7 @@ fn preserve_official_mix_bearer_tokens(
 
 fn set_or_replace_experimental_bearer_token(contents: &str, token: &str) -> String {
     let mut doc = parse_toml_document(contents).unwrap_or_else(|_| DocumentMut::new());
-    let provider_id = active_provider_id(&doc).unwrap_or_else(|| "codex-plus-relay".to_string());
+    let provider_id = active_provider_id(&doc).unwrap_or_else(|| "agentkey-relay".to_string());
     doc["model_provider"] = toml_edit::value(provider_id.as_str());
     doc["model_providers"][provider_id.as_str()]["experimental_bearer_token"] =
         toml_edit::value(token.trim());

@@ -39,11 +39,11 @@ fn injection_script_prefixes_helper_url_and_session_metadata() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("window.__CODEX_SESSION_DELETE_HELPER__"));
-    assert!(script.contains("window.__CODEX_PLUS_HELPER_TOKEN__"));
+    assert!(script.contains("window.__AGENTKEY_HELPER_TOKEN__"));
     assert!(script.contains("test-token"));
     assert!(script.contains("http://127.0.0.1:57321"));
-    assert!(!script.contains("window.__CODEX_PLUS_SPONSOR_IMAGES__"));
-    assert!(script.contains("window.__CODEX_PLUS_VERSION__"));
+    assert!(!script.contains("window.__AGENTKEY_SPONSOR_IMAGES__"));
+    assert!(script.contains("window.__AGENTKEY_VERSION__"));
     assert!(script.contains(agentkey_core::version::VERSION));
     assert!(script.contains("https://github.com/GPTokens/agentkey"));
 }
@@ -52,22 +52,22 @@ fn injection_script_prefixes_helper_url_and_session_metadata() {
 fn injection_script_marks_diagnostic_build_and_reports_script_loaded() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("window.__CODEX_PLUS_BUILD__"));
+    assert!(script.contains("window.__AGENTKEY_BUILD__"));
     assert!(script.contains(agentkey_core::assets::DIAGNOSTIC_BUILD_ID));
     assert!(script.contains("script_loaded"));
-    assert!(script.contains("data-codex-plus-build"));
+    assert!(script.contains("data-agentkey-build"));
 }
 
 #[test]
 fn injection_script_fetches_ads_without_bridge() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("directFetchCodexPlusAds"));
-    assert!(script.contains("cacheBustCodexPlusAdUrl"));
+    assert!(script.contains("directFetchAgentKeyAds"));
+    assert!(script.contains("cacheBustAgentKeyAdUrl"));
     assert!(script.contains("Date.now()"));
     assert!(script.contains("GPTokens/agentkey"));
     assert!(
-        !script.contains("codexPlusAds = normalizeCodexPlusAds(await postJson(\"/ads\", {}));")
+        !script.contains("agentKeyAds = normalizeAgentKeyAds(await postJson(\"/ads\", {}));")
     );
 }
 
@@ -94,11 +94,11 @@ fn injection_script_menu_exposes_three_independent_plugin_switches() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("插件市场解锁"));
-    assert!(script.contains("data-codex-plus-setting=\"pluginMarketplaceUnlock\""));
+    assert!(script.contains("data-agentkey-setting=\"pluginMarketplaceUnlock\""));
     assert!(script.contains("强制解锁入口"));
-    assert!(script.contains("data-codex-plus-setting=\"pluginEntryUnlock\""));
+    assert!(script.contains("data-agentkey-setting=\"pluginEntryUnlock\""));
     assert!(script.contains("特殊插件强制安装"));
-    assert!(script.contains("data-codex-plus-setting=\"forcePluginInstall\""));
+    assert!(script.contains("data-agentkey-setting=\"forcePluginInstall\""));
     assert!(script.contains("恢复 1.1.9 的入口解锁方式"));
 }
 
@@ -107,7 +107,7 @@ fn injection_script_skips_plugin_patch_work_in_relay_mode() {
     let script = assets::injection_script(57321, "test-token");
 
     assert!(script.contains("function pluginPatchDisabledInRelayMode()"));
-    assert!(script.contains("!codexPlusBackendSettingsLoaded"));
+    assert!(script.contains("!agentKeyBackendSettingsLoaded"));
     assert!(script.contains("if (pluginPatchDisabledInRelayMode()) return"));
     assert!(script.contains("clearPluginPatchArtifacts()"));
 }
@@ -147,7 +147,7 @@ fn injection_script_restores_legacy_plugin_sidebar_entry_unlock() {
     assert!(script.contains("auth.setAuthMethod(\"chatgpt\")"));
     assert!(script.contains("function pluginEntryButton()"));
     assert!(script.contains("function enablePluginEntry()"));
-    assert!(script.contains("if (!codexPlusSettings().pluginEntryUnlock) return"));
+    assert!(script.contains("if (!agentKeySettings().pluginEntryUnlock) return"));
     assert!(script.contains("pluginButton.addEventListener(\"click\", () => {"));
     assert!(script.contains("spoofChatGPTAuthMethod(pluginButton);"));
     assert!(script.contains("插件 - 已解锁"));
@@ -160,7 +160,7 @@ fn injection_script_keeps_plugin_marketplace_unlock_separate_from_entry_unlock()
 
     assert!(script.contains("pluginMarketplaceUnlock: true"));
     assert!(script.contains("pluginMarketplaceUnlock: \"codexAppPluginMarketplaceUnlock\""));
-    assert!(script.contains("if (!codexPlusSettings().pluginMarketplaceUnlock) return"));
+    assert!(script.contains("if (!agentKeySettings().pluginMarketplaceUnlock) return"));
     assert!(script.contains("installPluginBuildFlavorFilterPatch"));
     assert!(script.contains("installPluginMarketplaceRequestPatch"));
 }
@@ -184,8 +184,8 @@ fn injection_script_keeps_bundled_marketplace_name_for_default_filter() {
 
     assert!(script.contains("codexPluginMarketplaceUnlockVersion = \"10\""));
     assert!(script.contains("if (name === \"openai-bundled\") return \"\""));
-    assert!(!script.contains("if (name === \"openai-bundled\") return \"codex-plus-openai-bundled\""));
-    assert!(script.contains("if (name === \"openai-bundled\" || name === \"codex-plus-openai-bundled\") return \"OpenAI插件1(AgentKey)\""));
+    assert!(!script.contains("if (name === \"openai-bundled\") return \"agentkey-openai-bundled\""));
+    assert!(script.contains("if (name === \"openai-bundled\" || name === \"agentkey-openai-bundled\") return \"OpenAI插件1(AgentKey)\""));
 }
 
 #[test]
@@ -222,8 +222,8 @@ fn injection_script_expands_api_key_plugin_marketplace_requests() {
     assert!(script.contains("restorePluginMarketplaceName"));
     assert!(script.contains("next.remoteMarketplaceName = restorePluginMarketplaceName(next.remoteMarketplaceName)"));
     assert!(script.contains("if (name === \"openai-bundled\") return \"\""));
-    assert!(script.contains("if (name === \"openai-curated\") return \"codex-plus-openai-curated\""));
-    assert!(script.contains("if (name === \"openai-primary-runtime\") return \"codex-plus-openai-primary-runtime\""));
+    assert!(script.contains("if (name === \"openai-curated\") return \"agentkey-openai-curated\""));
+    assert!(script.contains("if (name === \"openai-primary-runtime\") return \"agentkey-openai-primary-runtime\""));
     assert!(script.contains("OpenAI插件1(AgentKey)"));
     assert!(script.contains("OpenAI插件2(AgentKey)"));
     assert!(script.contains("OpenAI插件3(AgentKey)"));
@@ -294,7 +294,7 @@ fn injection_script_exposes_conversation_view_width_control() {
     assert!(script.contains("conversationView"));
     assert!(script.contains("conversationViewMaxWidth"));
     assert!(script.contains("对话居中宽度"));
-    assert!(script.contains("data-codex-plus-conversation-view-width"));
+    assert!(script.contains("data-agentkey-conversation-view-width"));
     assert!(script.contains("conversationViewWidth()"));
     assert!(script.contains("normalizeConversationViewWidth"));
 }
@@ -380,7 +380,7 @@ fn injection_script_exposes_fast_service_tier_control() {
     assert!(script.contains("setCodexThreadServiceTierMode"));
     assert!(script.contains("codexServiceTierRequestOverride"));
     assert!(script.contains("serviceTierControls: false"));
-    assert!(script.contains("data-codex-plus-setting=\"serviceTierControls\""));
+    assert!(script.contains("data-agentkey-setting=\"serviceTierControls\""));
     assert!(script.contains("data-codex-service-tier-controls"));
     assert!(script.contains("removeCodexServiceTierBadges"));
     assert!(script.contains("installCodexServiceTierDispatcherPatch"));

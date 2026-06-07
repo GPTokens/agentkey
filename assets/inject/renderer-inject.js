@@ -1,6 +1,6 @@
 (() => {
   const helperBase = window.__CODEX_SESSION_DELETE_HELPER__ || "http://127.0.0.1:57321";
-  const helperToken = window.__CODEX_PLUS_HELPER_TOKEN__ || "";
+  const helperToken = window.__AGENTKEY_HELPER_TOKEN__ || "";
   const buttonClass = "codex-delete-button";
   const exportButtonClass = "codex-export-button";
   const projectMoveButtonClass = "codex-project-move-button";
@@ -18,7 +18,7 @@
   const conversationViewMinWidth = 320;
   const conversationViewMaxAllowedWidth = 4000;
   const conversationViewDefaultWidth = 900;
-  const conversationViewLegacyWidthKey = "codexPlus.threadCenter.maxWidth";
+  const conversationViewLegacyWidthKey = "agentKey.threadCenter.maxWidth";
   const zedRemoteButtonClass = "codex-zed-remote-button";
   const zedRemoteOpenInMenuItemClass = "codex-zed-open-in-menu-item";
   const zedRemoteToastClass = "codex-zed-remote-toast";
@@ -42,8 +42,8 @@
   const chatsSortDbRefreshIntervalMs = 5000;
   const styleId = "codex-delete-style";
   const codexDeleteStyleVersion = "12";
-  const codexPlusMenuId = "codex-plus-menu";
-  const codexPlusMenuFloatingClass = "codex-plus-menu-floating";
+  const agentKeyMenuId = "agentkey-menu";
+  const agentKeyMenuFloatingClass = "agentkey-menu-floating";
   const codexDeleteVersion = "7";
   const codexExportVersion = "1";
   const codexProjectMoveVersion = "1";
@@ -56,9 +56,9 @@
   const codexThreadServiceTierVersion = "1";
   const codexServiceTierBadgeClass = "codex-service-tier-badge";
   const codexServiceTierBadgeVersion = "3";
-  let codexPlusVersion = window.__CODEX_PLUS_VERSION__ || "unknown";
-  const codexPlusBuild = window.__CODEX_PLUS_BUILD__ || "unknown";
-  const codexPlusSettingsKey = "codexPlusSettings";
+  let agentKeyVersion = window.__AGENTKEY_VERSION__ || "unknown";
+  const agentKeyBuild = window.__AGENTKEY_BUILD__ || "unknown";
+  const agentKeySettingsKey = "agentKeySettings";
   const codexThreadScrollKey = "codexThreadScroll";
   const codexThreadServiceTierKey = "codexThreadServiceTierOverrides";
   const codexThreadServiceTierMaxEntries = 120;
@@ -97,15 +97,15 @@
   let upstreamBranchDefaultsInflight = new Map();
   const upstreamProjectContextTtlMs = 10 * 60 * 1000;
   const branchWorktreePathAttribute = "data-codex-branch-worktree-path";
-  ["__codexPlusHtmlCenteredThreadWidth", "__codexPlusViewportCenteredThreadWidth", "__codexPlusBoundedThreadCenter"].forEach((key) => {
+  ["__agentKeyHtmlCenteredThreadWidth", "__agentKeyViewportCenteredThreadWidth", "__agentKeyBoundedThreadCenter"].forEach((key) => {
     try {
       window[key]?.cleanup?.();
     } catch (_) {}
   });
   try {
-    window.__codexPlusConversationViewCleanup?.();
+    window.__agentKeyConversationViewCleanup?.();
   } catch (_) {}
-  window.__codexPlusConversationViewCleanup = null;
+  window.__agentKeyConversationViewCleanup = null;
   const selectors = {
     sidebarThread: "[data-app-action-sidebar-thread-id]",
     threadTitle: "[data-thread-title]",
@@ -425,7 +425,7 @@
       /* Dark theme overrides for delete-confirm and project-move dialogs.
          Triggered either by Codex applying a "dark" class / data-theme="dark"
          on its document root, or by the OS-level prefers-color-scheme hint.
-         Palette matches the existing AgentKey dark modal (.codex-plus-modal-content). */
+         Palette matches the existing AgentKey dark modal (.agentkey-modal-content). */
       html.dark .codex-delete-confirm-overlay,
       html[data-theme="dark"] .codex-delete-confirm-overlay,
       :root[data-theme="dark"] .codex-delete-confirm-overlay {
@@ -544,13 +544,13 @@
           color: #9ca3af;
         }
       }
-      #${codexPlusMenuId}.${codexPlusMenuFloatingClass} {
+      #${agentKeyMenuId}.${agentKeyMenuFloatingClass} {
         position: fixed;
-        top: var(--codex-plus-menu-top, 0);
-        right: var(--codex-plus-menu-right, 140px);
+        top: var(--agentkey-menu-top, 0);
+        right: var(--agentkey-menu-right, 140px);
         left: auto;
         z-index: 2147483645;
-        height: var(--codex-plus-menu-height, 30px);
+        height: var(--agentkey-menu-height, 30px);
         color: #d1d5db;
         font: 13px system-ui, sans-serif;
         text-align: right;
@@ -560,7 +560,7 @@
         pointer-events: auto;
         -webkit-app-region: no-drag;
       }
-      #${codexPlusMenuId} {
+      #${agentKeyMenuId} {
         display: inline-flex;
         align-items: center;
         height: 100%;
@@ -568,7 +568,7 @@
         pointer-events: auto;
         -webkit-app-region: no-drag;
       }
-      .codex-plus-trigger {
+      .agentkey-trigger {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -584,7 +584,7 @@
         pointer-events: auto;
         -webkit-app-region: no-drag;
       }
-      .codex-plus-modal-overlay {
+      .agentkey-modal-overlay {
         position: fixed;
         inset: 0;
         z-index: 2147483646;
@@ -595,7 +595,7 @@
         pointer-events: auto;
         -webkit-app-region: no-drag;
       }
-      .codex-plus-modal-content {
+      .agentkey-modal-content {
         width: min(520px, calc(100vw - 48px));
         max-height: min(680px, calc(100vh - 40px));
         display: flex;
@@ -610,8 +610,8 @@
         pointer-events: auto;
         -webkit-app-region: no-drag;
       }
-      .codex-plus-modal-content[data-codex-plus-active-tab="support"] { width: min(820px, calc(100vw - 48px)); }
-      .codex-plus-modal-header {
+      .agentkey-modal-content[data-agentkey-active-tab="support"] { width: min(820px, calc(100vw - 48px)); }
+      .agentkey-modal-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -619,12 +619,12 @@
         flex: 0 0 auto;
         -webkit-app-region: no-drag;
       }
-      .codex-plus-modal-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 650; }
-      .codex-plus-backend-indicator { width: 9px; height: 9px; border-radius: 999px; background: #a1a1aa; display: inline-block; }
-      .codex-plus-backend-indicator[data-status="ok"] { background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,.75); }
-      .codex-plus-backend-indicator[data-status="failed"] { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,.75); }
-      .codex-plus-backend-indicator[data-status="checking"] { background: #fbbf24; }
-      .codex-plus-modal-close {
+      .agentkey-modal-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 650; }
+      .agentkey-backend-indicator { width: 9px; height: 9px; border-radius: 999px; background: #a1a1aa; display: inline-block; }
+      .agentkey-backend-indicator[data-status="ok"] { background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,.75); }
+      .agentkey-backend-indicator[data-status="failed"] { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,.75); }
+      .agentkey-backend-indicator[data-status="checking"] { background: #fbbf24; }
+      .agentkey-modal-close {
         border: 0;
         background: transparent;
         color: #d1d5db;
@@ -633,7 +633,7 @@
         pointer-events: auto;
         -webkit-app-region: no-drag;
       }
-      .codex-plus-modal-body {
+      .agentkey-modal-body {
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
@@ -643,16 +643,16 @@
         scrollbar-width: thin;
         scrollbar-color: rgba(255,255,255,.28) transparent;
       }
-      .codex-plus-modal-body::-webkit-scrollbar { width: 10px; }
-      .codex-plus-modal-body::-webkit-scrollbar-track { background: transparent; }
-      .codex-plus-modal-body::-webkit-scrollbar-thumb {
+      .agentkey-modal-body::-webkit-scrollbar { width: 10px; }
+      .agentkey-modal-body::-webkit-scrollbar-track { background: transparent; }
+      .agentkey-modal-body::-webkit-scrollbar-thumb {
         border: 2px solid transparent;
         border-radius: 999px;
         background: rgba(255,255,255,.28);
         background-clip: padding-box;
       }
-      .codex-plus-modal-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.38); background-clip: padding-box; }
-      .codex-plus-row {
+      .agentkey-modal-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.38); background-clip: padding-box; }
+      .agentkey-row {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
@@ -660,11 +660,11 @@
         padding: 10px 0;
         border-top: 1px solid rgba(255,255,255,.1);
       }
-      .codex-plus-row:first-child { border-top: 0; }
-      .codex-plus-row-title { font-weight: 550; line-height: 1.35; }
-      .codex-plus-row-description { margin-top: 2px; color: #a1a1aa; font-size: 12px; line-height: 1.4; }
-      .codex-plus-model-compat-warning { margin-top: 6px; color: #fbbf24; font-size: 12px; line-height: 1.45; }
-      .codex-plus-toggle {
+      .agentkey-row:first-child { border-top: 0; }
+      .agentkey-row-title { font-weight: 550; line-height: 1.35; }
+      .agentkey-row-description { margin-top: 2px; color: #a1a1aa; font-size: 12px; line-height: 1.4; }
+      .agentkey-model-compat-warning { margin-top: 6px; color: #fbbf24; font-size: 12px; line-height: 1.45; }
+      .agentkey-toggle {
         width: 42px;
         height: 24px;
         border: 0;
@@ -672,7 +672,7 @@
         background: #52525b;
         padding: 2px;
       }
-      .codex-plus-toggle span {
+      .agentkey-toggle span {
         display: block;
         width: 20px;
         height: 20px;
@@ -680,20 +680,20 @@
         background: white;
         transition: transform .12s ease;
       }
-      .codex-plus-toggle,
-      .codex-plus-action-button,
-      .codex-plus-issue-button,
-      .codex-plus-backend-status {
+      .agentkey-toggle,
+      .agentkey-action-button,
+      .agentkey-issue-button,
+      .agentkey-backend-status {
         flex-shrink: 0;
         align-self: center;
       }
-      .codex-plus-toggle[data-enabled="true"] { background: #10a37f; }
-      .codex-plus-toggle[data-enabled="true"] span { transform: translateX(18px); }
-      .codex-plus-toggle[data-relay-unneeded="true"] { width: 72px; cursor: default; background: rgba(16,163,127,.16); color: #6ee7b7; }
-      .codex-plus-toggle[data-relay-unneeded="true"] span { display: none; }
-      .codex-plus-toggle[data-relay-unneeded="true"]::after { content: "无需开启"; font-size: 12px; font-weight: 650; line-height: 1; }
-      .codex-plus-width-control { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 176px; align-self: center; }
-      .codex-plus-width-input {
+      .agentkey-toggle[data-enabled="true"] { background: #10a37f; }
+      .agentkey-toggle[data-enabled="true"] span { transform: translateX(18px); }
+      .agentkey-toggle[data-relay-unneeded="true"] { width: 72px; cursor: default; background: rgba(16,163,127,.16); color: #6ee7b7; }
+      .agentkey-toggle[data-relay-unneeded="true"] span { display: none; }
+      .agentkey-toggle[data-relay-unneeded="true"]::after { content: "无需开启"; font-size: 12px; font-weight: 650; line-height: 1; }
+      .agentkey-width-control { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 176px; align-self: center; }
+      .agentkey-width-input {
         width: 78px;
         height: 26px;
         box-sizing: border-box;
@@ -704,17 +704,17 @@
         font: 12px system-ui, sans-serif;
         padding: 0 8px;
       }
-      .codex-plus-width-input:disabled { opacity: .55; cursor: not-allowed; }
-      .codex-plus-service-tier-control { display: grid; gap: 6px; min-width: 316px; justify-items: end; align-self: center; }
-      .codex-plus-service-tier-status { color: #a1a1aa; font-size: 12px; line-height: 1.3; text-align: right; }
-      .codex-plus-service-tier-status[data-status="ok"] { color: #34d399; }
-      .codex-plus-service-tier-status[data-status="failed"] { color: #f87171; }
-      .codex-plus-service-tier-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-      .codex-plus-service-tier-thread-actions { opacity: .88; align-items: center; }
-      .codex-plus-service-tier-thread-label { color: #a1a1aa; font: 12px/1.2 system-ui, sans-serif; white-space: nowrap; }
-      .codex-plus-service-tier-button { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 5px 8px; white-space: nowrap; }
-      .codex-plus-service-tier-button[data-active="true"] { border-color: #10a37f; background: rgba(16,163,127,.22); color: #6ee7b7; }
-      .codex-plus-service-tier-button:disabled { opacity: .55; cursor: not-allowed; }
+      .agentkey-width-input:disabled { opacity: .55; cursor: not-allowed; }
+      .agentkey-service-tier-control { display: grid; gap: 6px; min-width: 316px; justify-items: end; align-self: center; }
+      .agentkey-service-tier-status { color: #a1a1aa; font-size: 12px; line-height: 1.3; text-align: right; }
+      .agentkey-service-tier-status[data-status="ok"] { color: #34d399; }
+      .agentkey-service-tier-status[data-status="failed"] { color: #f87171; }
+      .agentkey-service-tier-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+      .agentkey-service-tier-thread-actions { opacity: .88; align-items: center; }
+      .agentkey-service-tier-thread-label { color: #a1a1aa; font: 12px/1.2 system-ui, sans-serif; white-space: nowrap; }
+      .agentkey-service-tier-button { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 5px 8px; white-space: nowrap; }
+      .agentkey-service-tier-button[data-active="true"] { border-color: #10a37f; background: rgba(16,163,127,.22); color: #6ee7b7; }
+      .agentkey-service-tier-button:disabled { opacity: .55; cursor: not-allowed; }
       .${codexServiceTierBadgeClass} {
         display: inline-flex;
         align-items: center;
@@ -737,19 +737,19 @@
       .${codexServiceTierBadgeClass}[data-tier="loading"] { color: #a1a1aa; }
       .${codexServiceTierBadgeClass}[data-tier="failed"] { border-color: rgba(248,113,113,.42); background: rgba(248,113,113,.12); color: #fca5a5; }
       .${codexServiceTierBadgeClass}[data-disabled="true"] { cursor: not-allowed; opacity: .78; }
-      .codex-plus-about { color: #a1a1aa; line-height: 1.5; }
-      .codex-plus-tabs { display: flex; gap: 8px; padding: 0 20px 6px; flex: 0 0 auto; }
-      .codex-plus-tab-button { border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: transparent; color: #d1d5db; font: 12px system-ui, sans-serif; padding: 5px 10px; }
-      .codex-plus-tab-button[data-active="true"] { background: #10a37f; color: white; border-color: #10a37f; }
-      .codex-plus-panel[hidden] { display: none; }
-      .codex-plus-action-button,
-      .codex-plus-issue-button { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 6px 8px; }
-      .codex-plus-worktree-actions {
+      .agentkey-about { color: #a1a1aa; line-height: 1.5; }
+      .agentkey-tabs { display: flex; gap: 8px; padding: 0 20px 6px; flex: 0 0 auto; }
+      .agentkey-tab-button { border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: transparent; color: #d1d5db; font: 12px system-ui, sans-serif; padding: 5px 10px; }
+      .agentkey-tab-button[data-active="true"] { background: #10a37f; color: white; border-color: #10a37f; }
+      .agentkey-panel[hidden] { display: none; }
+      .agentkey-action-button,
+      .agentkey-issue-button { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 6px 8px; }
+      .agentkey-worktree-actions {
         display: inline-flex;
         align-items: center;
         gap: 8px;
       }
-      .codex-plus-form-field {
+      .agentkey-form-field {
         display: grid;
         gap: 4px;
         margin-top: 10px;
@@ -757,7 +757,7 @@
         font: 12px system-ui, sans-serif;
         text-align: left;
       }
-      .codex-plus-form-field input {
+      .agentkey-form-field input {
         width: min(520px, 72vw);
         border: 1px solid rgba(255,255,255,.18);
         border-radius: 8px;
@@ -766,48 +766,48 @@
         padding: 8px 10px;
         font: 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       }
-      .codex-plus-form-message {
+      .agentkey-form-message {
         min-height: 18px;
         margin-top: 10px;
         color: #a1a1aa;
         font: 12px system-ui, sans-serif;
         text-align: left;
       }
-      .codex-plus-form-message[data-status="ok"] { color: #34d399; }
-      .codex-plus-form-message[data-status="failed"] { color: #f87171; }
-      .codex-plus-form-message[data-status="loading"] { color: #fbbf24; }
-      .codex-plus-backend-status { display: grid; gap: 4px; min-width: 132px; justify-items: end; }
-      .codex-plus-backend-label { color: #a1a1aa; font-size: 12px; }
-      .codex-plus-backend-label[data-status="ok"] { color: #34d399; }
-      .codex-plus-backend-label[data-status="failed"] { color: #f87171; }
-      .codex-plus-backend-repair { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 6px 8px; }
-      .codex-plus-backend-repair[hidden] { display: none; }
-      .codex-plus-user-script-warning { margin-top: 4px; color: #fbbf24; font-size: 12px; }
-      .codex-plus-user-script-dirs { margin-top: 6px; color: #a1a1aa; font-size: 11px; line-height: 1.4; word-break: break-all; }
-      .codex-plus-user-script-list { margin-top: 8px; display: grid; gap: 6px; }
-      .codex-plus-user-script-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 6px 8px; }
-      .codex-plus-user-script-name { font-size: 12px; }
-      .codex-plus-user-script-meta { margin-top: 2px; color: #a1a1aa; font-size: 11px; }
-      .codex-plus-user-script-error { margin-top: 2px; color: #f87171; font-size: 11px; word-break: break-all; }
-      .codex-plus-user-script-actions { display: grid; justify-items: end; gap: 8px; min-width: 120px; }
-      .codex-plus-user-script-reload { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 6px 8px; }
-      .codex-plus-sponsor-text { color: #d1d5db; font-size: 13px; line-height: 1.55; margin: 4px 0 12px; }
-      .codex-plus-ad-section { display: grid; gap: 10px; margin-top: 12px; }
-      .codex-plus-ad-section:first-of-type { margin-top: 0; }
-      .codex-plus-ad-section-title { color: #f8fafc; font-size: 15px; margin: 0; }
-      .codex-plus-ad-list { display: grid; gap: 14px; }
-      .codex-plus-ad-card { border: 1px solid rgba(96,165,250,.26); border-radius: 16px; background: linear-gradient(135deg, rgba(37,99,235,.18), rgba(255,255,255,.05)); box-shadow: 0 14px 36px rgba(0,0,0,.22); }
-      .codex-plus-ad-content { padding: 14px; }
-      .codex-plus-ad-title { margin: 0; color: #f8fafc; font-size: 17px; line-height: 1.35; }
-      .codex-plus-ad-description { margin: 6px 0 10px; color: #dbeafe; font-size: 13px; line-height: 1.55; }
-      .codex-plus-ad-highlights { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-      .codex-plus-ad-highlights span { border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: rgba(255,255,255,.08); color: #f3f4f6; font-size: 12px; padding: 4px 8px; }
-      .codex-plus-ad-link { display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: #2563eb; color: #ffffff; font-size: 13px; font-weight: 650; text-decoration: none; padding: 8px 12px; }
-      .codex-plus-ad-empty { border: 1px dashed rgba(255,255,255,.16); border-radius: 12px; color: #9ca3af; font-size: 13px; padding: 12px; text-align: center; }
-      .codex-plus-sponsor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .codex-plus-sponsor-card { border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); text-align: center; }
-      .codex-plus-sponsor-card-title { color: #f3f4f6; font-size: 13px; margin-bottom: 8px; }
-      .codex-plus-sponsor-qr { display: block; width: 100%; max-width: 340px; border-radius: 8px; margin: 0 auto; background: white; }
+      .agentkey-form-message[data-status="ok"] { color: #34d399; }
+      .agentkey-form-message[data-status="failed"] { color: #f87171; }
+      .agentkey-form-message[data-status="loading"] { color: #fbbf24; }
+      .agentkey-backend-status { display: grid; gap: 4px; min-width: 132px; justify-items: end; }
+      .agentkey-backend-label { color: #a1a1aa; font-size: 12px; }
+      .agentkey-backend-label[data-status="ok"] { color: #34d399; }
+      .agentkey-backend-label[data-status="failed"] { color: #f87171; }
+      .agentkey-backend-repair { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 6px 8px; }
+      .agentkey-backend-repair[hidden] { display: none; }
+      .agentkey-user-script-warning { margin-top: 4px; color: #fbbf24; font-size: 12px; }
+      .agentkey-user-script-dirs { margin-top: 6px; color: #a1a1aa; font-size: 11px; line-height: 1.4; word-break: break-all; }
+      .agentkey-user-script-list { margin-top: 8px; display: grid; gap: 6px; }
+      .agentkey-user-script-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 6px 8px; }
+      .agentkey-user-script-name { font-size: 12px; }
+      .agentkey-user-script-meta { margin-top: 2px; color: #a1a1aa; font-size: 11px; }
+      .agentkey-user-script-error { margin-top: 2px; color: #f87171; font-size: 11px; word-break: break-all; }
+      .agentkey-user-script-actions { display: grid; justify-items: end; gap: 8px; min-width: 120px; }
+      .agentkey-user-script-reload { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 6px 8px; }
+      .agentkey-sponsor-text { color: #d1d5db; font-size: 13px; line-height: 1.55; margin: 4px 0 12px; }
+      .agentkey-ad-section { display: grid; gap: 10px; margin-top: 12px; }
+      .agentkey-ad-section:first-of-type { margin-top: 0; }
+      .agentkey-ad-section-title { color: #f8fafc; font-size: 15px; margin: 0; }
+      .agentkey-ad-list { display: grid; gap: 14px; }
+      .agentkey-ad-card { border: 1px solid rgba(96,165,250,.26); border-radius: 16px; background: linear-gradient(135deg, rgba(37,99,235,.18), rgba(255,255,255,.05)); box-shadow: 0 14px 36px rgba(0,0,0,.22); }
+      .agentkey-ad-content { padding: 14px; }
+      .agentkey-ad-title { margin: 0; color: #f8fafc; font-size: 17px; line-height: 1.35; }
+      .agentkey-ad-description { margin: 6px 0 10px; color: #dbeafe; font-size: 13px; line-height: 1.55; }
+      .agentkey-ad-highlights { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      .agentkey-ad-highlights span { border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: rgba(255,255,255,.08); color: #f3f4f6; font-size: 12px; padding: 4px 8px; }
+      .agentkey-ad-link { display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: #2563eb; color: #ffffff; font-size: 13px; font-weight: 650; text-decoration: none; padding: 8px 12px; }
+      .agentkey-ad-empty { border: 1px dashed rgba(255,255,255,.16); border-radius: 12px; color: #9ca3af; font-size: 13px; padding: 12px; text-align: center; }
+      .agentkey-sponsor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .agentkey-sponsor-card { border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.04); text-align: center; }
+      .agentkey-sponsor-card-title { color: #f3f4f6; font-size: 13px; margin-bottom: 8px; }
+      .agentkey-sponsor-qr { display: block; width: 100%; max-width: 340px; border-radius: 8px; margin: 0 auto; background: white; }
       .${timelineClass} {
         position: fixed;
         top: calc(72px + 12px);
@@ -886,11 +886,11 @@
     document.documentElement.appendChild(style);
   }
 
-  function defaultCodexPlusSettings() {
+  function defaultAgentKeySettings() {
     return { pluginEntryUnlock: true, pluginMarketplaceUnlock: true, forcePluginInstall: true, modelWhitelistUnlock: true, sessionDelete: true, markdownExport: true, projectMove: true, conversationTimeline: true, conversationView: false, conversationViewMaxWidth: conversationViewDefaultWidth, threadScrollRestore: true, zedRemoteOpen: true, upstreamWorktreeCreate: true, nativeMenuPlacement: true, serviceTierControls: false };
   }
 
-  const codexPlusBackendSettingMap = {
+  const agentKeyBackendSettingMap = {
     pluginEntryUnlock: "codexAppPluginEntryUnlock",
     pluginMarketplaceUnlock: "codexAppPluginMarketplaceUnlock",
     forcePluginInstall: "codexAppForcePluginInstall",
@@ -907,19 +907,19 @@
     serviceTierControls: "codexAppServiceTierControls",
   };
 
-  function backendCodexPlusSettings() {
+  function backendAgentKeySettings() {
     const settings = {};
-    Object.entries(codexPlusBackendSettingMap).forEach(([localKey, backendKey]) => {
-      if (typeof codexPlusBackendSettings[backendKey] === "boolean") {
-        settings[localKey] = codexPlusBackendSettings[backendKey];
+    Object.entries(agentKeyBackendSettingMap).forEach(([localKey, backendKey]) => {
+      if (typeof agentKeyBackendSettings[backendKey] === "boolean") {
+        settings[localKey] = agentKeyBackendSettings[backendKey];
       }
     });
     return settings;
   }
 
-  function codexPlusSettings() {
-    const relayPatchDisabled = codexPlusBackendSettings.launchMode === "relay";
-    if (codexPlusBackendSettings.enhancementsEnabled === false) {
+  function agentKeySettings() {
+    const relayPatchDisabled = agentKeyBackendSettings.launchMode === "relay";
+    if (agentKeyBackendSettings.enhancementsEnabled === false) {
       return {
         pluginEntryUnlock: false,
         pluginMarketplaceUnlock: false,
@@ -939,7 +939,7 @@
       };
     }
     try {
-      const settings = { ...defaultCodexPlusSettings(), ...JSON.parse(localStorage.getItem(codexPlusSettingsKey) || "{}"), ...backendCodexPlusSettings() };
+      const settings = { ...defaultAgentKeySettings(), ...JSON.parse(localStorage.getItem(agentKeySettingsKey) || "{}"), ...backendAgentKeySettings() };
       if (relayPatchDisabled) {
         settings.pluginEntryUnlock = false;
         settings.pluginMarketplaceUnlock = false;
@@ -947,7 +947,7 @@
       }
       return settings;
     } catch {
-      const settings = { ...defaultCodexPlusSettings(), ...backendCodexPlusSettings() };
+      const settings = { ...defaultAgentKeySettings(), ...backendAgentKeySettings() };
       if (relayPatchDisabled) {
         settings.pluginEntryUnlock = false;
         settings.pluginMarketplaceUnlock = false;
@@ -957,20 +957,20 @@
     }
   }
 
-  function setCodexPlusSetting(key, value) {
-    const backendKey = codexPlusBackendSettingMap[key];
+  function setAgentKeySetting(key, value) {
+    const backendKey = agentKeyBackendSettingMap[key];
     if (backendKey) {
       setBackendSetting(backendKey, value);
       return;
     }
     let stored = {};
     try {
-      stored = JSON.parse(localStorage.getItem(codexPlusSettingsKey) || "{}");
+      stored = JSON.parse(localStorage.getItem(agentKeySettingsKey) || "{}");
     } catch {
       stored = {};
     }
     const next = { ...stored, [key]: value };
-    localStorage.setItem(codexPlusSettingsKey, JSON.stringify(next));
+    localStorage.setItem(agentKeySettingsKey, JSON.stringify(next));
     if (key === "threadScrollRestore" && !value) {
       clearTimeout(window.__codexThreadScrollSaveTimer);
       window.__codexThreadScrollSaveTimer = null;
@@ -990,7 +990,7 @@
         refreshCodexServiceTierControls();
       }
     }
-    renderCodexPlusMenu();
+    renderAgentKeyMenu();
     scan();
   }
 
@@ -1002,16 +1002,16 @@
   }
 
   function conversationViewWidth() {
-    const settingsWidth = normalizeConversationViewWidth(codexPlusSettings().conversationViewMaxWidth);
+    const settingsWidth = normalizeConversationViewWidth(agentKeySettings().conversationViewMaxWidth);
     if (settingsWidth) return settingsWidth;
     const legacyWidth = normalizeConversationViewWidth(localStorage.getItem(conversationViewLegacyWidthKey));
     return legacyWidth || conversationViewDefaultWidth;
   }
 
   function refreshConversationViewControls() {
-    const enabled = !!codexPlusSettings().conversationView;
+    const enabled = !!agentKeySettings().conversationView;
     const width = conversationViewWidth();
-    document.querySelectorAll("[data-codex-plus-conversation-view-width]").forEach((input) => {
+    document.querySelectorAll("[data-agentkey-conversation-view-width]").forEach((input) => {
       input.value = String(width);
       input.disabled = !enabled;
     });
@@ -1020,19 +1020,19 @@
   function setConversationViewWidth(value) {
     const width = normalizeConversationViewWidth(value);
     if (!width) return;
-    setCodexPlusSetting("conversationViewMaxWidth", width);
+    setAgentKeySetting("conversationViewMaxWidth", width);
   }
 
-  function renderCodexPlusMenu() {
-    document.querySelectorAll(".codex-plus-toggle[data-codex-plus-setting]").forEach((button) => {
-      const key = button.getAttribute("data-codex-plus-setting");
-      button.dataset.enabled = String(!!codexPlusSettings()[key]);
+  function renderAgentKeyMenu() {
+    document.querySelectorAll(".agentkey-toggle[data-agentkey-setting]").forEach((button) => {
+      const key = button.getAttribute("data-agentkey-setting");
+      button.dataset.enabled = String(!!agentKeySettings()[key]);
     });
     refreshConversationViewControls();
     refreshCodexServiceTierControls();
   }
 
-  let codexPlusBackendSettings = { providerSyncEnabled: false, enhancementsEnabled: true, launchMode: "patch", codexAppVersion: "" };
+  let agentKeyBackendSettings = { providerSyncEnabled: false, enhancementsEnabled: true, launchMode: "patch", codexAppVersion: "" };
   const codexPluginLegacyEntryUnlockBeforeVersion = "26.601.2237";
 
   function parseCodexVersionParts(version) {
@@ -1059,25 +1059,25 @@
   }
 
   function codexPluginUnlockStrategy() {
-    const version = String(codexPlusBackendSettings.codexAppVersion || "").trim();
+    const version = String(agentKeyBackendSettings.codexAppVersion || "").trim();
     const comparison = compareCodexVersions(version, codexPluginLegacyEntryUnlockBeforeVersion);
     if (comparison == null) return "unknown";
     return comparison < 0 ? "legacy" : "modern";
   }
 
   function logCodexPluginUnlockStrategy(strategy) {
-    const codexAppVersion = String(codexPlusBackendSettings.codexAppVersion || "").trim();
+    const codexAppVersion = String(agentKeyBackendSettings.codexAppVersion || "").trim();
     const signature = `${strategy}:${codexAppVersion || "unknown"}`;
     if (window.__codexPluginUnlockStrategyLogged === signature) return;
     window.__codexPluginUnlockStrategyLogged = signature;
-    sendCodexPlusDiagnostic("plugin_unlock_strategy_selected", {
+    sendAgentKeyDiagnostic("plugin_unlock_strategy_selected", {
       strategy,
       codexAppVersion,
       cutoff: codexPluginLegacyEntryUnlockBeforeVersion,
     });
   }
 
-  let codexPlusBackendSettingsLoaded = false;
+  let agentKeyBackendSettingsLoaded = false;
   let codexServiceTierState = {
     status: "loading",
     serviceTier: null,
@@ -1331,7 +1331,7 @@
   }
 
   function setCodexServiceTierControlMode(mode) {
-    if (codexPlusBackendStatus.status !== "ok") {
+    if (agentKeyBackendStatus.status !== "ok") {
       showToast("后端未连接，无法切换服务模式", null);
       refreshCodexServiceTierControls();
       return;
@@ -1358,7 +1358,7 @@
   }
 
   function syncCodexServiceTierEffectiveState() {
-    if (!codexPlusSettings().serviceTierControls) {
+    if (!agentKeySettings().serviceTierControls) {
       codexServiceTierState = {
         ...codexServiceTierState,
         activeThreadId: "",
@@ -1391,8 +1391,8 @@
   }
 
   function codexServiceTierBadgeState() {
-    if (codexPlusBackendStatus.status === "checking") return { tier: "loading", label: "...", disabled: true, title: "服务模式：正在检查后端连接" };
-    if (codexPlusBackendStatus.status && codexPlusBackendStatus.status !== "ok") return { tier: "failed", label: "未连接", disabled: true, title: "服务模式：后端未连接，无法切换" };
+    if (agentKeyBackendStatus.status === "checking") return { tier: "loading", label: "...", disabled: true, title: "服务模式：正在检查后端连接" };
+    if (agentKeyBackendStatus.status && agentKeyBackendStatus.status !== "ok") return { tier: "failed", label: "未连接", disabled: true, title: "服务模式：后端未连接，无法切换" };
     if (codexServiceTierState.status === "loading") return { tier: "loading", label: "...", title: "服务模式：正在读取" };
     if (codexServiceTierState.status === "failed") return { tier: "failed", label: "?", title: "服务模式：读取失败" };
     const effectiveMode = codexServiceTierState.effectiveMode || "standard";
@@ -1421,9 +1421,9 @@
 
   function refreshCodexServiceTierControls() {
     syncCodexServiceTierEffectiveState();
-    const featureEnabled = !!codexPlusSettings().serviceTierControls;
-    const backendConnected = codexPlusBackendStatus.status === "ok";
-    const backendChecking = codexPlusBackendStatus.status === "checking";
+    const featureEnabled = !!agentKeySettings().serviceTierControls;
+    const backendConnected = agentKeyBackendStatus.status === "ok";
+    const backendChecking = agentKeyBackendStatus.status === "checking";
     document.querySelectorAll("[data-codex-service-tier-controls]").forEach((node) => {
       node.hidden = !featureEnabled;
     });
@@ -1466,7 +1466,7 @@
   }
 
   async function loadCodexServiceTierState() {
-    if (!codexPlusSettings().serviceTierControls) {
+    if (!agentKeySettings().serviceTierControls) {
       codexServiceTierState = { ...codexServiceTierState, status: "idle", message: "未启用" };
       refreshCodexServiceTierControls();
       return;
@@ -1487,7 +1487,7 @@
         status: "failed",
         message: "读取失败",
       };
-      sendCodexPlusDiagnostic("service_tier_read_failed", {
+      sendAgentKeyDiagnostic("service_tier_read_failed", {
         errorName: error?.name || "",
         errorMessage: error?.message || String(error),
       });
@@ -1497,7 +1497,7 @@
   }
 
   function setCodexThreadServiceTierMode(mode) {
-    if (codexPlusBackendStatus.status !== "ok") {
+    if (agentKeyBackendStatus.status !== "ok") {
       showToast("后端未连接，无法切换服务模式", null);
       refreshCodexServiceTierControls();
       return;
@@ -1511,7 +1511,7 @@
   }
 
   function toggleCodexServiceTierFromBadge() {
-    if (codexPlusBackendStatus.status !== "ok") {
+    if (agentKeyBackendStatus.status !== "ok") {
       showToast("后端未连接，无法切换服务模式", null);
       refreshCodexServiceTierControls();
       return;
@@ -1525,7 +1525,7 @@
   }
 
   function codexServiceTierOverrideForRequest(method, params, threadIdHint = "") {
-    if (!codexPlusSettings().serviceTierControls) return null;
+    if (!agentKeySettings().serviceTierControls) return null;
     if (!codexServiceTierRequestMethods().has(method) || !params || typeof params !== "object") return null;
     const state = readThreadServiceTierState();
     const controlMode = normalizeCodexServiceTierControlMode(state.mode);
@@ -1555,7 +1555,7 @@
     const override = codexServiceTierOverrideForRequest(method, params, threadIdHint);
     if (!override) return params;
     const nextParams = { ...(params || {}), serviceTier: override.serviceTier };
-    sendCodexPlusDiagnostic("service_tier_request_override_applied", {
+    sendAgentKeyDiagnostic("service_tier_request_override_applied", {
       method,
       threadId: override.threadId || "",
       mode: override.mode,
@@ -1565,7 +1565,7 @@
   }
 
   function codexServiceTierRequestOverride(message) {
-    if (!codexPlusSettings().serviceTierControls) return message;
+    if (!agentKeySettings().serviceTierControls) return message;
     if (!message || typeof message !== "object") return message;
     if (message.type === "send-cli-request-for-host") {
       const method = String(message.method || "");
@@ -1635,9 +1635,9 @@
           return dispatcher.__codexServiceTierOriginalDispatchMessage(nextType, nextPayload);
         };
         window.__codexServiceTierRequestOverrideInstalled = codexServiceTierRequestOverrideVersion;
-        sendCodexPlusDiagnostic("service_tier_dispatcher_patch_installed", {});
+        sendAgentKeyDiagnostic("service_tier_dispatcher_patch_installed", {});
       } catch (error) {
-        sendCodexPlusDiagnostic("service_tier_dispatcher_patch_failed", {
+        sendAgentKeyDiagnostic("service_tier_dispatcher_patch_failed", {
           errorName: error?.name || "",
           errorMessage: error?.message || String(error),
         });
@@ -1652,12 +1652,12 @@
       if (!settings || typeof settings !== "object" || (!("launchMode" in settings) && !("enhancementsEnabled" in settings) && !("providerSyncEnabled" in settings))) {
         throw new Error("invalid backend settings response");
       }
-      codexPlusBackendSettings = { ...codexPlusBackendSettings, ...settings };
-      codexPlusBackendSettingsLoaded = true;
-      refreshCodexPlusBackendToggles();
+      agentKeyBackendSettings = { ...agentKeyBackendSettings, ...settings };
+      agentKeyBackendSettingsLoaded = true;
+      refreshAgentKeyBackendToggles();
       return true;
     } catch (_) {
-      refreshCodexPlusBackendToggles();
+      refreshAgentKeyBackendToggles();
       return false;
     }
   }
@@ -1675,46 +1675,46 @@
   }
 
   async function setBackendSetting(key, value) {
-    codexPlusBackendSettings = { ...codexPlusBackendSettings, [key]: value };
-    refreshCodexPlusBackendToggles();
+    agentKeyBackendSettings = { ...agentKeyBackendSettings, [key]: value };
+    refreshAgentKeyBackendToggles();
     try {
       const settings = await postJson("/settings/set", { [key]: value });
-      codexPlusBackendSettings = { ...codexPlusBackendSettings, ...settings };
+      agentKeyBackendSettings = { ...agentKeyBackendSettings, ...settings };
     } finally {
-      refreshCodexPlusBackendToggles();
+      refreshAgentKeyBackendToggles();
     }
   }
 
-  function refreshCodexPlusBackendToggles() {
-    document.querySelectorAll(".codex-plus-toggle[data-codex-backend-setting]").forEach((button) => {
+  function refreshAgentKeyBackendToggles() {
+    document.querySelectorAll(".agentkey-toggle[data-codex-backend-setting]").forEach((button) => {
       const key = button.getAttribute("data-codex-backend-setting");
-      button.dataset.enabled = String(!!codexPlusBackendSettings[key]);
+      button.dataset.enabled = String(!!agentKeyBackendSettings[key]);
     });
-    renderCodexPlusMenu();
+    renderAgentKeyMenu();
     scan();
   }
 
-  let codexPlusUserScripts = { enabled: true, builtin_dir: "", user_dir: "", scripts: [] };
-  let codexPlusBackendStatus = { status: "checking", message: "正在检查后端…" };
-  let codexPlusBackendCheckSeq = 0;
+  let agentKeyUserScripts = { enabled: true, builtin_dir: "", user_dir: "", scripts: [] };
+  let agentKeyBackendStatus = { status: "checking", message: "正在检查后端…" };
+  let agentKeyBackendCheckSeq = 0;
 
-  function setCodexPlusTriggerLabel(trigger) {
+  function setAgentKeyTriggerLabel(trigger) {
     if (!trigger) return;
-    let label = trigger.querySelector("[data-codex-plus-trigger-label]");
+    let label = trigger.querySelector("[data-agentkey-trigger-label]");
     if (!label) {
       label = document.createElement("span");
-      label.dataset.codexPlusTriggerLabel = "true";
+      label.dataset.agentKeyTriggerLabel = "true";
       trigger.appendChild(label);
     }
-    label.textContent = `AgentKey ${codexPlusVersion}`;
+    label.textContent = `AgentKey ${agentKeyVersion}`;
   }
 
-  function ensureCodexPlusTriggerIndicator(trigger) {
+  function ensureAgentKeyTriggerIndicator(trigger) {
     if (!trigger) return null;
     let indicator = trigger.querySelector("[data-codex-backend-indicator]");
     if (!indicator) {
       indicator = document.createElement("span");
-      indicator.className = "codex-plus-backend-indicator";
+      indicator.className = "agentkey-backend-indicator";
       indicator.dataset.codexBackendIndicator = "true";
       trigger.prepend(indicator);
     }
@@ -1722,11 +1722,11 @@
   }
 
   function renderBackendStatus() {
-    const status = codexPlusBackendStatus.status || "failed";
+    const status = agentKeyBackendStatus.status || "failed";
     const label = document.querySelector("[data-codex-backend-status]");
     if (label) {
       label.dataset.status = status;
-      label.textContent = codexPlusBackendStatus.message || (status === "ok" ? "后端已连接" : "未连接");
+      label.textContent = agentKeyBackendStatus.message || (status === "ok" ? "后端已连接" : "未连接");
     }
     document.querySelectorAll("[data-codex-backend-indicator]").forEach((indicator) => {
       indicator.dataset.status = status;
@@ -1745,12 +1745,12 @@
   }
 
   async function checkBackendStatus() {
-    const seq = ++codexPlusBackendCheckSeq;
+    const seq = ++agentKeyBackendCheckSeq;
     const nextStatus = await withBackendTimeout(postJson("/backend/status", {}));
-    if (seq !== codexPlusBackendCheckSeq) return;
-    codexPlusBackendStatus = nextStatus;
+    if (seq !== agentKeyBackendCheckSeq) return;
+    agentKeyBackendStatus = nextStatus;
     if (nextStatus?.status !== "ok") {
-      sendCodexPlusDiagnostic("backend_check_failed", {
+      sendAgentKeyDiagnostic("backend_check_failed", {
         status: nextStatus?.status || "unknown",
         message: nextStatus?.message || "",
         timeout: !!nextStatus?.timeout,
@@ -1760,12 +1760,12 @@
   }
 
   async function repairBackend() {
-    codexPlusBackendStatus = { status: "checking", message: "正在修复后端…" };
+    agentKeyBackendStatus = { status: "checking", message: "正在修复后端…" };
     renderBackendStatus();
     try {
-      codexPlusBackendStatus = await postJson("/backend/repair", {});
+      agentKeyBackendStatus = await postJson("/backend/repair", {});
     } catch (error) {
-      codexPlusBackendStatus = { status: "failed", message: "后端修复失败" };
+      agentKeyBackendStatus = { status: "failed", message: "后端修复失败" };
     }
     renderBackendStatus();
   }
@@ -1780,8 +1780,8 @@
   }
 
   function scheduleBackendHeartbeat() {
-    if (window.__codexPlusBackendHeartbeat) return;
-    window.__codexPlusBackendHeartbeat = setInterval(checkBackendStatus, 5000);
+    if (window.__agentKeyBackendHeartbeat) return;
+    window.__agentKeyBackendHeartbeat = setInterval(checkBackendStatus, 5000);
     checkBackendStatus();
   }
 
@@ -1791,23 +1791,23 @@
 
   function renderUserScripts() {
     const enabledToggle = document.querySelector("[data-codex-user-scripts-enabled]");
-    if (enabledToggle) enabledToggle.dataset.enabled = String(!!codexPlusUserScripts.enabled);
+    if (enabledToggle) enabledToggle.dataset.enabled = String(!!agentKeyUserScripts.enabled);
     const dirs = document.querySelector("[data-codex-user-script-dirs]");
-    if (dirs) dirs.textContent = `内置：${codexPlusUserScripts.builtin_dir || "未找到"}  用户：${codexPlusUserScripts.user_dir || "未找到"}`;
+    if (dirs) dirs.textContent = `内置：${agentKeyUserScripts.builtin_dir || "未找到"}  用户：${agentKeyUserScripts.user_dir || "未找到"}`;
     const list = document.querySelector("[data-codex-user-script-list]");
     if (!list) return;
-    if (!codexPlusUserScripts.scripts?.length) {
+    if (!agentKeyUserScripts.scripts?.length) {
       list.textContent = "未发现用户脚本。";
       return;
     }
-    list.innerHTML = codexPlusUserScripts.scripts.map((script) => `
-      <div class="codex-plus-user-script-item">
+    list.innerHTML = agentKeyUserScripts.scripts.map((script) => `
+      <div class="agentkey-user-script-item">
         <div>
-          <div class="codex-plus-user-script-name">${escapeHtml(script.name || script.key)}</div>
-          <div class="codex-plus-user-script-meta">${script.source === "builtin" ? "内置" : "用户"} · ${userScriptStatusLabel(script.status)}</div>
-          ${script.error ? `<div class="codex-plus-user-script-error">${escapeHtml(script.error)}</div>` : ""}
+          <div class="agentkey-user-script-name">${escapeHtml(script.name || script.key)}</div>
+          <div class="agentkey-user-script-meta">${script.source === "builtin" ? "内置" : "用户"} · ${userScriptStatusLabel(script.status)}</div>
+          ${script.error ? `<div class="agentkey-user-script-error">${escapeHtml(script.error)}</div>` : ""}
         </div>
-        <button type="button" class="codex-plus-toggle" data-codex-user-script-key="${escapeHtml(script.key)}" data-enabled="${String(!!script.enabled)}"><span></span></button>
+        <button type="button" class="agentkey-toggle" data-codex-user-script-key="${escapeHtml(script.key)}" data-enabled="${String(!!script.enabled)}"><span></span></button>
       </div>
     `).join("");
   }
@@ -1815,25 +1815,25 @@
   async function loadUserScripts(path = "/user-scripts/list", payload = {}) {
     const result = await postJson(path, payload);
     if (result?.scripts) {
-      codexPlusUserScripts = result;
+      agentKeyUserScripts = result;
       renderUserScripts();
     }
   }
 
-  const codexPlusAdsUrl = "/ads";
-  let codexPlusAds = [];
-  let codexPlusAdsLoaded = false;
+  const agentKeyAdsUrl = "/ads";
+  let agentKeyAds = [];
+  let agentKeyAdsLoaded = false;
 
-  function isCodexPlusAdExpired(ad) {
+  function isAgentKeyAdExpired(ad) {
     if (!ad.expires_at) return false;
     const expiresAt = Date.parse(ad.expires_at);
     return Number.isFinite(expiresAt) && expiresAt < Date.now();
   }
 
-  function normalizeCodexPlusAds(payload) {
+  function normalizeAgentKeyAds(payload) {
     if (!payload || !Array.isArray(payload.ads)) return [];
     return payload.ads.filter((ad) => {
-      return ad && ["sponsor", "normal"].includes(ad.type) && ad.title && ad.description && ad.url && !isCodexPlusAdExpired(ad);
+      return ad && ["sponsor", "normal"].includes(ad.type) && ad.title && ad.description && ad.url && !isAgentKeyAdExpired(ad);
     }).map((ad) => ({
       id: String(ad.id || ad.title),
       type: ad.type,
@@ -1845,43 +1845,43 @@
     }));
   }
 
-  function renderCodexPlusAdGroup(type, emptyText) {
-    const ads = codexPlusAds.filter((ad) => ad.type === type);
-    if (!ads.length) return `<div class="codex-plus-ad-empty">${escapeHtml(emptyText)}</div>`;
+  function renderAgentKeyAdGroup(type, emptyText) {
+    const ads = agentKeyAds.filter((ad) => ad.type === type);
+    if (!ads.length) return `<div class="agentkey-ad-empty">${escapeHtml(emptyText)}</div>`;
     return ads.map((ad) => `
-      <article class="codex-plus-ad-card">
-        <div class="codex-plus-ad-content">
-          <h3 class="codex-plus-ad-title">${escapeHtml(ad.title)}</h3>
-          <p class="codex-plus-ad-description">${escapeHtml(ad.description)}</p>
-          <div class="codex-plus-ad-highlights">
+      <article class="agentkey-ad-card">
+        <div class="agentkey-ad-content">
+          <h3 class="agentkey-ad-title">${escapeHtml(ad.title)}</h3>
+          <p class="agentkey-ad-description">${escapeHtml(ad.description)}</p>
+          <div class="agentkey-ad-highlights">
             ${ad.highlights.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
           </div>
-          <a class="codex-plus-ad-link" href="${escapeHtml(ad.url)}" target="_blank" rel="noreferrer">访问 ${escapeHtml(new URL(ad.url).hostname)}</a>
+          <a class="agentkey-ad-link" href="${escapeHtml(ad.url)}" target="_blank" rel="noreferrer">访问 ${escapeHtml(new URL(ad.url).hostname)}</a>
         </div>
       </article>
     `).join("");
   }
 
-  function renderCodexPlusAds() {
-    if (!codexPlusAdsLoaded) return `<div class="codex-plus-ad-empty">推荐内容加载中…</div>`;
-    if (!codexPlusAds.length) return `<div class="codex-plus-ad-empty">暂无推荐内容。</div>`;
+  function renderAgentKeyAds() {
+    if (!agentKeyAdsLoaded) return `<div class="agentkey-ad-empty">推荐内容加载中…</div>`;
+    if (!agentKeyAds.length) return `<div class="agentkey-ad-empty">暂无推荐内容。</div>`;
     return `
-      <section class="codex-plus-ad-section">
-        <h3 class="codex-plus-ad-section-title">赞助商推荐</h3>
-        <div class="codex-plus-ad-list">${renderCodexPlusAdGroup("sponsor", "暂无赞助商推荐。")}</div>
+      <section class="agentkey-ad-section">
+        <h3 class="agentkey-ad-section-title">赞助商推荐</h3>
+        <div class="agentkey-ad-list">${renderAgentKeyAdGroup("sponsor", "暂无赞助商推荐。")}</div>
       </section>
-      <section class="codex-plus-ad-section">
-        <h3 class="codex-plus-ad-section-title">普通推荐</h3>
-        <div class="codex-plus-ad-list">${renderCodexPlusAdGroup("normal", "暂无普通推荐。")}</div>
+      <section class="agentkey-ad-section">
+        <h3 class="agentkey-ad-section-title">普通推荐</h3>
+        <div class="agentkey-ad-list">${renderAgentKeyAdGroup("normal", "暂无普通推荐。")}</div>
       </section>
     `;
   }
 
-  function cacheBustCodexPlusAdUrl(url, version) {
+  function cacheBustAgentKeyAdUrl(url, version) {
     return `${url}${url.includes("?") ? "&" : "?"}v=${version}`;
   }
 
-  async function directFetchCodexPlusAds() {
+  async function directFetchAgentKeyAds() {
     const urls = [
       "https://raw.githubusercontent.com/GPTokens/agentkey/main/assets/recommendations.json",
       "https://cdn.jsdelivr.net/gh/GPTokens/agentkey@main/assets/recommendations.json",
@@ -1890,7 +1890,7 @@
     const cacheBust = Date.now();
     for (const url of urls) {
       try {
-        const response = await fetch(cacheBustCodexPlusAdUrl(url, cacheBust), {
+        const response = await fetch(cacheBustAgentKeyAdUrl(url, cacheBust), {
           headers: { "Accept": "application/json" },
           cache: "no-store",
         });
@@ -1903,193 +1903,193 @@
     throw lastError || new Error("ad list unavailable");
   }
 
-  async function fetchCodexPlusAds() {
+  async function fetchAgentKeyAds() {
     try {
-      codexPlusAds = normalizeCodexPlusAds(await directFetchCodexPlusAds());
+      agentKeyAds = normalizeAgentKeyAds(await directFetchAgentKeyAds());
     } catch (error) {
-      sendCodexPlusDiagnostic("ads_fetch_failed", {
+      sendAgentKeyDiagnostic("ads_fetch_failed", {
         errorName: error?.name || "",
         errorMessage: error?.message || String(error),
       });
-      codexPlusAds = [];
+      agentKeyAds = [];
     } finally {
-      codexPlusAdsLoaded = true;
-      const panel = document.querySelector('[data-codex-plus-panel="sponsor"] .codex-plus-ad-remote');
-      if (panel) panel.innerHTML = renderCodexPlusAds();
+      agentKeyAdsLoaded = true;
+      const panel = document.querySelector('[data-agentkey-panel="sponsor"] .agentkey-ad-remote');
+      if (panel) panel.innerHTML = renderAgentKeyAds();
     }
   }
 
-  function selectCodexPlusTab(tab) {
-    document.querySelectorAll(".codex-plus-modal-content").forEach((modal) => {
-      modal.dataset.codexPlusActiveTab = tab;
+  function selectAgentKeyTab(tab) {
+    document.querySelectorAll(".agentkey-modal-content").forEach((modal) => {
+      modal.dataset.agentKeyActiveTab = tab;
     });
-    document.querySelectorAll("[data-codex-plus-tab]").forEach((button) => {
-      button.dataset.active = String(button.getAttribute("data-codex-plus-tab") === tab);
+    document.querySelectorAll("[data-agentkey-tab]").forEach((button) => {
+      button.dataset.active = String(button.getAttribute("data-agentkey-tab") === tab);
     });
-    document.querySelectorAll("[data-codex-plus-panel]").forEach((panel) => {
-      panel.hidden = panel.getAttribute("data-codex-plus-panel") !== tab;
+    document.querySelectorAll("[data-agentkey-panel]").forEach((panel) => {
+      panel.hidden = panel.getAttribute("data-agentkey-panel") !== tab;
     });
     if (tab === "userScripts") loadUserScripts();
   }
 
-  function openCodexPlusModal() {
-    document.querySelectorAll(".codex-plus-modal-overlay").forEach((node) => node.remove());
-    document.querySelectorAll('[data-codex-plus-dialog="true"]').forEach((node) => node.remove());
+  function openAgentKeyModal() {
+    document.querySelectorAll(".agentkey-modal-overlay").forEach((node) => node.remove());
+    document.querySelectorAll('[data-agentkey-dialog="true"]').forEach((node) => node.remove());
     const overlay = document.createElement("div");
-    overlay.className = "codex-plus-modal-overlay";
+    overlay.className = "agentkey-modal-overlay";
     overlay.innerHTML = `
-      <div class="codex-plus-modal-content" role="dialog" aria-modal="true" aria-label="AgentKey">
-        <div class="codex-plus-modal-header">
-          <div class="codex-plus-modal-title"><span class="codex-plus-backend-indicator" data-codex-backend-indicator="true" data-status="checking"></span><span data-codex-plus-version="true">AgentKey ${codexPlusVersion}</span></div>
-          <button type="button" class="codex-plus-modal-close" aria-label="关闭">×</button>
+      <div class="agentkey-modal-content" role="dialog" aria-modal="true" aria-label="AgentKey">
+        <div class="agentkey-modal-header">
+          <div class="agentkey-modal-title"><span class="agentkey-backend-indicator" data-codex-backend-indicator="true" data-status="checking"></span><span data-agentkey-version="true">AgentKey ${agentKeyVersion}</span></div>
+          <button type="button" class="agentkey-modal-close" aria-label="关闭">×</button>
         </div>
-        <div class="codex-plus-tabs" role="tablist" aria-label="AgentKey">
-          <button type="button" class="codex-plus-tab-button" data-codex-plus-tab="home" data-active="true">主页</button>
-          <button type="button" class="codex-plus-tab-button" data-codex-plus-tab="userScripts" data-active="false">用户脚本</button>
-          <button type="button" class="codex-plus-tab-button" data-codex-plus-tab="sponsor" data-active="false">推荐内容</button>
-          <button type="button" class="codex-plus-tab-button" data-codex-plus-tab="support" data-active="false">项目状态</button>
+        <div class="agentkey-tabs" role="tablist" aria-label="AgentKey">
+          <button type="button" class="agentkey-tab-button" data-agentkey-tab="home" data-active="true">主页</button>
+          <button type="button" class="agentkey-tab-button" data-agentkey-tab="userScripts" data-active="false">用户脚本</button>
+          <button type="button" class="agentkey-tab-button" data-agentkey-tab="sponsor" data-active="false">推荐内容</button>
+          <button type="button" class="agentkey-tab-button" data-agentkey-tab="support" data-active="false">项目状态</button>
         </div>
-        <div class="codex-plus-modal-body">
-          <div class="codex-plus-panel" data-codex-plus-panel="home">
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">后端连接</div><div class="codex-plus-row-description">每 5 秒检查一次 launcher 后端状态；断开时可尝试修复后端运行。</div></div>
-              <div class="codex-plus-backend-status">
-                <div class="codex-plus-backend-label" data-codex-backend-status="true" data-status="checking">正在检查后端…</div>
-                <button type="button" class="codex-plus-backend-repair" data-codex-backend-repair="true" hidden>修复后端运行</button>
+        <div class="agentkey-modal-body">
+          <div class="agentkey-panel" data-agentkey-panel="home">
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">后端连接</div><div class="agentkey-row-description">每 5 秒检查一次 launcher 后端状态；断开时可尝试修复后端运行。</div></div>
+              <div class="agentkey-backend-status">
+                <div class="agentkey-backend-label" data-codex-backend-status="true" data-status="checking">正在检查后端…</div>
+                <button type="button" class="agentkey-backend-repair" data-codex-backend-repair="true" hidden>修复后端运行</button>
               </div>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">页面功能增强</div><div class="codex-plus-row-description">关闭后停用删除、导出、移动、Timeline、插件相关和菜单位置增强。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-backend-setting="enhancementsEnabled"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">页面功能增强</div><div class="agentkey-row-description">关闭后停用删除、导出、移动、Timeline、插件相关和菜单位置增强。</div></div>
+              <button type="button" class="agentkey-toggle" data-codex-backend-setting="enhancementsEnabled"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">插件市场解锁</div><div class="codex-plus-row-description">${codexPlusBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；ChatGPT 登录态会保留官方插件市场。" : "API Key 模式下扩展插件市场请求，尽量显示完整插件列表。"}</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="pluginMarketplaceUnlock" ${codexPlusBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">插件市场解锁</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；ChatGPT 登录态会保留官方插件市场。" : "API Key 模式下扩展插件市场请求，尽量显示完整插件列表。"}</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="pluginMarketplaceUnlock" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">强制解锁入口</div><div class="codex-plus-row-description">${codexPlusBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；官方登录态会保留插件入口。" : "恢复 1.1.9 的入口解锁方式，强制显示并启用插件入口。"}</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="pluginEntryUnlock" ${codexPlusBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">强制解锁入口</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；官方登录态会保留插件入口。" : "恢复 1.1.9 的入口解锁方式，强制显示并启用插件入口。"}</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="pluginEntryUnlock" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">特殊插件强制安装</div><div class="codex-plus-row-description">${codexPlusBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；不会改插件安装入口。" : "解除 App unavailable / 应用不可用导致的前端安装禁用。"}</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="forcePluginInstall" ${codexPlusBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">特殊插件强制安装</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；不会改插件安装入口。" : "解除 App unavailable / 应用不可用导致的前端安装禁用。"}</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="forcePluginInstall" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">模型白名单解锁</div><div class="codex-plus-row-description">从环境变量和 Codex config.toml 中的中转站 /v1/models 拉取模型，并补进模型选择列表。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="modelWhitelistUnlock"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">模型白名单解锁</div><div class="agentkey-row-description">从环境变量和 Codex config.toml 中的中转站 /v1/models 拉取模型，并补进模型选择列表。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="modelWhitelistUnlock"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">Fast 按钮</div><div class="codex-plus-row-description">显示服务模式切换按钮，并允许把请求切到 Fast / priority；默认关闭以避免误触高价服务模式。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="serviceTierControls"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">Fast 按钮</div><div class="agentkey-row-description">显示服务模式切换按钮，并允许把请求切到 Fast / priority；默认关闭以避免误触高价服务模式。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="serviceTierControls"><span></span></button>
             </div>
-            <div class="codex-plus-row" data-codex-service-tier-controls="true">
-              <div><div class="codex-plus-row-title">服务模式</div><div class="codex-plus-row-description">继承使用 config.toml 的 service tier；全局模式覆盖全部 thread；自定义允许按 thread 覆盖。</div></div>
-              <div class="codex-plus-service-tier-control">
-                <div class="codex-plus-service-tier-status" data-codex-service-tier-status="true" data-status="loading">正在读取…</div>
-                <div class="codex-plus-service-tier-actions">
-                  <button type="button" class="codex-plus-service-tier-button" data-codex-service-tier-inherit="true">继承</button>
-                  <button type="button" class="codex-plus-service-tier-button" data-codex-service-tier-standard="true">全局 Standard</button>
-                  <button type="button" class="codex-plus-service-tier-button" data-codex-service-tier-fast="true">全局 Fast</button>
-                  <button type="button" class="codex-plus-service-tier-button" data-codex-service-tier-custom="true">自定义</button>
+            <div class="agentkey-row" data-codex-service-tier-controls="true">
+              <div><div class="agentkey-row-title">服务模式</div><div class="agentkey-row-description">继承使用 config.toml 的 service tier；全局模式覆盖全部 thread；自定义允许按 thread 覆盖。</div></div>
+              <div class="agentkey-service-tier-control">
+                <div class="agentkey-service-tier-status" data-codex-service-tier-status="true" data-status="loading">正在读取…</div>
+                <div class="agentkey-service-tier-actions">
+                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-inherit="true">继承</button>
+                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-standard="true">全局 Standard</button>
+                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-fast="true">全局 Fast</button>
+                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-custom="true">自定义</button>
                 </div>
-                <div class="codex-plus-service-tier-actions codex-plus-service-tier-thread-actions">
-                  <span class="codex-plus-service-tier-thread-label">当前 thread 覆盖</span>
-                  <button type="button" class="codex-plus-service-tier-button" data-codex-service-tier-thread-inherit="true" title="当前 thread 不单独覆盖，继承 config.toml">继承</button>
-                  <button type="button" class="codex-plus-service-tier-button" data-codex-service-tier-thread-standard="true" title="仅当前 thread 使用 Standard，并切到自定义模式">Standard</button>
-                  <button type="button" class="codex-plus-service-tier-button" data-codex-service-tier-thread-fast="true" title="仅当前 thread 使用 Fast，并切到自定义模式">Fast</button>
+                <div class="agentkey-service-tier-actions agentkey-service-tier-thread-actions">
+                  <span class="agentkey-service-tier-thread-label">当前 thread 覆盖</span>
+                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-thread-inherit="true" title="当前 thread 不单独覆盖，继承 config.toml">继承</button>
+                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-thread-standard="true" title="仅当前 thread 使用 Standard，并切到自定义模式">Standard</button>
+                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-thread-fast="true" title="仅当前 thread 使用 Fast，并切到自定义模式">Fast</button>
                 </div>
               </div>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">会话删除</div><div class="codex-plus-row-description">在会话列表悬停显示删除按钮，并支持撤销。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="sessionDelete"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">会话删除</div><div class="agentkey-row-description">在会话列表悬停显示删除按钮，并支持撤销。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="sessionDelete"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">Markdown 导出</div><div class="codex-plus-row-description">在会话列表显示导出按钮，按本地 rollout 导出带时间戳的 Markdown。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="markdownExport"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">Markdown 导出</div><div class="agentkey-row-description">在会话列表显示导出按钮，按本地 rollout 导出带时间戳的 Markdown。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="markdownExport"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">会话项目移动</div><div class="codex-plus-row-description">在会话列表悬停显示移动按钮，可移动到普通对话或其他本地项目。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="projectMove"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">会话项目移动</div><div class="agentkey-row-description">在会话列表悬停显示移动按钮，可移动到普通对话或其他本地项目。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="projectMove"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">对话 Timeline</div><div class="codex-plus-row-description">在对话右侧显示用户提问时间线，悬停查看摘要，点击跳转。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="conversationTimeline"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">对话 Timeline</div><div class="agentkey-row-description">在对话右侧显示用户提问时间线，悬停查看摘要，点击跳转。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="conversationTimeline"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">对话居中宽度</div><div class="codex-plus-row-description">开启后把主对话和输入框限制到固定最大宽度，适合大屏阅读。</div></div>
-              <div class="codex-plus-width-control">
-                <input class="codex-plus-width-input" data-codex-plus-conversation-view-width="true" min="${conversationViewMinWidth}" max="${conversationViewMaxAllowedWidth}" step="10" type="number" value="${conversationViewWidth()}">
-                <button type="button" class="codex-plus-toggle" data-codex-plus-setting="conversationView"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">对话居中宽度</div><div class="agentkey-row-description">开启后把主对话和输入框限制到固定最大宽度，适合大屏阅读。</div></div>
+              <div class="agentkey-width-control">
+                <input class="agentkey-width-input" data-agentkey-conversation-view-width="true" min="${conversationViewMinWidth}" max="${conversationViewMaxAllowedWidth}" step="10" type="number" value="${conversationViewWidth()}">
+                <button type="button" class="agentkey-toggle" data-agentkey-setting="conversationView"><span></span></button>
               </div>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">切换对话保留位置</div><div class="codex-plus-row-description">开启后在不同 thread 之间切换时恢复到上一次浏览位置，不再自动跳到底部。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="threadScrollRestore"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">切换对话保留位置</div><div class="agentkey-row-description">开启后在不同 thread 之间切换时恢复到上一次浏览位置，不再自动跳到底部。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="threadScrollRestore"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">Zed Remote open</div><div class="codex-plus-row-description">Open supported remote SSH file references in Zed without patching Codex.app.</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="zedRemoteOpen"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">Zed Remote open</div><div class="agentkey-row-description">Open supported remote SSH file references in Zed without patching Codex.app.</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="zedRemoteOpen"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">Upstream worktree</div><div class="codex-plus-row-description">Create a Git worktree from a fresh upstream branch, equivalent to git worktree add -b branch path upstream/base.</div></div>
-              <div class="codex-plus-worktree-actions">
-                <button type="button" class="codex-plus-action-button" data-codex-upstream-worktree-open="true">创建</button>
-                <button type="button" class="codex-plus-toggle" data-codex-plus-setting="upstreamWorktreeCreate"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">Upstream worktree</div><div class="agentkey-row-description">Create a Git worktree from a fresh upstream branch, equivalent to git worktree add -b branch path upstream/base.</div></div>
+              <div class="agentkey-worktree-actions">
+                <button type="button" class="agentkey-action-button" data-codex-upstream-worktree-open="true">创建</button>
+                <button type="button" class="agentkey-toggle" data-agentkey-setting="upstreamWorktreeCreate"><span></span></button>
               </div>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">历史会话修复</div><div class="codex-plus-row-description">切换官方登录、混合 API 或纯 API 后，让旧对话重新显示在当前模式下。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-backend-setting="providerSyncEnabled"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">历史会话修复</div><div class="agentkey-row-description">切换官方登录、混合 API 或纯 API 后，让旧对话重新显示在当前模式下。</div></div>
+              <button type="button" class="agentkey-toggle" data-codex-backend-setting="providerSyncEnabled"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">页面增强模式</div><div class="codex-plus-row-description">${codexPlusBackendSettings.launchMode === "relay" ? "兼容增强：保留会话删除、导出、项目移动、Timeline 和用户脚本，仅关闭插件入口相关增强。" : "完整增强：加载插件入口、强制安装、项目路径移动等全部页面能力。"}</div></div>
-              <button type="button" class="codex-plus-action-button" data-codex-open-manager="true">打开管理工具</button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">页面增强模式</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强：保留会话删除、导出、项目移动、Timeline 和用户脚本，仅关闭插件入口相关增强。" : "完整增强：加载插件入口、强制安装、项目路径移动等全部页面能力。"}</div></div>
+              <button type="button" class="agentkey-action-button" data-codex-open-manager="true">打开管理工具</button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">原生菜单栏位置</div><div class="codex-plus-row-description">把 AgentKey 菜单插入顶部原生菜单栏；默认关闭以避免页面重渲染冲突。</div></div>
-              <button type="button" class="codex-plus-toggle" data-codex-plus-setting="nativeMenuPlacement"><span></span></button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">原生菜单栏位置</div><div class="agentkey-row-description">把 AgentKey 菜单插入顶部原生菜单栏；默认关闭以避免页面重渲染冲突。</div></div>
+              <button type="button" class="agentkey-toggle" data-agentkey-setting="nativeMenuPlacement"><span></span></button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">打开 DevTools</div><div class="codex-plus-row-description">打开当前 Codex 页面开发者工具，方便查看用户脚本报错。</div></div>
-              <button type="button" class="codex-plus-action-button" data-codex-open-devtools="true">打开 DevTools</button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">打开 DevTools</div><div class="agentkey-row-description">打开当前 Codex 页面开发者工具，方便查看用户脚本报错。</div></div>
+              <button type="button" class="agentkey-action-button" data-codex-open-devtools="true">打开 DevTools</button>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">关于 AgentKey</div><div class="codex-plus-about">AgentKey 是通过本地 launcher 注入的桌面桥接菜单，用 API Key 支持 Codex 与 Claude Code 工作流。<br>Build: <span data-codex-plus-build="true">${codexPlusBuild}</span><br>GitHub: <a href="https://github.com/GPTokens/agentkey" target="_blank" rel="noreferrer">https://github.com/GPTokens/agentkey</a></div></div>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">关于 AgentKey</div><div class="agentkey-about">AgentKey 是通过本地 launcher 注入的桌面桥接菜单，用 API Key 支持 Codex 与 Claude Code 工作流。<br>Build: <span data-agentkey-build="true">${agentKeyBuild}</span><br>GitHub: <a href="https://github.com/GPTokens/agentkey" target="_blank" rel="noreferrer">https://github.com/GPTokens/agentkey</a></div></div>
             </div>
-            <div class="codex-plus-row">
-              <div><div class="codex-plus-row-title">提出问题</div><div class="codex-plus-row-description">打开 GitHub Issues 反馈问题或建议。</div></div>
-              <button type="button" class="codex-plus-issue-button" data-codex-plus-issue="true">提出问题</button>
+            <div class="agentkey-row">
+              <div><div class="agentkey-row-title">提出问题</div><div class="agentkey-row-description">打开 GitHub Issues 反馈问题或建议。</div></div>
+              <button type="button" class="agentkey-issue-button" data-agentkey-issue="true">提出问题</button>
             </div>
           </div>
-          <div class="codex-plus-panel" data-codex-plus-panel="userScripts" hidden>
-            <div class="codex-plus-row" data-codex-user-scripts-section="true">
+          <div class="agentkey-panel" data-agentkey-panel="userScripts" hidden>
+            <div class="agentkey-row" data-codex-user-scripts-section="true">
               <div>
-                <div class="codex-plus-row-title">用户脚本</div>
-                <div class="codex-plus-row-description">启用用户脚本：自动加载内置目录和用户配置目录中的 .js 文件。</div>
-                <div class="codex-plus-user-script-warning">禁用后需重载页面或重启 AgentKey 才能完全移除已执行效果。</div>
-                <div class="codex-plus-user-script-dirs" data-codex-user-script-dirs="true">正在读取脚本目录…</div>
-                <div class="codex-plus-user-script-list" data-codex-user-script-list="true">正在读取用户脚本…</div>
+                <div class="agentkey-row-title">用户脚本</div>
+                <div class="agentkey-row-description">启用用户脚本：自动加载内置目录和用户配置目录中的 .js 文件。</div>
+                <div class="agentkey-user-script-warning">禁用后需重载页面或重启 AgentKey 才能完全移除已执行效果。</div>
+                <div class="agentkey-user-script-dirs" data-codex-user-script-dirs="true">正在读取脚本目录…</div>
+                <div class="agentkey-user-script-list" data-codex-user-script-list="true">正在读取用户脚本…</div>
               </div>
-              <div class="codex-plus-user-script-actions">
-                <button type="button" class="codex-plus-toggle" data-codex-user-scripts-enabled="true"><span></span></button>
-                <button type="button" class="codex-plus-user-script-reload" data-codex-user-scripts-reload="true">重新加载用户脚本</button>
+              <div class="agentkey-user-script-actions">
+                <button type="button" class="agentkey-toggle" data-codex-user-scripts-enabled="true"><span></span></button>
+                <button type="button" class="agentkey-user-script-reload" data-codex-user-scripts-reload="true">重新加载用户脚本</button>
               </div>
             </div>
           </div>
-          <div class="codex-plus-panel" data-codex-plus-panel="sponsor" hidden>
-            <div class="codex-plus-sponsor-text">推荐内容用于展示适合 AgentKey 用户的 API、模型和桌面客户端工作流资源。</div>
-            <div class="codex-plus-ad-remote">
-              ${renderCodexPlusAds()}
+          <div class="agentkey-panel" data-agentkey-panel="sponsor" hidden>
+            <div class="agentkey-sponsor-text">推荐内容用于展示适合 AgentKey 用户的 API、模型和桌面客户端工作流资源。</div>
+            <div class="agentkey-ad-remote">
+              ${renderAgentKeyAds()}
             </div>
           </div>
-          <div class="codex-plus-panel" data-codex-plus-panel="support" hidden>
-            <div class="codex-plus-sponsor-text">AgentKey 正在准备首个公开版本。当前重点是 API Key 配置、Claude Code 支持、本地 helper 安全和安装体验。</div>
+          <div class="agentkey-panel" data-agentkey-panel="support" hidden>
+            <div class="agentkey-sponsor-text">AgentKey 正在准备首个公开版本。当前重点是 API Key 配置、Claude Code 支持、本地 helper 安全和安装体验。</div>
           </div>
         </div>
       </div>
     `;
-    const closeButton = overlay.querySelector(".codex-plus-modal-close");
+    const closeButton = overlay.querySelector(".agentkey-modal-close");
     closeButton?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -2097,12 +2097,12 @@
     }, true);
     overlay.addEventListener("input", (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      const widthInput = target?.closest("[data-codex-plus-conversation-view-width]");
+      const widthInput = target?.closest("[data-agentkey-conversation-view-width]");
       if (widthInput) setConversationViewWidth(widthInput.value);
     }, true);
     overlay.addEventListener("change", (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      const widthInput = target?.closest("[data-codex-plus-conversation-view-width]");
+      const widthInput = target?.closest("[data-agentkey-conversation-view-width]");
       if (widthInput) {
         const width = normalizeConversationViewWidth(widthInput.value);
         widthInput.value = String(width || conversationViewWidth());
@@ -2111,13 +2111,13 @@
     }, true);
     overlay.addEventListener("click", (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      if (event.target === overlay || target?.closest(".codex-plus-modal-close")) {
+      if (event.target === overlay || target?.closest(".agentkey-modal-close")) {
         overlay.remove();
         return;
       }
-      const tabButton = target?.closest("[data-codex-plus-tab]");
+      const tabButton = target?.closest("[data-agentkey-tab]");
       if (tabButton) {
-        selectCodexPlusTab(tabButton.getAttribute("data-codex-plus-tab"));
+        selectAgentKeyTab(tabButton.getAttribute("data-agentkey-tab"));
         return;
       }
       if (target?.closest("[data-codex-open-devtools]")) {
@@ -2128,11 +2128,11 @@
         openManagerFromCodex();
         return;
       }
-      if (target?.closest("[data-codex-plus-discord]")) {
+      if (target?.closest("[data-agentkey-discord]")) {
         window.open("https://discord.gg/y96kX7A76v", "_blank");
         return;
       }
-      if (target?.closest("[data-codex-plus-telegram]")) {
+      if (target?.closest("[data-agentkey-telegram]")) {
         window.open("https://github.com/GPTokens/agentkey", "_blank");
         return;
       }
@@ -2140,7 +2140,7 @@
         repairBackend();
         return;
       }
-      const issueButton = target?.closest("[data-codex-plus-issue]");
+      const issueButton = target?.closest("[data-agentkey-issue]");
       if (issueButton) {
         const issueUrl = "https://github.com/GPTokens/agentkey/issues";
         window.open(issueUrl, "_blank");
@@ -2189,66 +2189,66 @@
         return;
       }
       if (target?.closest("[data-codex-upstream-worktree-open]")) {
-        if (!codexPlusSettings().upstreamWorktreeCreate) {
+        if (!agentKeySettings().upstreamWorktreeCreate) {
           showToast("Upstream worktree enhancement is disabled", null);
           return;
         }
         openUpstreamWorktreeDialog();
         return;
       }
-      const toggle = target?.closest("[data-codex-plus-setting]");
+      const toggle = target?.closest("[data-agentkey-setting]");
       if (toggle) {
         if (toggle.disabled) return;
-        const key = toggle.getAttribute("data-codex-plus-setting");
-        setCodexPlusSetting(key, !codexPlusSettings()[key]);
+        const key = toggle.getAttribute("data-agentkey-setting");
+        setAgentKeySetting(key, !agentKeySettings()[key]);
         return;
       }
       const backendToggle = target?.closest("[data-codex-backend-setting]");
       if (backendToggle) {
         const key = backendToggle.getAttribute("data-codex-backend-setting");
-        setBackendSetting(key, !codexPlusBackendSettings[key]);
+        setBackendSetting(key, !agentKeyBackendSettings[key]);
         return;
       }
     }, true);
     document.body.appendChild(overlay);
-    if (!codexPlusAdsLoaded) fetchCodexPlusAds();
-    selectCodexPlusTab("home");
-    renderCodexPlusMenu();
-    refreshCodexPlusBackendToggles();
+    if (!agentKeyAdsLoaded) fetchAgentKeyAds();
+    selectAgentKeyTab("home");
+    renderAgentKeyMenu();
+    refreshAgentKeyBackendToggles();
     renderBackendStatus();
     void loadCodexServiceTierState();
     loadUserScripts();
   }
 
   function findNativeMenuInsertionPoint() {
-    if (!codexPlusSettings().nativeMenuPlacement) return null;
+    if (!agentKeySettings().nativeMenuPlacement) return null;
     const header = document.querySelector(selectors.appHeader);
     const menuBar = header?.querySelector(selectors.nativeMenuBar);
     if (menuBar) {
-      const buttons = Array.from(menuBar.querySelectorAll("button")).filter((button) => !button.closest(`#${codexPlusMenuId}`));
+      const buttons = Array.from(menuBar.querySelectorAll("button")).filter((button) => !button.closest(`#${agentKeyMenuId}`));
       return { parent: menuBar, before: buttons[buttons.length - 1]?.nextSibling || null, nativeButtonClass: buttons[buttons.length - 1]?.className || "" };
     }
     const contextSurface = header?.querySelector(selectors.headerContextMenuSurface);
     const buttons = Array.from(contextSurface?.querySelectorAll?.("button") || [])
-      .filter((button) => !button.closest(`#${codexPlusMenuId}`) && button.getBoundingClientRect().width > 0 && button.getBoundingClientRect().height > 0);
+      .filter((button) => !button.closest(`#${agentKeyMenuId}`) && button.getBoundingClientRect().width > 0 && button.getBoundingClientRect().height > 0);
     const nativeButton = buttons.find((button) => !button.parentElement?.classList?.contains("inline-flex")) || buttons[0];
     const parent = nativeButton?.parentElement;
     if (!parent) return null;
     return { parent, before: nativeButton, nativeButtonClass: nativeButton.className || "" };
   }
 
-  function removeDuplicateCodexPlusMenus(keep) {
-    document.querySelectorAll(`#${codexPlusMenuId}, [data-codex-plus-menu="true"]`).forEach((node) => {
+  function removeDuplicateAgentKeyMenus(keep) {
+    document.querySelectorAll(`#${agentKeyMenuId}, [data-agentkey-menu="true"]`).forEach((node) => {
       if (node !== keep) node.remove();
     });
     Array.from(document.querySelectorAll("button")).forEach((button) => {
-      if ((button.textContent || "").trim() === `AgentKey ${codexPlusVersion}` && !button.closest(`#${codexPlusMenuId}`)) {
+      if ((button.textContent || "").trim() === `AgentKey ${agentKeyVersion}` && !button.closest(`#${agentKeyMenuId}`)) {
         button.remove();
       }
     });
   }
 
-  function normalizeCodexPlusTriggerClassName(className) {
+  function normalizeAgentKeyTriggerClassName(className) {
     const classes = String(className || "").split(/\s+/).filter(Boolean);
     const incompatibleNativeGroupClasses = new Set(["gap-0", "rounded-l-none", "border-l-0", "pl-0.5", "pr-1.5"]);
     const hasIncompatibleNativeGroupClass = classes.some((name) => incompatibleNativeGroupClasses.has(name));
@@ -2261,15 +2261,15 @@
     return normalized.join(" ");
   }
 
-  function configureCodexPlusTrigger(menu, trigger, nativeButtonClass) {
+  function configureAgentKeyTrigger(menu, trigger, nativeButtonClass) {
     if (!trigger) return;
-    if (nativeButtonClass) trigger.className = normalizeCodexPlusTriggerClassName(nativeButtonClass);
-    if (trigger.dataset.codexPlusTriggerInstalled === "5") return;
-    trigger.dataset.codexPlusTriggerInstalled = "5";
+    if (nativeButtonClass) trigger.className = normalizeAgentKeyTriggerClassName(nativeButtonClass);
+    if (trigger.dataset.agentKeyTriggerInstalled === "5") return;
+    trigger.dataset.agentKeyTriggerInstalled = "5";
     trigger.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      openCodexPlusModal();
+      openAgentKeyModal();
     }, true);
   }
 
@@ -2294,7 +2294,7 @@
   }
 
   function isHeaderToolbarButton(button, header, rect) {
-    if (!button || button.closest?.(`#${codexPlusMenuId}`)) return false;
+    if (!button || button.closest?.(`#${agentKeyMenuId}`)) return false;
     if (!(rect.width > 0 && rect.height > 0 && rect.left > window.innerWidth / 2)) return false;
     const buttonCluster = button.closest(".ms-auto.flex.shrink-0.items-center");
     if (buttonCluster && header?.contains(buttonCluster)) return true;
@@ -2303,8 +2303,8 @@
     return !!button.closest?.('[class*="ms-auto"][class*="shrink-0"][class*="items-center"]');
   }
 
-  function updateFloatingCodexPlusMenuPosition(menu) {
-    if (!menu?.classList?.contains(codexPlusMenuFloatingClass)) return;
+  function updateFloatingAgentKeyMenuPosition(menu) {
+    if (!menu?.classList?.contains(agentKeyMenuFloatingClass)) return;
     const header = document.querySelector(selectors.appHeader) || document.querySelector("header");
     if (!header) return;
     const toolbarButtons = Array.from(header.querySelectorAll("button"))
@@ -2316,61 +2316,61 @@
       const measuredGap = toolbarButtons[1] ? toolbarButtons[1].rect.left - toolbarButtons[0].rect.right : 0;
       const styles = anchor.button.parentElement ? getComputedStyle(anchor.button.parentElement) : null;
       const gap = Math.max(numericCssValue(styles?.columnGap || styles?.gap), measuredGap, 0);
-      setCssPropIfChanged(menu, "--codex-plus-menu-top", `${anchor.rect.top}px`);
-      setCssPropIfChanged(menu, "--codex-plus-menu-height", `${anchor.rect.height}px`);
-      setCssPropIfChanged(menu, "--codex-plus-menu-right", `${Math.max(0, window.innerWidth - anchor.rect.left + gap)}px`);
+      setCssPropIfChanged(menu, "--agentkey-menu-top", `${anchor.rect.top}px`);
+      setCssPropIfChanged(menu, "--agentkey-menu-height", `${anchor.rect.height}px`);
+      setCssPropIfChanged(menu, "--agentkey-menu-right", `${Math.max(0, window.innerWidth - anchor.rect.left + gap)}px`);
       return;
     }
 
     const headerRect = header.getBoundingClientRect();
     if (headerRect.height) {
-      setCssPropIfChanged(menu, "--codex-plus-menu-top", `${headerRect.top}px`);
-      setCssPropIfChanged(menu, "--codex-plus-menu-height", `${headerRect.height}px`);
+      setCssPropIfChanged(menu, "--agentkey-menu-top", `${headerRect.top}px`);
+      setCssPropIfChanged(menu, "--agentkey-menu-height", `${headerRect.height}px`);
     }
-    menu.style.removeProperty("--codex-plus-menu-right");
+    menu.style.removeProperty("--agentkey-menu-right");
   }
 
-  function installCodexPlusMenu() {
-    const existing = document.getElementById(codexPlusMenuId);
-    removeDuplicateCodexPlusMenus(existing);
+  function installAgentKeyMenu() {
+    const existing = document.getElementById(agentKeyMenuId);
+    removeDuplicateAgentKeyMenus(existing);
     let insertionPoint = findNativeMenuInsertionPoint();
-    if (existing && existing.dataset.codexPlusMenuVersion !== "6") {
+    if (existing && existing.dataset.agentKeyMenuVersion !== "6") {
       existing.remove();
       insertionPoint = findNativeMenuInsertionPoint();
     } else if (existing && insertionPoint && existing.parentElement === insertionPoint.parent) {
-      configureCodexPlusTrigger(existing, existing.querySelector("button"), insertionPoint.nativeButtonClass);
-      removeDuplicateCodexPlusMenus(existing);
+      configureAgentKeyTrigger(existing, existing.querySelector("button"), insertionPoint.nativeButtonClass);
+      removeDuplicateAgentKeyMenus(existing);
       return;
     } else if (existing && insertionPoint) {
-      configureCodexPlusTrigger(existing, existing.querySelector("button"), insertionPoint.nativeButtonClass);
+      configureAgentKeyTrigger(existing, existing.querySelector("button"), insertionPoint.nativeButtonClass);
       existing.className = "";
       const safeBefore = insertionPoint.before?.parentElement === insertionPoint.parent ? insertionPoint.before : null;
       insertionPoint.parent.insertBefore(existing, safeBefore);
-      removeDuplicateCodexPlusMenus(existing);
+      removeDuplicateAgentKeyMenus(existing);
       return;
     }
     const menu = document.createElement("div");
-    menu.id = codexPlusMenuId;
-    menu.dataset.codexPlusMenu = "true";
-    menu.dataset.codexPlusMenuVersion = "6";
+    menu.id = agentKeyMenuId;
+    menu.dataset.agentKeyMenu = "true";
+    menu.dataset.agentKeyMenuVersion = "6";
     const trigger = document.createElement("button");
     trigger.type = "button";
-    const indicator = ensureCodexPlusTriggerIndicator(trigger);
-    if (indicator) indicator.dataset.status = codexPlusBackendStatus.status || "checking";
-    setCodexPlusTriggerLabel(trigger);
-    const nativeButtonClass = insertionPoint?.nativeButtonClass || "codex-plus-trigger";
-    configureCodexPlusTrigger(menu, trigger, nativeButtonClass);
+    const indicator = ensureAgentKeyTriggerIndicator(trigger);
+    if (indicator) indicator.dataset.status = agentKeyBackendStatus.status || "checking";
+    setAgentKeyTriggerLabel(trigger);
+    const nativeButtonClass = insertionPoint?.nativeButtonClass || "agentkey-trigger";
+    configureAgentKeyTrigger(menu, trigger, nativeButtonClass);
     menu.appendChild(trigger);
     if (insertionPoint) {
       menu.className = "";
       const safeBefore = insertionPoint.before?.parentElement === insertionPoint.parent ? insertionPoint.before : null;
       insertionPoint.parent.insertBefore(menu, safeBefore);
     } else {
-      menu.className = codexPlusMenuFloatingClass;
+      menu.className = agentKeyMenuFloatingClass;
       document.documentElement.appendChild(menu);
-      updateFloatingCodexPlusMenuPosition(menu);
+      updateFloatingAgentKeyMenuPosition(menu);
     }
-    removeDuplicateCodexPlusMenus(menu);
+    removeDuplicateAgentKeyMenus(menu);
   }
 
   function patchPluginMarketplaceRequestParams(method, params) {
@@ -2382,7 +2382,7 @@
     const next = { ...params };
     const hadMarketplaceKinds = Object.prototype.hasOwnProperty.call(next, "marketplaceKinds");
     if (hadMarketplaceKinds) delete next.marketplaceKinds;
-    sendCodexPlusDiagnostic("plugin_marketplace_request_expanded", {
+    sendAgentKeyDiagnostic("plugin_marketplace_request_expanded", {
       hadMarketplaceKinds,
       cwdCount: Array.isArray(next.cwds) ? next.cwds.length : 0,
     });
@@ -2391,20 +2391,20 @@
 
   function pluginMarketplaceAliasForName(name) {
     if (name === "openai-bundled") return "";
-    if (name === "openai-curated") return "codex-plus-openai-curated";
-    if (name === "openai-primary-runtime") return "codex-plus-openai-primary-runtime";
+    if (name === "openai-curated") return "agentkey-openai-curated";
+    if (name === "openai-primary-runtime") return "agentkey-openai-primary-runtime";
     return "";
   }
 
   function displayNameForPluginMarketplaceName(name, fallback) {
-    if (name === "openai-bundled" || name === "codex-plus-openai-bundled") return "OpenAI插件1(AgentKey)";
-    if (name === "openai-curated" || name === "codex-plus-openai-curated") return "OpenAI插件2(AgentKey)";
-    if (name === "openai-primary-runtime" || name === "codex-plus-openai-primary-runtime") return "OpenAI插件3(AgentKey)";
+    if (name === "openai-bundled" || name === "agentkey-openai-bundled") return "OpenAI插件1(AgentKey)";
+    if (name === "openai-curated" || name === "agentkey-openai-curated") return "OpenAI插件2(AgentKey)";
+    if (name === "openai-primary-runtime" || name === "agentkey-openai-primary-runtime") return "OpenAI插件3(AgentKey)";
     return fallback;
   }
 
   function patchPluginMarketplaceObject(marketplace) {
-    if (!marketplace || typeof marketplace !== "object" || marketplace.__codexPlusMarketplaceUnlockPatched) return false;
+    if (!marketplace || typeof marketplace !== "object" || marketplace.__agentKeyMarketplaceUnlockPatched) return false;
     const alias = pluginMarketplaceAliasForName(marketplace.name);
     if (alias) marketplace.name = alias;
     const displayName = displayNameForPluginMarketplaceName(marketplace.name, marketplace.displayName || marketplace.title || marketplace.label || marketplace.name);
@@ -2423,14 +2423,14 @@
     } else {
       marketplace.interface = { displayName, name: displayName, title: displayName, label: displayName };
     }
-    marketplace.__codexPlusMarketplaceUnlockPatched = true;
+    marketplace.__agentKeyMarketplaceUnlockPatched = true;
     return true;
   }
 
   function restorePluginMarketplaceName(name) {
-    if (name === "codex-plus-openai-bundled") return "openai-bundled";
-    if (name === "codex-plus-openai-curated") return "openai-curated";
-    if (name === "codex-plus-openai-primary-runtime") return "openai-primary-runtime";
+    if (name === "agentkey-openai-bundled") return "openai-bundled";
+    if (name === "agentkey-openai-curated") return "openai-curated";
+    if (name === "agentkey-openai-primary-runtime") return "openai-primary-runtime";
     return name;
   }
 
@@ -2468,7 +2468,7 @@
   function installPluginBuildFlavorFilterPatch() {
     if (window.__codexPluginBuildFlavorFilterPatch === codexPluginMarketplaceUnlockVersion) return;
     if (pluginPatchDisabledInRelayMode()) return;
-    if (!codexPlusSettings().pluginMarketplaceUnlock) return;
+    if (!agentKeySettings().pluginMarketplaceUnlock) return;
     const originalFilter = Array.prototype.__codexPluginBuildFlavorOriginalFilter || Array.prototype.filter;
     if (!Array.prototype.__codexPluginBuildFlavorOriginalFilter) {
       Object.defineProperty(Array.prototype, "__codexPluginBuildFlavorOriginalFilter", {
@@ -2483,11 +2483,11 @@
     }
     const patchedFilter = function codexPluginBuildFlavorFilterPatch(callback, thisArg) {
       if (isCodexPluginBuildFlavorFilter(callback, this)) {
-        sendCodexPlusDiagnostic("plugin_build_flavor_filter_bypassed", { pluginCount: this.length });
+        sendAgentKeyDiagnostic("plugin_build_flavor_filter_bypassed", { pluginCount: this.length });
         return Array.from(this);
       }
       if (isCodexPluginMarketplaceHiddenFilter(callback, this)) {
-        sendCodexPlusDiagnostic("plugin_marketplace_hidden_filter_bypassed", { marketplaceCount: this.length });
+        sendAgentKeyDiagnostic("plugin_marketplace_hidden_filter_bypassed", { marketplaceCount: this.length });
         return Array.from(this);
       }
       return originalFilter.call(this, callback, thisArg);
@@ -2495,7 +2495,7 @@
     patchedFilter.__codexPluginBuildFlavorPatched = codexPluginMarketplaceUnlockVersion;
     Array.prototype.filter = patchedFilter;
     window.__codexPluginBuildFlavorFilterPatch = codexPluginMarketplaceUnlockVersion;
-    sendCodexPlusDiagnostic("plugin_build_flavor_filter_patch_installed", {});
+    sendAgentKeyDiagnostic("plugin_build_flavor_filter_patch_installed", {});
   }
 
   function restorePluginMarketplaceRequestParams(params, method = "") {
@@ -2535,7 +2535,7 @@
           }
           if (patchPluginMarketplaceObject(marketplace)) patchedCount += 1;
         });
-        sendCodexPlusDiagnostic("plugin_marketplace_response_debug", {
+        sendAgentKeyDiagnostic("plugin_marketplace_response_debug", {
           marketplaces: result.marketplaces.map((marketplace) => ({
             name: marketplace?.name || "",
             path: marketplace?.path || null,
@@ -2547,10 +2547,10 @@
         });
       }
       if (patchedCount > 0) {
-        sendCodexPlusDiagnostic("plugin_marketplace_response_expanded", { patchedCount });
+        sendAgentKeyDiagnostic("plugin_marketplace_response_expanded", { patchedCount });
       }
     } catch (error) {
-      sendCodexPlusDiagnostic("plugin_marketplace_response_patch_failed", {
+      sendAgentKeyDiagnostic("plugin_marketplace_response_patch_failed", {
         errorName: error?.name || "",
         errorMessage: error?.message || String(error),
       });
@@ -2567,7 +2567,7 @@
       const requestMethod = appServerModelRequestMethod(String(method || ""), params);
       const requestParams = patchPluginMarketplaceRequestParams(requestMethod, restorePluginMarketplaceRequestParams(params, requestMethod));
       if (requestMethod === "install-plugin") {
-        sendCodexPlusDiagnostic("plugin_install_request_debug", {
+        sendAgentKeyDiagnostic("plugin_install_request_debug", {
           method: String(method || ""),
           requestMethod,
           originalMarketplacePath: params?.marketplacePath || null,
@@ -2583,7 +2583,7 @@
         return patchPluginMarketplaceResult(requestMethod, result);
       } catch (error) {
         if (requestMethod === "install-plugin") {
-          sendCodexPlusDiagnostic("plugin_install_request_failed", {
+          sendAgentKeyDiagnostic("plugin_install_request_failed", {
             method: String(method || ""),
             requestMethod,
             requestMarketplacePath: requestParams?.marketplacePath || null,
@@ -2603,7 +2603,7 @@
   function installPluginMarketplaceRequestPatch() {
     if (window.__codexPluginMarketplaceUnlockInstalled === codexPluginMarketplaceUnlockVersion) return;
     if (pluginPatchDisabledInRelayMode()) return;
-    if (!codexPlusSettings().pluginMarketplaceUnlock) return;
+    if (!agentKeySettings().pluginMarketplaceUnlock) return;
     const patch = async () => {
       try {
         const module = await loadCodexAppModule("app-server-manager-signals-");
@@ -2620,18 +2620,18 @@
         }
         if (patchedCount > 0) {
           window.__codexPluginMarketplaceUnlockInstalled = codexPluginMarketplaceUnlockVersion;
-          sendCodexPlusDiagnostic("plugin_marketplace_request_patch_installed", {
+          sendAgentKeyDiagnostic("plugin_marketplace_request_patch_installed", {
             candidateCount: candidates.length,
             patchedCount,
           });
         } else {
-          sendCodexPlusDiagnostic("plugin_marketplace_request_patch_not_found", {
+          sendAgentKeyDiagnostic("plugin_marketplace_request_patch_not_found", {
             exportCount: Object.keys(module || {}).length,
             candidateCount: candidates.length,
           });
         }
       } catch (error) {
-        sendCodexPlusDiagnostic("plugin_marketplace_request_patch_failed", {
+        sendAgentKeyDiagnostic("plugin_marketplace_request_patch_failed", {
           errorName: error?.name || "",
           errorMessage: error?.message || String(error),
         });
@@ -2689,7 +2689,7 @@
 
   function enablePluginEntry() {
     if (pluginPatchDisabledInRelayMode()) return;
-    if (!codexPlusSettings().pluginEntryUnlock) return;
+    if (!agentKeySettings().pluginEntryUnlock) return;
     const pluginButton = pluginEntryButton();
     if (!pluginButton) return;
     const spoofed = spoofChatGPTAuthMethod(pluginButton);
@@ -2710,11 +2710,11 @@
         spoofChatGPTAuthMethod(pluginButton);
       }, true);
     }
-    sendCodexPlusDiagnostic("plugin_entry_unlock_applied", { spoofed });
+    sendAgentKeyDiagnostic("plugin_entry_unlock_applied", { spoofed });
   }
 
   function pluginPatchDisabledInRelayMode() {
-    return !codexPlusBackendSettingsLoaded || codexPlusBackendSettings.launchMode === "relay";
+    return !agentKeyBackendSettingsLoaded || agentKeyBackendSettings.launchMode === "relay";
   }
 
   function pluginInstallCandidates() {
@@ -2820,7 +2820,7 @@
 
   function unblockPluginInstallButtons() {
     if (pluginPatchDisabledInRelayMode()) return;
-    if (!codexPlusSettings().forcePluginInstall) return;
+    if (!agentKeySettings().forcePluginInstall) return;
     pluginInstallCandidates().forEach((button) => {
       const text = installButtonLabel(button);
       if (!isInstallButtonLabel(text)) return;
@@ -2830,7 +2830,7 @@
   }
 
   function refreshForcePluginInstallUnlockLoop() {
-    const shouldRun = !pluginPatchDisabledInRelayMode() && codexPlusSettings().forcePluginInstall;
+    const shouldRun = !pluginPatchDisabledInRelayMode() && agentKeySettings().forcePluginInstall;
     if (!shouldRun) {
       clearInterval(window.__codexForcePluginInstallRefreshTimer);
       window.__codexForcePluginInstallRefreshTimer = null;
@@ -2838,7 +2838,7 @@
     }
     if (window.__codexForcePluginInstallRefreshTimer) return;
     window.__codexForcePluginInstallRefreshTimer = setInterval(() => {
-      if (!codexPlusSettings().forcePluginInstall || pluginPatchDisabledInRelayMode()) {
+      if (!agentKeySettings().forcePluginInstall || pluginPatchDisabledInRelayMode()) {
         clearInterval(window.__codexForcePluginInstallRefreshTimer);
         window.__codexForcePluginInstallRefreshTimer = null;
         return;
@@ -2913,7 +2913,7 @@
     return { session_id: sessionId, title };
   }
 
-  function codexPlusDiagnosticPayload(event, detail) {
+  function agentKeyDiagnosticPayload(event, detail) {
     return {
       event,
       detail: detail || {},
@@ -2925,8 +2925,8 @@
     };
   }
 
-  function sendCodexPlusDiagnostic(event, detail) {
-    const payload = codexPlusDiagnosticPayload(event, detail);
+  function sendAgentKeyDiagnostic(event, detail) {
+    const payload = agentKeyDiagnosticPayload(event, detail);
     if (window.__codexSessionDeleteBridge) {
       window.__codexSessionDeleteBridge("/diagnostics/log", payload).catch(() => {});
     }
@@ -2939,9 +2939,9 @@
     }).catch(() => {});
   }
 
-  sendCodexPlusDiagnostic("script_loaded", {
-    version: codexPlusVersion,
-    build: codexPlusBuild,
+  sendAgentKeyDiagnostic("script_loaded", {
+    version: agentKeyVersion,
+    build: agentKeyBuild,
   });
 
   function locationThreadId() {
@@ -3160,7 +3160,7 @@
   function shouldBlockThreadScrollAutobottom(scroller, top) {
     const runtime = threadScrollRuntime();
     const lock = currentThreadScrollRestoreLock();
-    if (!lock || !codexPlusSettings().threadScrollRestore) return false;
+    if (!lock || !agentKeySettings().threadScrollRestore) return false;
     const guardScroller = threadScrollGuardScroller(scroller);
     if (runtime.applyingRestore || !guardScroller) return false;
     const targetTop = threadScrollTargetTop(guardScroller, lock.targetTop);
@@ -3286,13 +3286,13 @@
     }
     runtime.activeScroller = scroller;
     runtime.scrollListenerUsesWindow = nextUsesWindow;
-    if (!scroller || !codexPlusSettings().threadScrollRestore) return;
+    if (!scroller || !agentKeySettings().threadScrollRestore) return;
     const target = nextUsesWindow ? window : scroller;
     target.addEventListener("scroll", runtime.scrollListener, true);
   }
 
   function saveThreadScrollPositionNow(sessionId = threadScrollRuntime().activeSessionId, scroller = threadScrollRuntime().activeScroller) {
-    if (!codexPlusSettings().threadScrollRestore) return;
+    if (!agentKeySettings().threadScrollRestore) return;
     const runtime = threadScrollRuntime();
     const key = validThreadScrollSessionKey(sessionId);
     if (!key || !scroller) return;
@@ -3313,7 +3313,7 @@
   }
 
   function scheduleThreadScrollSave() {
-    if (!codexPlusSettings().threadScrollRestore || window.__codexThreadScrollSaveTimer) return;
+    if (!agentKeySettings().threadScrollRestore || window.__codexThreadScrollSaveTimer) return;
     window.__codexThreadScrollSaveTimer = setTimeout(() => {
       window.__codexThreadScrollSaveTimer = null;
       saveThreadScrollPositionNow();
@@ -3323,7 +3323,7 @@
   function restoreThreadScrollPosition(sessionId) {
     const runtime = threadScrollRuntime();
     const key = validThreadScrollSessionKey(sessionId);
-    if (!codexPlusSettings().threadScrollRestore || !key || runtime.activeSessionId !== key || userScrollIntentActive() || threadScrollRestoreCancelledForSession(key)) return;
+    if (!agentKeySettings().threadScrollRestore || !key || runtime.activeSessionId !== key || userScrollIntentActive() || threadScrollRestoreCancelledForSession(key)) return;
     const lock = activeThreadScrollRestoreLock(key);
     const entry = lock || readThreadScrollEntries()[key];
     if (!entry) return;
@@ -3350,7 +3350,7 @@
   function scheduleThreadScrollRestore(sessionId) {
     clearThreadScrollRestoreTimers();
     const key = validThreadScrollSessionKey(sessionId);
-    if (!codexPlusSettings().threadScrollRestore || !key || userScrollIntentActive() || threadScrollRestoreCancelledForSession(key)) return;
+    if (!agentKeySettings().threadScrollRestore || !key || userScrollIntentActive() || threadScrollRestoreCancelledForSession(key)) return;
     const entry = readThreadScrollEntries()[key];
     if (!entry) {
       clearThreadScrollRestoreLock();
@@ -3370,7 +3370,7 @@
     const currentRef = currentSessionRef();
     const nextSessionId = validThreadScrollSessionKey(currentRef.session_id);
     if (!nextSessionId) return;
-    if (!codexPlusSettings().threadScrollRestore) {
+    if (!agentKeySettings().threadScrollRestore) {
       bindThreadScrollListener(null);
       clearThreadScrollRestoreTimers();
       clearThreadScrollRestoreLock();
@@ -3409,7 +3409,7 @@
   }
 
   function captureThreadScrollNavigation(targetSessionId) {
-    if (!codexPlusSettings().threadScrollRestore) return;
+    if (!agentKeySettings().threadScrollRestore) return;
     const runtime = threadScrollRuntime();
     const targetKey = validThreadScrollSessionKey(targetSessionId);
     const sessionChanged = !!targetKey && targetKey !== runtime.activeSessionId;
@@ -3441,7 +3441,7 @@
   }
 
   function markThreadScrollUserIntent(event) {
-    if (!codexPlusSettings().threadScrollRestore || !eventTargetsActiveThreadScroller(event)) return;
+    if (!agentKeySettings().threadScrollRestore || !eventTargetsActiveThreadScroller(event)) return;
     cancelThreadScrollRestoreForUserIntent();
   }
 
@@ -3492,19 +3492,19 @@
     document.removeEventListener("click", window.__codexThreadScrollClickNavigationHandler, true);
     document.removeEventListener("keydown", window.__codexThreadScrollKeyboardHandler, true);
     const navigationHandler = (event) => {
-      if (!codexPlusSettings().threadScrollRestore) return;
+      if (!agentKeySettings().threadScrollRestore) return;
       const row = event.target?.closest?.(selectors.sidebarThread);
       if (!row) return;
       window.__codexThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
     };
     const clickHandler = (event) => {
-      if (!codexPlusSettings().threadScrollRestore) return;
+      if (!agentKeySettings().threadScrollRestore) return;
       const row = event.target?.closest?.(selectors.sidebarThread);
       if (!row) return;
       window.__codexThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
     };
     const keyboardHandler = (event) => {
-      if (!codexPlusSettings().threadScrollRestore) return;
+      if (!agentKeySettings().threadScrollRestore) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       const row = event.target?.closest?.(selectors.sidebarThread);
       if (!row) return;
@@ -3577,7 +3577,7 @@
           return { status: "failed", message: "未连接" };
         }
       }
-      sendCodexPlusDiagnostic("bridge_missing_for_route", { path });
+      sendAgentKeyDiagnostic("bridge_missing_for_route", { path });
       return { status: "failed", message: "桥接不可用，请重启启动器" };
     }
     function bridgeWithBackendTimeout(path, payload) {
@@ -3602,17 +3602,17 @@
       if (path === "/backend/status" || path === "/backend/repair") {
         const result = await bridgeWithBackendTimeout(path, payload);
         if (result?.status === "ok") return result;
-        if (result?.timeout) sendCodexPlusDiagnostic("backend_bridge_timeout", { path });
+        if (result?.timeout) sendAgentKeyDiagnostic("backend_bridge_timeout", { path });
         const fallback = await fetchBackendStatusFromHelper(path, payload);
         if (fallback?.status === "ok") {
-          sendCodexPlusDiagnostic("backend_status_bridge_failed_http_fallback_ok", {
+          sendAgentKeyDiagnostic("backend_status_bridge_failed_http_fallback_ok", {
             path,
             httpStatus: 200,
             responseStatus: fallback.status || "",
           });
           return fallback;
         }
-        sendCodexPlusDiagnostic("backend_status_bridge_and_http_failed", {
+        sendAgentKeyDiagnostic("backend_status_bridge_and_http_failed", {
           path,
           errorName: "",
           errorMessage: "",
@@ -3621,7 +3621,7 @@
       }
       return await window.__codexSessionDeleteBridge(path, payload);
     } catch (error) {
-      sendCodexPlusDiagnostic("bridge_call_failed", {
+      sendAgentKeyDiagnostic("bridge_call_failed", {
         path,
         errorName: error?.name || "",
         errorMessage: error?.message || String(error),
@@ -3629,14 +3629,14 @@
       if (path === "/backend/status" || path === "/backend/repair") {
         const fallback = await fetchBackendStatusFromHelper(path, payload);
         if (fallback?.status === "ok") {
-          sendCodexPlusDiagnostic("backend_status_bridge_failed_http_fallback_ok", {
+          sendAgentKeyDiagnostic("backend_status_bridge_failed_http_fallback_ok", {
             path,
             httpStatus: 200,
             responseStatus: fallback.status || "",
           });
           return fallback;
         }
-        sendCodexPlusDiagnostic("backend_status_bridge_and_http_failed", {
+        sendAgentKeyDiagnostic("backend_status_bridge_and_http_failed", {
           path,
           errorName: error?.name || "",
           errorMessage: error?.message || String(error),
@@ -3699,13 +3699,13 @@
   let codexModelCatalog = { status: "loading", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
   let codexModelCatalogLoadedAt = 0;
   let codexModelCatalogPromise = null;
-  const codexPlusModelListRequestIds = new Set();
+  const agentKeyModelListRequestIds = new Set();
 
-  function codexPlusModelUnlockEnabled() {
-    return !!codexPlusSettings().modelWhitelistUnlock;
+  function agentKeyModelUnlockEnabled() {
+    return !!agentKeySettings().modelWhitelistUnlock;
   }
 
-  function codexPlusModelNames() {
+  function agentKeyModelNames() {
     return uniqueValues([
       codexModelCatalog.default_model,
       codexModelCatalog.model,
@@ -3720,7 +3720,7 @@
       .then((result) => {
         codexModelCatalog = result && typeof result === "object" ? result : { status: "failed", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
         codexModelCatalogLoadedAt = Date.now();
-        renderCodexPlusMenu();
+        renderAgentKeyMenu();
         patchCodexModelWhitelist();
         return codexModelCatalog;
       })
@@ -3739,7 +3739,7 @@
     return ["minimal", "low", "medium", "high", "xhigh"].map((reasoningEffort) => ({ reasoningEffort, description: `${reasoningEffort} effort` }));
   }
 
-  function codexPlusModelDescriptor(modelName) {
+  function agentKeyModelDescriptor(modelName) {
     return {
       model: modelName,
       id: modelName,
@@ -3766,7 +3766,7 @@
 
   function patchModelNameArray(models) {
     if (!stringArrayLooksPatchable(models)) return false;
-    const customModels = codexPlusModelNames();
+    const customModels = agentKeyModelNames();
     if (!customModels.length) return false;
     let changed = false;
     customModels.forEach((modelName) => {
@@ -3780,7 +3780,7 @@
 
   function patchModelArray(models, allowEmpty = false) {
     if (!modelArrayLooksPatchable(models, allowEmpty)) return false;
-    const customModels = codexPlusModelNames();
+    const customModels = agentKeyModelNames();
     if (!customModels.length) return false;
     let changed = false;
     const existing = new Map(models.map((item) => [item.model, item]));
@@ -3792,7 +3792,7 @@
     });
     customModels.forEach((modelName) => {
       if (!existing.has(modelName)) {
-        models.push(codexPlusModelDescriptor(modelName));
+        models.push(agentKeyModelDescriptor(modelName));
         changed = true;
       }
     });
@@ -3811,7 +3811,7 @@
     if (patchModelArray(value.result?.models)) changed = true;
     if (patchModelArray(value.message?.result?.data)) changed = true;
     if (patchModelArray(value.message?.result?.models)) changed = true;
-    const names = codexPlusModelNames();
+    const names = agentKeyModelNames();
     if (value.availableModels instanceof Set) {
       names.forEach((name) => {
         if (!value.availableModels.has(name)) {
@@ -3855,7 +3855,7 @@
       if (value.hidden_models.length !== before) changed = true;
     }
     if (value.defaultModel == null && names.length > 0) {
-      value.defaultModel = codexPlusModelDescriptor(names[0]);
+      value.defaultModel = agentKeyModelDescriptor(names[0]);
       changed = true;
     } else if (typeof value.defaultModel === "string" && names.includes(value.defaultModel) && value.model == null) {
       value.model = value.defaultModel;
@@ -3865,34 +3865,34 @@
   }
 
   async function patchModelJsonResponse(payload) {
-    if (!codexPlusModelUnlockEnabled()) return payload;
-    if (!codexPlusModelNames().length) await loadCodexModelCatalog();
+    if (!agentKeyModelUnlockEnabled()) return payload;
+    if (!agentKeyModelNames().length) await loadCodexModelCatalog();
     if (!payload || typeof payload !== "object") return payload;
     try {
       patchModelContainer(payload);
       patchObjectGraphForModels(payload, new WeakSet(), 0);
     } catch (error) {
-      window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-      window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
+      window.__agentKeyModelPatchFailures = window.__agentKeyModelPatchFailures || [];
+      window.__agentKeyModelPatchFailures.push(String(error?.stack || error));
     }
     return payload;
   }
 
   function installModelJsonResponsePatch() {
-    if (window.__codexPlusModelJsonResponsePatchInstalled === "1") return;
-    window.__codexPlusModelJsonResponsePatchInstalled = "1";
-    window.__codexPlusModelJsonResponseOriginals = window.__codexPlusModelJsonResponseOriginals || {};
-    const originals = window.__codexPlusModelJsonResponseOriginals;
+    if (window.__agentKeyModelJsonResponsePatchInstalled === "1") return;
+    window.__agentKeyModelJsonResponsePatchInstalled = "1";
+    window.__agentKeyModelJsonResponseOriginals = window.__agentKeyModelJsonResponseOriginals || {};
+    const originals = window.__agentKeyModelJsonResponseOriginals;
     originals.responseJson = originals.responseJson || Response.prototype.json;
     if (typeof originals.responseJson !== "function") return;
-    Response.prototype.json = async function codexPlusPatchedResponseJson(...args) {
+    Response.prototype.json = async function agentKeyPatchedResponseJson(...args) {
       const payload = await originals.responseJson.apply(this, args);
       return await patchModelJsonResponse(payload);
     };
   }
 
   function patchStatsigModelDynamicConfig(config) {
-    const names = codexPlusModelNames();
+    const names = agentKeyModelNames();
     const value = config?.value;
     if (!names.length || !value || typeof value !== "object") return config;
     const availableModels = Array.isArray(value.available_models) ? [...value.available_models] : [];
@@ -3928,13 +3928,13 @@
   function patchStatsigModelWhitelist() {
     statsigClients().forEach((client) => {
       if (typeof client.getDynamicConfig !== "function") return;
-      if (!client.__codexPlusModelWhitelistPatched) {
+      if (!client.__agentKeyModelWhitelistPatched) {
         const originalGetDynamicConfig = client.getDynamicConfig.bind(client);
         client.getDynamicConfig = (name, options) => {
           const result = originalGetDynamicConfig(name, options);
           return patchStatsigModelDynamicConfig(result);
         };
-        client.__codexPlusModelWhitelistPatched = true;
+        client.__agentKeyModelWhitelistPatched = true;
       }
       try {
         patchStatsigModelDynamicConfig(client.getDynamicConfig("107580212", { disableExposureLog: true }));
@@ -3978,21 +3978,21 @@
   }
 
   function patchAppServerModelMessages() {
-    if (window.__codexPlusModelMessagePatchInstalled) return;
-    window.__codexPlusModelMessagePatchInstalled = true;
+    if (window.__agentKeyModelMessagePatchInstalled) return;
+    window.__agentKeyModelMessagePatchInstalled = true;
     const originalDispatchEvent = window.dispatchEvent;
-    window.dispatchEvent = function patchedCodexPlusDispatchEvent(event) {
+    window.dispatchEvent = function patchedAgentKeyDispatchEvent(event) {
       try {
         const detail = event?.detail;
         const request = detail?.request;
         if (event?.type === "codex-message-from-view" && detail?.type === "mcp-request" && request?.method === "model/list") {
           request.params = { ...(request.params || {}), includeHidden: true };
-          if (request.id != null) codexPlusModelListRequestIds.add(String(request.id));
+          if (request.id != null) agentKeyModelListRequestIds.add(String(request.id));
         }
         if (event?.type === "message") patchMcpModelResponseData(event.data);
       } catch (error) {
-        window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-        window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
+        window.__agentKeyModelPatchFailures = window.__agentKeyModelPatchFailures || [];
+        window.__agentKeyModelPatchFailures.push(String(error?.stack || error));
       }
       return originalDispatchEvent.call(this, event);
     };
@@ -4001,8 +4001,8 @@
       try {
         patchMcpModelResponseData(event?.data);
       } catch (error) {
-        window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-        window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
+        window.__agentKeyModelPatchFailures = window.__agentKeyModelPatchFailures || [];
+        window.__agentKeyModelPatchFailures.push(String(error?.stack || error));
       }
     }, true);
   }
@@ -4011,8 +4011,8 @@
     if (data?.type !== "mcp-response") return false;
     const message = data.message || data.response;
     const requestId = message?.id != null ? String(message.id) : "";
-    if (codexPlusModelListRequestIds.size > 0 && !codexPlusModelListRequestIds.has(requestId)) return false;
-    codexPlusModelListRequestIds.delete(requestId);
+    if (agentKeyModelListRequestIds.size > 0 && !agentKeyModelListRequestIds.has(requestId)) return false;
+    agentKeyModelListRequestIds.delete(requestId);
     return patchModelContainer(data) || patchModelContainer(message) || patchModelContainer(message?.result) || patchModelContainer(message?.result?.data);
   }
 
@@ -4029,34 +4029,34 @@
       if (Array.isArray(result?.models)) patchModelArray(result.models, true);
       patchModelContainer(result);
       patchObjectGraphForModels(result, new WeakSet(), 0);
-      sendCodexPlusDiagnostic("model_app_server_result_patched", {
+      sendAgentKeyDiagnostic("model_app_server_result_patched", {
         method,
         modelCount: Array.isArray(result?.data) ? result.data.length : Array.isArray(result?.models) ? result.models.length : Array.isArray(result) ? result.length : null,
       });
     } catch (error) {
-      window.__codexPlusModelPatchFailures = window.__codexPlusModelPatchFailures || [];
-      window.__codexPlusModelPatchFailures.push(String(error?.stack || error));
+      window.__agentKeyModelPatchFailures = window.__agentKeyModelPatchFailures || [];
+      window.__agentKeyModelPatchFailures.push(String(error?.stack || error));
     }
     return result;
   }
 
   function patchAppServerModelRequestClient(client) {
     if (!client || typeof client.sendRequest !== "function") return false;
-    if (client.__codexPlusModelRequestPatch === codexAppServerModelRequestPatchVersion) return true;
-    const originalSendRequest = client.__codexPlusModelOriginalSendRequest || client.sendRequest.bind(client);
-    client.__codexPlusModelOriginalSendRequest = originalSendRequest;
-    client.sendRequest = async function codexPlusModelPatchedSendRequest(method, params, options) {
+    if (client.__agentKeyModelRequestPatch === codexAppServerModelRequestPatchVersion) return true;
+    const originalSendRequest = client.__agentKeyModelOriginalSendRequest || client.sendRequest.bind(client);
+    client.__agentKeyModelOriginalSendRequest = originalSendRequest;
+    client.sendRequest = async function agentKeyModelPatchedSendRequest(method, params, options) {
       const result = await originalSendRequest(method, params, options);
-      if (!codexPlusModelUnlockEnabled()) return result;
-      if (!codexPlusModelNames().length) await loadCodexModelCatalog();
+      if (!agentKeyModelUnlockEnabled()) return result;
+      if (!agentKeyModelNames().length) await loadCodexModelCatalog();
       return patchAppServerModelResult(appServerModelRequestMethod(String(method || ""), params), result);
     };
-    client.__codexPlusModelRequestPatch = codexAppServerModelRequestPatchVersion;
+    client.__agentKeyModelRequestPatch = codexAppServerModelRequestPatchVersion;
     return true;
   }
 
   function installAppServerModelRequestPatch() {
-    if (window.__codexPlusAppServerModelRequestPatchInstalled === codexAppServerModelRequestPatchVersion) return;
+    if (window.__agentKeyAppServerModelRequestPatchInstalled === codexAppServerModelRequestPatchVersion) return;
     const patch = async () => {
       try {
         const module = await loadCodexAppModule("app-server-manager-signals-");
@@ -4072,19 +4072,19 @@
           }
         }
         if (patchedCount > 0) {
-          window.__codexPlusAppServerModelRequestPatchInstalled = codexAppServerModelRequestPatchVersion;
-          sendCodexPlusDiagnostic("model_app_server_request_patch_installed", {
+          window.__agentKeyAppServerModelRequestPatchInstalled = codexAppServerModelRequestPatchVersion;
+          sendAgentKeyDiagnostic("model_app_server_request_patch_installed", {
             candidateCount: candidates.length,
             patchedCount,
           });
         } else {
-          sendCodexPlusDiagnostic("model_app_server_request_patch_not_found", {
+          sendAgentKeyDiagnostic("model_app_server_request_patch_not_found", {
             exportCount: Object.keys(module || {}).length,
             candidateCount: candidates.length,
           });
         }
       } catch (error) {
-        sendCodexPlusDiagnostic("model_app_server_request_patch_failed", {
+        sendAgentKeyDiagnostic("model_app_server_request_patch_failed", {
           errorName: error?.name || "",
           errorMessage: error?.message || String(error),
         });
@@ -4094,11 +4094,11 @@
   }
 
   function patchCodexModelWhitelist() {
-    if (!codexPlusModelUnlockEnabled()) return;
+    if (!agentKeyModelUnlockEnabled()) return;
     installModelJsonResponsePatch();
     patchAppServerModelMessages();
     installAppServerModelRequestPatch();
-    if (!codexPlusModelNames().length) {
+    if (!agentKeyModelNames().length) {
       loadCodexModelCatalog();
       return;
     }
@@ -4663,7 +4663,7 @@
   }
 
   function applyProjectMoveProjection() {
-    if (!codexPlusSettings().projectMove) return;
+    if (!agentKeySettings().projectMove) return;
     const projection = readProjectMoveProjection();
     const targetRowsById = new Map();
     const settledRefs = [];
@@ -4718,7 +4718,7 @@
   }
 
   function scheduleProjectMoveProjection() {
-    if (!codexPlusSettings().projectMove || window.__codexProjectMoveProjectionTimer) return;
+    if (!agentKeySettings().projectMove || window.__codexProjectMoveProjectionTimer) return;
     window.__codexProjectMoveProjectionTimer = setTimeout(() => {
       if (window.__codexProjectMoveRuntimeId !== codexProjectMoveRuntimeId) return;
       window.__codexProjectMoveProjectionTimer = null;
@@ -4797,7 +4797,7 @@
   }
 
   async function applyChatsSortCorrection() {
-    if (!codexPlusSettings().projectMove || chatsSortInFlight) return;
+    if (!agentKeySettings().projectMove || chatsSortInFlight) return;
     const rows = visibleChatsRows();
     if (rows.length < 2) return;
     const refs = rows.map(sessionRefFromRow).filter((ref) => ref.session_id);
@@ -4835,7 +4835,7 @@
   }
 
   function scheduleChatsSortCorrection(delay = chatsSortRefreshIntervalMs) {
-    if (!codexPlusSettings().projectMove || window.__codexProjectMoveChatsSortTimer) return;
+    if (!agentKeySettings().projectMove || window.__codexProjectMoveChatsSortTimer) return;
     window.__codexProjectMoveChatsSortTimer = setTimeout(() => {
       if (window.__codexProjectMoveRuntimeId !== codexProjectMoveRuntimeId) return;
       window.__codexProjectMoveChatsSortTimer = null;
@@ -4843,7 +4843,7 @@
         window.__codexProjectMoveSortFailures = window.__codexProjectMoveSortFailures || [];
         window.__codexProjectMoveSortFailures.push(String(error?.stack || error));
       }).finally(() => {
-        if (codexPlusSettings().projectMove) scheduleChatsSortCorrection();
+        if (agentKeySettings().projectMove) scheduleChatsSortCorrection();
       });
     }, delay);
   }
@@ -5431,7 +5431,7 @@
   }
 
   async function injectUpstreamBranchOptions() {
-    if (!codexPlusSettings().upstreamWorktreeCreate) {
+    if (!agentKeySettings().upstreamWorktreeCreate) {
       removeUpstreamBranchOptions();
       return;
     }
@@ -5537,7 +5537,7 @@
       if (result?.status !== "ok") throw new Error(result?.message || "prepare failed");
       writePreparedUpstreamBranchSelection(selection, result);
     }).catch((error) => {
-      sendCodexPlusDiagnostic("upstream_branch_prepare_failed", {
+      sendAgentKeyDiagnostic("upstream_branch_prepare_failed", {
         label: selection.label || "",
         errorName: error?.name || "",
         errorMessage: error?.message || String(error),
@@ -5576,7 +5576,7 @@
     const selection = readUpstreamBranchSelection();
     const request = payload?.request;
     const sourceRef = upstreamQualifiedSourceRef(selection);
-    if (!codexPlusSettings().upstreamWorktreeCreate || !sourceRef) return payload;
+    if (!agentKeySettings().upstreamWorktreeCreate || !sourceRef) return payload;
     if (!pendingWorktreeRequestMatchesSelection(request, selection)) return payload;
     if (request?.startingState?.type !== "branch") return payload;
     if (request.startingState.branchName === sourceRef) return payload;
@@ -5585,7 +5585,7 @@
       startingState: { ...request.startingState, branchName: sourceRef },
     };
     prepareUpstreamBranchSelection(selection);
-    sendCodexPlusDiagnostic("upstream_pending_worktree_override_applied", {
+    sendAgentKeyDiagnostic("upstream_pending_worktree_override_applied", {
       label: selection.label || "",
       sourceRef,
       sourceWorkspaceRoot: request.sourceWorkspaceRoot || "",
@@ -5613,7 +5613,7 @@
         }
         window.__codexUpstreamPendingWorktreeDispatcherPatch = patchVersion;
       } catch (error) {
-        sendCodexPlusDiagnostic("upstream_pending_worktree_patch_failed", {
+        sendAgentKeyDiagnostic("upstream_pending_worktree_patch_failed", {
           errorName: error?.name || "",
           errorMessage: error?.message || String(error),
         });
@@ -5666,7 +5666,7 @@
   }
 
   async function handleUpstreamWorktreeNativeCreate(event) {
-    if (!codexPlusSettings().upstreamWorktreeCreate) return false;
+    if (!agentKeySettings().upstreamWorktreeCreate) return false;
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     const trigger = target?.closest?.("[data-codex-worktree-create], [data-worktree-create]");
     if (!trigger) return false;
@@ -5760,12 +5760,12 @@
       <div class="codex-delete-confirm-content" role="dialog" aria-modal="true" aria-label="Create upstream worktree">
         <div class="codex-delete-confirm-title">Create from upstream</div>
         <div class="codex-delete-confirm-message">等价于 git worktree add -b branch path upstream/base。创建前会先 fetch 远端分支。</div>
-        <label class="codex-plus-form-field">仓库路径<input data-codex-upstream-worktree-field="repoPath" type="text" placeholder="/path/to/repo"></label>
-        <label class="codex-plus-form-field">新分支名<input data-codex-upstream-worktree-field="branchName" type="text" placeholder="feature/my-task"></label>
-        <label class="codex-plus-form-field">Worktree 路径<input data-codex-upstream-worktree-field="worktreePath" type="text" placeholder="/path/to/worktrees/my-task"></label>
-        <label class="codex-plus-form-field">Remote<input data-codex-upstream-worktree-field="remote" type="text" value="upstream"></label>
-        <label class="codex-plus-form-field">Base branch<input data-codex-upstream-worktree-field="baseBranch" type="text" value="main"></label>
-        <div class="codex-plus-form-message" data-codex-upstream-worktree-message>填写仓库路径后会自动读取 remote 和当前分支。</div>
+        <label class="agentkey-form-field">仓库路径<input data-codex-upstream-worktree-field="repoPath" type="text" placeholder="/path/to/repo"></label>
+        <label class="agentkey-form-field">新分支名<input data-codex-upstream-worktree-field="branchName" type="text" placeholder="feature/my-task"></label>
+        <label class="agentkey-form-field">Worktree 路径<input data-codex-upstream-worktree-field="worktreePath" type="text" placeholder="/path/to/worktrees/my-task"></label>
+        <label class="agentkey-form-field">Remote<input data-codex-upstream-worktree-field="remote" type="text" value="upstream"></label>
+        <label class="agentkey-form-field">Base branch<input data-codex-upstream-worktree-field="baseBranch" type="text" value="main"></label>
+        <div class="agentkey-form-message" data-codex-upstream-worktree-message>填写仓库路径后会自动读取 remote 和当前分支。</div>
         <div class="codex-delete-confirm-actions">
           <button type="button" data-codex-upstream-worktree-cancel="true">取消</button>
           <button type="button" data-codex-upstream-worktree-defaults="true">读取默认值</button>
@@ -6247,7 +6247,7 @@
   }
 
   function attachButton(row) {
-    const settings = codexPlusSettings();
+    const settings = agentKeySettings();
     if (!settings.sessionDelete && !settings.markdownExport && !settings.projectMove) {
       removeActionGroups(row);
       row.dataset.codexDeleteRow = "false";
@@ -6411,7 +6411,7 @@
   }
 
   function attachArchivedPageDeleteButton(row) {
-    const settings = codexPlusSettings();
+    const settings = agentKeySettings();
     row.querySelectorAll("[data-codex-archive-row-action]").forEach((button) => button.remove());
     row.dataset.codexArchiveDeleteRow = "false";
     if (!settings.sessionDelete && !settings.markdownExport) return;
@@ -6637,7 +6637,7 @@
   }
 
   function refreshConversationTimeline() {
-    if (!codexPlusSettings().conversationTimeline) {
+    if (!agentKeySettings().conversationTimeline) {
       removeConversationTimeline();
       return;
     }
@@ -6885,7 +6885,7 @@
   }
 
   function installCodexServiceTierBadge() {
-    if (!codexPlusSettings().serviceTierControls) {
+    if (!agentKeySettings().serviceTierControls) {
       removeCodexServiceTierBadges();
       return;
     }
@@ -6931,51 +6931,51 @@
       transform: el.style.transform || "",
       boxSizing: el.style.boxSizing || "",
     };
-    if (!("codexPlusConversationViewOriginalWidth" in el.dataset)) el.dataset.codexPlusConversationViewOriginalWidth = original.width;
-    if (!("codexPlusConversationViewOriginalMaxWidth" in el.dataset)) el.dataset.codexPlusConversationViewOriginalMaxWidth = original.maxWidth;
-    if (!("codexPlusConversationViewOriginalMarginLeft" in el.dataset)) el.dataset.codexPlusConversationViewOriginalMarginLeft = original.marginLeft;
-    if (!("codexPlusConversationViewOriginalMarginRight" in el.dataset)) el.dataset.codexPlusConversationViewOriginalMarginRight = original.marginRight;
-    if (!("codexPlusConversationViewOriginalLeft" in el.dataset)) el.dataset.codexPlusConversationViewOriginalLeft = original.left;
-    if (!("codexPlusConversationViewOriginalTransform" in el.dataset)) el.dataset.codexPlusConversationViewOriginalTransform = original.transform;
-    if (!("codexPlusConversationViewOriginalBoxSizing" in el.dataset)) el.dataset.codexPlusConversationViewOriginalBoxSizing = original.boxSizing;
+    if (!("agentKeyConversationViewOriginalWidth" in el.dataset)) el.dataset.agentKeyConversationViewOriginalWidth = original.width;
+    if (!("agentKeyConversationViewOriginalMaxWidth" in el.dataset)) el.dataset.agentKeyConversationViewOriginalMaxWidth = original.maxWidth;
+    if (!("agentKeyConversationViewOriginalMarginLeft" in el.dataset)) el.dataset.agentKeyConversationViewOriginalMarginLeft = original.marginLeft;
+    if (!("agentKeyConversationViewOriginalMarginRight" in el.dataset)) el.dataset.agentKeyConversationViewOriginalMarginRight = original.marginRight;
+    if (!("agentKeyConversationViewOriginalLeft" in el.dataset)) el.dataset.agentKeyConversationViewOriginalLeft = original.left;
+    if (!("agentKeyConversationViewOriginalTransform" in el.dataset)) el.dataset.agentKeyConversationViewOriginalTransform = original.transform;
+    if (!("agentKeyConversationViewOriginalBoxSizing" in el.dataset)) el.dataset.agentKeyConversationViewOriginalBoxSizing = original.boxSizing;
   }
 
   function conversationViewRestoreElement(el) {
     if (!el) return;
-    if ("codexPlusConversationViewOriginalWidth" in el.dataset) {
-      el.style.width = el.dataset.codexPlusConversationViewOriginalWidth;
-      delete el.dataset.codexPlusConversationViewOriginalWidth;
+    if ("agentKeyConversationViewOriginalWidth" in el.dataset) {
+      el.style.width = el.dataset.agentKeyConversationViewOriginalWidth;
+      delete el.dataset.agentKeyConversationViewOriginalWidth;
     }
-    if ("codexPlusConversationViewOriginalMaxWidth" in el.dataset) {
-      el.style.maxWidth = el.dataset.codexPlusConversationViewOriginalMaxWidth;
-      delete el.dataset.codexPlusConversationViewOriginalMaxWidth;
+    if ("agentKeyConversationViewOriginalMaxWidth" in el.dataset) {
+      el.style.maxWidth = el.dataset.agentKeyConversationViewOriginalMaxWidth;
+      delete el.dataset.agentKeyConversationViewOriginalMaxWidth;
     }
-    if ("codexPlusConversationViewOriginalMarginLeft" in el.dataset) {
-      el.style.marginLeft = el.dataset.codexPlusConversationViewOriginalMarginLeft;
-      delete el.dataset.codexPlusConversationViewOriginalMarginLeft;
+    if ("agentKeyConversationViewOriginalMarginLeft" in el.dataset) {
+      el.style.marginLeft = el.dataset.agentKeyConversationViewOriginalMarginLeft;
+      delete el.dataset.agentKeyConversationViewOriginalMarginLeft;
     }
-    if ("codexPlusConversationViewOriginalMarginRight" in el.dataset) {
-      el.style.marginRight = el.dataset.codexPlusConversationViewOriginalMarginRight;
-      delete el.dataset.codexPlusConversationViewOriginalMarginRight;
+    if ("agentKeyConversationViewOriginalMarginRight" in el.dataset) {
+      el.style.marginRight = el.dataset.agentKeyConversationViewOriginalMarginRight;
+      delete el.dataset.agentKeyConversationViewOriginalMarginRight;
     }
-    if ("codexPlusConversationViewOriginalLeft" in el.dataset) {
-      el.style.left = el.dataset.codexPlusConversationViewOriginalLeft;
-      delete el.dataset.codexPlusConversationViewOriginalLeft;
+    if ("agentKeyConversationViewOriginalLeft" in el.dataset) {
+      el.style.left = el.dataset.agentKeyConversationViewOriginalLeft;
+      delete el.dataset.agentKeyConversationViewOriginalLeft;
     }
-    if ("codexPlusConversationViewOriginalTransform" in el.dataset) {
-      el.style.transform = el.dataset.codexPlusConversationViewOriginalTransform;
-      delete el.dataset.codexPlusConversationViewOriginalTransform;
+    if ("agentKeyConversationViewOriginalTransform" in el.dataset) {
+      el.style.transform = el.dataset.agentKeyConversationViewOriginalTransform;
+      delete el.dataset.agentKeyConversationViewOriginalTransform;
     }
-    if ("codexPlusConversationViewOriginalBoxSizing" in el.dataset) {
-      el.style.boxSizing = el.dataset.codexPlusConversationViewOriginalBoxSizing;
-      delete el.dataset.codexPlusConversationViewOriginalBoxSizing;
+    if ("agentKeyConversationViewOriginalBoxSizing" in el.dataset) {
+      el.style.boxSizing = el.dataset.agentKeyConversationViewOriginalBoxSizing;
+      delete el.dataset.agentKeyConversationViewOriginalBoxSizing;
     }
   }
 
   function conversationViewResetOwnOffset(el) {
     if (!el) return;
-    const originalTransform = el.dataset.codexPlusConversationViewOriginalTransform || "";
-    const originalLeft = el.dataset.codexPlusConversationViewOriginalLeft || "";
+    const originalTransform = el.dataset.agentKeyConversationViewOriginalTransform || "";
+    const originalLeft = el.dataset.agentKeyConversationViewOriginalLeft || "";
     if (el.style.left !== originalLeft) el.style.left = originalLeft;
     if (el.style.transform !== originalTransform) el.style.transform = originalTransform;
     const transform = String(el.style.transform || "").trim();
@@ -7047,7 +7047,7 @@
   }
 
   function conversationViewAlignNow() {
-    if (!codexPlusSettings().conversationView) return;
+    if (!agentKeySettings().conversationView) return;
     conversationViewResolveTargets();
     conversationViewAlignElement(conversationViewState.contentEl);
     conversationViewAlignElement(conversationViewState.composerEl);
@@ -7084,7 +7084,7 @@
     conversationViewState.composerEl = null;
   }
 
-  window.__codexPlusConversationViewCleanup = cleanupConversationView;
+  window.__agentKeyConversationViewCleanup = cleanupConversationView;
 
   function ensureConversationViewRuntime() {
     if (conversationViewState.ro && conversationViewState.mo && conversationViewState.pollId) return;
@@ -7103,7 +7103,7 @@
   }
 
   function refreshConversationView() {
-    if (!codexPlusSettings().conversationView) {
+    if (!agentKeySettings().conversationView) {
       cleanupConversationView();
       return;
     }
@@ -7114,7 +7114,7 @@
   function scanLightweight() {
     installStyle();
     installCodexServiceTierDispatcherPatch();
-    installCodexPlusMenu();
+    installAgentKeyMenu();
     scheduleBackendHeartbeat();
     installDeleteButtonEventDelegation();
     updateThreadScrollHandlers();
@@ -7421,7 +7421,7 @@
   }
 
   function zedRemoteContext(scope = document) {
-    const settings = codexPlusSettings();
+    const settings = agentKeySettings();
     if (!settings.zedRemoteOpen) return null;
     const now = Date.now();
     if (zedRemoteContextCache.scope === scope && now - zedRemoteContextCache.at < zedRemoteContextCacheTtlMs) {
@@ -7591,7 +7591,7 @@
   }
 
   async function activateZedRemoteOpenInMenuItem(event) {
-    if (!codexPlusSettings().zedRemoteOpen) return;
+    if (!agentKeySettings().zedRemoteOpen) return;
     if (event?.type === "keydown" && !["Enter", " "].includes(event.key)) return;
     const scope = event?.currentTarget?.closest?.('[role="menu"], [data-radix-popper-content-wrapper]') || event?.currentTarget || document;
     event.preventDefault();
@@ -7632,7 +7632,7 @@
 
   function refreshZedRemoteOpenInMenus(scope = document) {
     removeZedRemoteOpenInMenuItems(scope);
-    if (!codexPlusSettings().zedRemoteOpen) return;
+    if (!agentKeySettings().zedRemoteOpen) return;
     const fallbackPayload = zedRemoteCurrentFallbackPayload();
     zedRemoteOpenInMenuScopes(scope).forEach((menu) => {
       if (!(menu instanceof HTMLElement) || isExtensionUiNode(menu)) return;
@@ -7652,7 +7652,7 @@
   }
 
   async function refreshZedRemoteOpenControls(scope = document) {
-    if (!codexPlusSettings().zedRemoteOpen) {
+    if (!agentKeySettings().zedRemoteOpen) {
       removeZedRemoteButtons();
       removeZedRemoteOpenInMenuItems();
       return;
@@ -7682,7 +7682,7 @@
   }
 
   function shouldRefreshZedRemoteMenus(mutations) {
-    if (!codexPlusSettings().zedRemoteOpen) return false;
+    if (!agentKeySettings().zedRemoteOpen) return false;
     if (!mutations) return true;
     return mutations.some((mutation) => {
       const target = mutation.target;
@@ -7708,7 +7708,7 @@
       refreshForcePluginInstallUnlockLoop();
     } else {
       const pluginUnlockStrategy = codexPluginUnlockStrategy();
-      const settings = codexPlusSettings();
+      const settings = agentKeySettings();
       logCodexPluginUnlockStrategy(pluginUnlockStrategy);
       if ((pluginUnlockStrategy === "legacy" || pluginUnlockStrategy === "unknown") && settings.pluginEntryUnlock) {
         enablePluginEntry();
@@ -7748,7 +7748,7 @@
   }
 
   function isExtensionUiNode(node) {
-    return !!node?.closest?.(`.codex-delete-toast, .codex-delete-confirm-overlay, .codex-plus-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${codexServiceTierBadgeClass}, .codex-zed-remote-button, .codex-zed-remote-toast, #codex-plus-menu`);
+    return !!node?.closest?.(`.codex-delete-toast, .codex-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${codexServiceTierBadgeClass}, .codex-zed-remote-button, .codex-zed-remote-toast, #agentkey-menu`);
   }
 
   function scanRelevantSelector() {
@@ -7831,17 +7831,17 @@
   window.__codexProjectMoveReadProjection = readProjectMoveProjection;
   window.__codexProjectMoveTargets = projectMoveTargets;
   window.__codexProjectMoveSortChats = applyChatsSortCorrection;
-  window.removeEventListener("resize", window.__codexPlusResizeHandler);
-  let codexPlusResizeRafId = 0;
-  window.__codexPlusResizeHandler = () => {
-    cancelAnimationFrame(codexPlusResizeRafId);
-    codexPlusResizeRafId = requestAnimationFrame(() => {
-      updateFloatingCodexPlusMenuPosition(document.getElementById(codexPlusMenuId));
+  window.removeEventListener("resize", window.__agentKeyResizeHandler);
+  let agentKeyResizeRafId = 0;
+  window.__agentKeyResizeHandler = () => {
+    cancelAnimationFrame(agentKeyResizeRafId);
+    agentKeyResizeRafId = requestAnimationFrame(() => {
+      updateFloatingAgentKeyMenuPosition(document.getElementById(agentKeyMenuId));
       runScanStep(refreshConversationTimeline);
       runScanStep(refreshConversationView);
     });
   };
-  window.addEventListener("resize", window.__codexPlusResizeHandler);
+  window.addEventListener("resize", window.__agentKeyResizeHandler);
   window.__codexSessionDeleteObserver?.disconnect();
   window.__codexSessionDeleteObserver = new MutationObserver(scheduleScan);
   window.__codexSessionDeleteObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
