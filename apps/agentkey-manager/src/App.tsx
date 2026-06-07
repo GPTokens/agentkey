@@ -100,7 +100,8 @@ type RawOverviewResult = OverviewResult & {
 type BackendSettings = {
   desktopClientPath: string;
   codexAppPath?: string;
-  codexExtraArgs: string[];
+  desktopClientExtraArgs: string[];
+  codexExtraArgs?: string[];
   providerSyncEnabled: boolean;
   providerSyncSavedProviders: string[];
   providerSyncManualProviders: string[];
@@ -513,7 +514,7 @@ const routes: Array<{ id: Route; label: string; icon: LucideIcon }> = [
 
 const defaultSettings: BackendSettings = {
   desktopClientPath: "",
-  codexExtraArgs: [],
+  desktopClientExtraArgs: [],
   providerSyncEnabled: false,
   providerSyncSavedProviders: [],
   providerSyncManualProviders: [],
@@ -2285,7 +2286,7 @@ function SessionsScreen({
           </div>
           <div className="hint-line">
             <Info className="h-4 w-4" />
-            <span>删除会创建本地备份；如果 Codex App 正在使用该会话，建议先关闭对应会话窗口再操作。</span>
+            <span>删除会创建本地备份；如果桌面客户端正在使用该会话，建议先关闭对应会话窗口再操作。</span>
           </div>
           <label className="switch-row">
             <input
@@ -2629,18 +2630,18 @@ function SettingsScreen({
         </CardContent>
       </Panel>
       <Panel>
-        <CardHead title="Codex 启动参数" detail="启动 Codex App 时追加到默认 CDP 参数后。留空则保持默认启动行为。" />
+        <CardHead title="桌面客户端启动参数" detail="启动桌面客户端时追加到默认 CDP 参数后。留空则保持默认启动行为。" />
         <CardContent>
           <Field label="额外参数">
             <Textarea
               className="launch-args-input"
               placeholder="--force_high_performance_gpu"
               spellCheck={false}
-              value={codexExtraArgsToInput(form.codexExtraArgs)}
+              value={desktopClientExtraArgsToInput(form.desktopClientExtraArgs)}
               onChange={(event) =>
                 onFormChange({
                   ...form,
-                  codexExtraArgs: inputToCodexExtraArgs(event.currentTarget.value),
+                  desktopClientExtraArgs: inputToDesktopClientExtraArgs(event.currentTarget.value),
                 })
               }
             />
@@ -4517,7 +4518,11 @@ function normalizeOverview(result: RawOverviewResult): OverviewResult {
 }
 
 function normalizeSettings(settings: BackendSettings): BackendSettings {
-  const { codexAppPath: legacyDesktopClientPath, ...canonicalSettings } = settings;
+  const {
+    codexAppPath: legacyDesktopClientPath,
+    codexExtraArgs: legacyDesktopClientExtraArgs,
+    ...canonicalSettings
+  } = settings;
   const splitCommon = splitContextConfigText(settings.relayCommonConfigContents || "");
   const relayCommonConfigContents = splitCommon.common;
   const relayContextConfigContents = joinTomlSectionsRootFirst([
@@ -4563,6 +4568,7 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
     ...defaultSettings,
     ...canonicalSettings,
     desktopClientPath: settings.desktopClientPath || legacyDesktopClientPath || "",
+    desktopClientExtraArgs: settings.desktopClientExtraArgs || legacyDesktopClientExtraArgs || [],
     relayProfilesEnabled: settings.relayProfilesEnabled !== false,
     ccsLinkEnabled: settings.ccsLinkEnabled === true,
     relayCommonConfigContents,
@@ -4582,11 +4588,11 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
   });
 }
 
-function codexExtraArgsToInput(args: string[] | undefined) {
+function desktopClientExtraArgsToInput(args: string[] | undefined) {
   return (args ?? []).join("\n");
 }
 
-function inputToCodexExtraArgs(value: string) {
+function inputToDesktopClientExtraArgs(value: string) {
   return value === "" ? [] : value.split(/\r?\n/);
 }
 

@@ -150,7 +150,7 @@ pub enum ClaudeCodeAuthMode {
 pub struct BackendSettings {
     #[serde(rename = "desktopClientPath", alias = "codexAppPath", default)]
     pub codex_app_path: String,
-    #[serde(rename = "codexExtraArgs", default)]
+    #[serde(rename = "desktopClientExtraArgs", alias = "codexExtraArgs", default)]
     pub codex_extra_args: Vec<String>,
     #[serde(rename = "providerSyncEnabled", default)]
     pub provider_sync_enabled: bool,
@@ -578,22 +578,7 @@ impl SettingsStore {
 
 fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<String, Value>) {
     merge_string_setting_alias(target, source, "desktopClientPath", "codexAppPath");
-    if let Some(value) = source.get("codexExtraArgs").and_then(Value::as_array) {
-        let args = value
-            .iter()
-            .filter_map(Value::as_str)
-            .map(ToString::to_string)
-            .collect::<Vec<_>>();
-        target.insert(
-            "codexExtraArgs".to_string(),
-            Value::Array(
-                normalize_codex_extra_args(&args)
-                    .into_iter()
-                    .map(Value::String)
-                    .collect(),
-            ),
-        );
-    }
+    merge_extra_args_setting_alias(target, source);
     if let Some(value) = source.get("providerSyncEnabled").and_then(Value::as_bool) {
         target.insert("providerSyncEnabled".to_string(), Value::Bool(value));
     }
@@ -881,6 +866,34 @@ fn merge_string_setting_alias(
     if let Some(value) = value {
         target.insert(key.to_string(), Value::String(value));
     }
+}
+
+fn merge_extra_args_setting_alias(target: &mut Map<String, Value>, source: &Map<String, Value>) {
+    let value = source
+        .get("desktopClientExtraArgs")
+        .or_else(|| source.get("codexExtraArgs"))
+        .or_else(|| target.get("desktopClientExtraArgs"))
+        .or_else(|| target.get("codexExtraArgs"))
+        .and_then(Value::as_array);
+    let args = value
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    target.remove("codexExtraArgs");
+    target.insert(
+        "desktopClientExtraArgs".to_string(),
+        Value::Array(
+            normalize_codex_extra_args(&args)
+                .into_iter()
+                .map(Value::String)
+                .collect(),
+        ),
+    );
 }
 
 fn preserve_official_mix_bearer_tokens(
@@ -1188,9 +1201,9 @@ mod tests {
     }
 
     #[test]
-    fn settings_deserialize_reads_codex_extra_args() {
+    fn settings_deserialize_reads_desktop_client_extra_args() {
         let settings: BackendSettings = serde_json::from_str(
-            r#"{"codexExtraArgs":["--force_high_performance_gpu"," --ignored-trimmed-by-ui "]}"#,
+            r#"{"desktopClientExtraArgs":["--force_high_performance_gpu"," --ignored-trimmed-by-ui "]}"#,
         )
         .unwrap();
 
@@ -1200,6 +1213,19 @@ mod tests {
                 "--force_high_performance_gpu".to_string(),
                 " --ignored-trimmed-by-ui ".to_string(),
             ]
+        );
+    }
+
+    #[test]
+    fn settings_deserialize_accepts_legacy_extra_args_key() {
+        let settings: BackendSettings = serde_json::from_str(
+            r#"{"codexExtraArgs":["--force_high_performance_gpu"]}"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            settings.codex_extra_args,
+            vec!["--force_high_performance_gpu".to_string()]
         );
     }
 
@@ -1608,7 +1634,7 @@ experimental_bearer_token = "sk-existing""#));
             "codexGoalsEnabled": true,
             "relayBaseUrl": "https://relay.example.test/v1",
             "relayApiKey": "sk-relay",
-            "codexExtraArgs": ["--force_high_performance_gpu", "", "  ", " --enable-gpu "],
+            "desktopClientExtraArgs": ["--force_high_performance_gpu", "", "  ", " --enable-gpu "],
             "cliWrapperApiKeyEnv": "",
             "claudeCodeEnabled": true,
             "claudeCodeCommand": " claude --verbose ",
@@ -1909,12 +1935,13 @@ experimental_bearer_token = "sk-existing""#));
 
         assert!(updated.provider_sync_enabled);
         assert_eq!(saved["providerSyncEnabled"], json!(true));
-        assert_eq!(saved["codexExtraArgs"], Value::Null);
+        assert_eq!(saved["desktopClientExtraArgs"], json!([]));
+        assert!(saved.get("codexExtraArgs").is_none());
         assert_eq!(saved["customField"], json!({"nested": true}));
     }
 
     #[test]
-    fn settings_store_update_persists_codex_extra_args_and_preserves_unknown_fields() {
+    fn settings_store_update_persists_desktop_client_extra_args_and_preserves_unknown_fields() {
         let dir = temp_dir();
         let path = dir.join("settings.json");
         let store = SettingsStore::new(path.clone());
@@ -1926,7 +1953,7 @@ experimental_bearer_token = "sk-existing""#));
 
         let updated = store
             .update(json!({
-                "codexExtraArgs": ["--force_high_performance_gpu", "--enable-features=UseOzonePlatform"]
+                "desktopClientExtraArgs": ["--force_high_performance_gpu", "--enable-features=UseOzonePlatform"]
             }))
             .unwrap();
         let saved: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
@@ -1939,13 +1966,41 @@ experimental_bearer_token = "sk-existing""#));
             ]
         );
         assert_eq!(
-            saved["codexExtraArgs"],
+            saved["desktopClientExtraArgs"],
             json!([
                 "--force_high_performance_gpu",
                 "--enable-features=UseOzonePlatform"
             ])
         );
+        assert!(saved.get("codexExtraArgs").is_none());
         assert_eq!(saved["customField"], json!({"nested": true}));
+    }
+
+    #[test]
+    fn settings_store_update_canonicalizes_legacy_extra_args_key() {
+        let dir = temp_dir();
+        let path = dir.join("settings.json");
+        let store = SettingsStore::new(path.clone());
+
+        let updated = store
+            .update(json!({
+                "codexExtraArgs": ["--force_high_performance_gpu", " --enable-gpu "]
+            }))
+            .unwrap();
+        let saved: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+
+        assert_eq!(
+            updated.codex_extra_args,
+            vec![
+                "--force_high_performance_gpu".to_string(),
+                "--enable-gpu".to_string(),
+            ]
+        );
+        assert_eq!(
+            saved["desktopClientExtraArgs"],
+            json!(["--force_high_performance_gpu", "--enable-gpu"])
+        );
+        assert!(saved.get("codexExtraArgs").is_none());
     }
 
     #[test]
