@@ -238,6 +238,11 @@ fn manager_csp_blocks_broad_loopback_connections() {
         std::fs::read_to_string(manifest_dir.join("tauri.conf.json")).expect("read tauri config");
 
     assert!(tauri_conf.contains("connect-src 'self'"));
+    assert!(tauri_conf.contains("object-src 'none'"));
+    assert!(tauri_conf.contains("base-uri 'self'"));
+    assert!(tauri_conf.contains("form-action 'none'"));
+    assert!(tauri_conf.contains("frame-src 'none'"));
+    assert!(tauri_conf.contains("frame-ancestors 'none'"));
     assert!(!tauri_conf.contains(concat!("http://127.0.0.1:", "*")));
     assert!(!tauri_conf.contains(concat!("http://localhost:", "*")));
 }
