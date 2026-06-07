@@ -364,7 +364,9 @@ pub fn launch_claude_code(settings: BackendSettings) -> CommandResult<ClaudeCode
             &format!("启动 Claude Code 失败：{error}"),
             ClaudeCodeLaunchPayload {
                 pid: 0,
-                command: settings.claude_code_command,
+                command: agentkey_core::claude_code::claude_code_command_for_display(
+                    &settings.claude_code_command,
+                ),
                 working_directory: settings.claude_code_working_directory,
                 auth_env: match settings.claude_code_auth_mode {
                     agentkey_core::settings::ClaudeCodeAuthMode::ApiKey => {
@@ -746,6 +748,7 @@ fn validate_settings_before_save(settings: &BackendSettings) -> anyhow::Result<(
             &settings.claude_code_base_url,
         )?;
     }
+    agentkey_core::claude_code::validate_claude_code_command(&settings.claude_code_command)?;
     agentkey_core::claude_code::validate_claude_code_extra_env(
         &settings.claude_code_extra_env,
     )?;
@@ -2650,6 +2653,31 @@ mod tests {
 
         assert!(validate_settings_before_save(&https_settings).is_ok());
         assert!(validate_settings_before_save(&loopback_settings).is_ok());
+    }
+
+    #[test]
+    fn settings_validation_rejects_secret_like_claude_command() {
+        let settings = BackendSettings {
+            claude_code_command: "claude --auth-token sk-command-secret".to_string(),
+            ..BackendSettings::default()
+        };
+
+        assert!(validate_settings_before_save(&settings).is_err());
+    }
+
+    #[test]
+    fn launch_claude_code_failure_redacts_secret_like_command() {
+        let result = launch_claude_code(BackendSettings {
+            claude_code_command: "claude --api-key sk-command-secret".to_string(),
+            claude_code_api_key: "sk-env-secret".to_string(),
+            ..BackendSettings::default()
+        });
+        let text = serde_json::to_string(&result).unwrap();
+
+        assert_eq!(result.status, "failed");
+        assert_eq!(result.payload.command, "[REDACTED_COMMAND]");
+        assert!(!text.contains("sk-command-secret"));
+        assert!(!text.contains("sk-env-secret"));
     }
 
     #[test]

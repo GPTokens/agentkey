@@ -78,6 +78,19 @@ pub fn validate_claude_code_extra_env(contents: &str) -> anyhow::Result<()> {
     parse_extra_env(contents).map(|_| ())
 }
 
+pub fn validate_claude_code_command(value: &str) -> anyhow::Result<()> {
+    validated_command(value).map(|_| ())
+}
+
+pub fn claude_code_command_for_display(value: &str) -> String {
+    let trimmed = value.trim();
+    if command_contains_secret_marker(trimmed) {
+        "[REDACTED_COMMAND]".to_string()
+    } else {
+        trimmed.to_string()
+    }
+}
+
 fn platform_command(command_line: &str) -> Command {
     #[cfg(windows)]
     {
@@ -104,6 +117,7 @@ fn validated_command(value: &str) -> anyhow::Result<String> {
         anyhow::bail!("Claude Code 命令不能为空");
     }
     validate_process_value("Claude Code 命令", trimmed)?;
+    reject_secret_like_command("Claude Code 命令", trimmed)?;
     Ok(trimmed.to_string())
 }
 
@@ -155,6 +169,33 @@ fn validate_process_value(label: &str, value: &str) -> anyhow::Result<()> {
         anyhow::bail!("{label} 不能包含换行或 NUL 字符");
     }
     Ok(())
+}
+
+fn reject_secret_like_command(label: &str, value: &str) -> anyhow::Result<()> {
+    if command_contains_secret_marker(value) {
+        anyhow::bail!(
+            "{label} 不能包含 API Key、token、password 或 authorization 参数；请使用 AgentKey 的环境变量配置"
+        );
+    }
+    Ok(())
+}
+
+fn command_contains_secret_marker(value: &str) -> bool {
+    let normalized = value
+        .chars()
+        .filter(|ch| *ch != '-' && *ch != '_')
+        .collect::<String>()
+        .to_ascii_lowercase();
+    [
+        "apikey",
+        "authtoken",
+        "authorization",
+        "bearer",
+        "password",
+        "secret",
+    ]
+    .iter()
+    .any(|marker| normalized.contains(marker))
 }
 
 fn parse_extra_env(contents: &str) -> anyhow::Result<Vec<(String, String)>> {
@@ -217,6 +258,28 @@ mod tests {
     fn extra_env_rejects_managed_keys() {
         let error = parse_extra_env("ANTHROPIC_BASE_URL=http://example.test/v1").unwrap_err();
         assert!(error.to_string().contains("ANTHROPIC_BASE_URL"));
+    }
+
+    #[test]
+    fn command_rejects_secret_like_arguments() {
+        let error = validated_command("claude --api-key sk-test").unwrap_err();
+        assert!(error.to_string().contains("API Key"));
+        assert_eq!(
+            claude_code_command_for_display("claude --api-key sk-test"),
+            "[REDACTED_COMMAND]"
+        );
+    }
+
+    #[test]
+    fn command_allows_regular_claude_flags() {
+        assert_eq!(
+            validated_command("claude --permission-mode acceptEdits").unwrap(),
+            "claude --permission-mode acceptEdits"
+        );
+        assert_eq!(
+            claude_code_command_for_display(" claude --permission-mode acceptEdits "),
+            "claude --permission-mode acceptEdits"
+        );
     }
 
     #[test]

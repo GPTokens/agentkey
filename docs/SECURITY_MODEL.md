@@ -37,7 +37,7 @@ Diagnostics may include environment details, configuration paths, and provider s
 
 ## Claude Code Launch
 
-Claude Code is started with API credentials in the child process environment. API keys must not be written to command-line arguments or diagnostic events. Extra environment variables are accepted only as `KEY=value` lines with validated variable names.
+Claude Code is started with API credentials in the child process environment. API keys must not be written to command-line arguments or diagnostic events. AgentKey rejects Claude Code launch commands that contain secret-like argument markers such as API keys, bearer tokens, passwords, or authorization values. Extra environment variables are accepted only as `KEY=value` lines with validated variable names.
 
 Relay providers, Claude Code, model-catalog fetches, Chat Completions proxy upstreams, and Codex CLI wrapper provider base URLs must use HTTPS. HTTP is accepted only for loopback development endpoints such as `localhost`, `127.0.0.1`, or `::1`.
 
