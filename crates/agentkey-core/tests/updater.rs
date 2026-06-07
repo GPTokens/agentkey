@@ -1,6 +1,7 @@
 use agentkey_core::update::{
     Release, download_asset_to, is_newer_version, parse_version_tag, release_from_github_payload,
-    release_from_latest_json_payload, safe_asset_name, select_update_asset,
+    release_from_latest_json_payload, safe_asset_name, select_update_asset, sha256_hex,
+    verify_release_asset_sha256,
 };
 use serde_json::json;
 
@@ -27,7 +28,7 @@ fn github_payload_selects_platform_installer() {
         "assets": [
             {"name": "source.zip", "browser_download_url": "https://example.test/source.zip"},
             {"name": "agentkey-manager.exe", "browser_download_url": "https://example.test/manager.exe"},
-            {"name": "AgentKey_1.0.9_x64-setup.exe", "browser_download_url": "https://example.test/setup.exe"},
+            {"name": "AgentKey_1.0.9_x64-setup.exe", "browser_download_url": "https://example.test/setup.exe", "digest": "sha256:bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721"},
             {"name": "AgentKey_1.0.9_x64.dmg", "browser_download_url": "https://example.test/app.dmg"}
         ]
     }))
@@ -38,6 +39,10 @@ fn github_payload_selects_platform_installer() {
         assert_eq!(
             release.asset_name.as_deref(),
             Some("AgentKey_1.0.9_x64-setup.exe")
+        );
+        assert_eq!(
+            release.asset_sha256.as_deref(),
+            Some("bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721")
         );
     } else if cfg!(target_os = "macos") {
         assert_eq!(
@@ -57,7 +62,7 @@ fn latest_json_payload_selects_platform_installer_without_github_api_shape() {
         "body": "静态更新描述",
         "assets": [
             {"name": "source.zip", "url": "https://example.test/source.zip"},
-            {"name": "AgentKey-1.1.6-windows-x64-setup.exe", "url": "https://example.test/setup.exe"},
+            {"name": "AgentKey-1.1.6-windows-x64-setup.exe", "url": "https://example.test/setup.exe", "sha256": "bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721"},
             {"name": "AgentKey-1.1.6-macos-x64.dmg", "url": "https://example.test/app.dmg"}
         ]
     }))
@@ -69,6 +74,10 @@ fn latest_json_payload_selects_platform_installer_without_github_api_shape() {
         assert_eq!(
             release.asset_name.as_deref(),
             Some("AgentKey-1.1.6-windows-x64-setup.exe")
+        );
+        assert_eq!(
+            release.asset_sha256.as_deref(),
+            Some("bef57ec7f53a6d40beb640a780a639c83bc29ac8a9816f1fc6c5c6dcd93c4721")
         );
     } else if cfg!(target_os = "macos") {
         assert_eq!(
@@ -128,10 +137,64 @@ fn download_asset_to_writes_bytes() {
         body: "fixes".to_string(),
         asset_name: Some("pkg.zip".to_string()),
         asset_url: Some("https://example.test/pkg.zip".to_string()),
+        asset_sha256: None,
     };
 
     let path = download_asset_to(&release, b"abcdef", dir.path()).unwrap();
 
     assert_eq!(path, dir.path().join("pkg.zip"));
     assert_eq!(std::fs::read(path).unwrap(), b"abcdef");
+}
+
+#[test]
+fn sha256_hex_matches_known_vector() {
+    assert_eq!(
+        sha256_hex(b"abc"),
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
+}
+
+#[test]
+fn release_asset_sha256_is_required_before_execution() {
+    let release = Release {
+        version: "v1.0.9".to_string(),
+        url: "https://example.test".to_string(),
+        body: "fixes".to_string(),
+        asset_name: Some("pkg.zip".to_string()),
+        asset_url: Some("https://example.test/pkg.zip".to_string()),
+        asset_sha256: None,
+    };
+
+    assert!(verify_release_asset_sha256(&release, b"abcdef").is_err());
+}
+
+#[test]
+fn release_asset_sha256_rejects_mismatch() {
+    let release = Release {
+        version: "v1.0.9".to_string(),
+        url: "https://example.test".to_string(),
+        body: "fixes".to_string(),
+        asset_name: Some("pkg.zip".to_string()),
+        asset_url: Some("https://example.test/pkg.zip".to_string()),
+        asset_sha256: Some("0".repeat(64)),
+    };
+
+    assert!(verify_release_asset_sha256(&release, b"abcdef").is_err());
+}
+
+#[test]
+fn release_asset_sha256_accepts_match() {
+    let release = Release {
+        version: "v1.0.9".to_string(),
+        url: "https://example.test".to_string(),
+        body: "fixes".to_string(),
+        asset_name: Some("pkg.zip".to_string()),
+        asset_url: Some("https://example.test/pkg.zip".to_string()),
+        asset_sha256: Some(sha256_hex(b"abcdef")),
+    };
+
+    assert_eq!(
+        verify_release_asset_sha256(&release, b"abcdef").unwrap(),
+        sha256_hex(b"abcdef")
+    );
 }

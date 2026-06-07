@@ -378,6 +378,7 @@ type UpdateResult = CommandResult<{
   releaseSummary?: string;
   assetName?: string | null;
   assetUrl?: string | null;
+  assetSha256?: string | null;
   updateAvailable?: boolean;
   installedPath?: string;
   progress?: number;
@@ -895,6 +896,7 @@ export function App() {
             body: update.releaseSummary ?? "",
             asset_name: update.assetName,
             asset_url: update.assetUrl,
+            asset_sha256: update.assetSha256 ?? null,
           }
         : null;
     const result = await run(() => call<UpdateResult>("perform_update", { release }));
@@ -2534,6 +2536,7 @@ function AboutScreen({
             <Metric label="状态" value={update?.status ?? "not_checked"} />
             <Metric label="最新版本" value={update?.latestVersion ?? "未检查"} />
             <Metric label="资源" value={update?.assetName ?? "-"} />
+            <Metric label="SHA-256" value={update?.assetSha256 ? "已提供" : "缺失"} />
             <Metric label="进度" value={`${update?.progress ?? 0}%`} />
           </div>
           <Textarea className="log-view" readOnly value={update?.releaseSummary || update?.message || "尚未检查 GitHub Release；更新会下载并启动安装包。"} />

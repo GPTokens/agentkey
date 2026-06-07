@@ -26,6 +26,8 @@ CORS is not an authentication mechanism. It is a browser access boundary. AgentK
 
 Updater code must verify release artifacts before execution. Acceptable verification options include detached signatures, trusted checksums, or platform-native signing where available.
 
+AgentKey currently requires a SHA-256 checksum for the selected release asset. The checksum can be supplied as `sha256`, `checksum`, or a GitHub-style `digest` value such as `sha256:<hex>`. Assets without a valid checksum are downloaded but not executed.
+
 ## Diagnostics
 
 Diagnostics may include environment details, configuration paths, and provider settings. Diagnostics must redact secrets before sending or saving reports.

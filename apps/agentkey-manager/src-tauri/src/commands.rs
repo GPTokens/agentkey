@@ -1200,6 +1200,7 @@ pub async fn check_update() -> CommandResult<Value> {
                     "releaseSummary": update.release_summary,
                     "assetName": update.asset_name,
                     "assetUrl": update.asset_url,
+                    "assetSha256": update.asset_sha256,
                     "updateAvailable": update.update_available,
                     "progress": 0
                 }),
@@ -1213,6 +1214,7 @@ pub async fn check_update() -> CommandResult<Value> {
                 "releaseSummary": "",
                 "assetName": Value::Null,
                 "assetUrl": Value::Null,
+                "assetSha256": Value::Null,
                 "updateAvailable": false,
                 "progress": 0
             }),
