@@ -6291,8 +6291,7 @@
     const missingDelete = settings.sessionDelete && !existingDeleteButton;
     const missingMore = needsMoreMenu && !existingMoreButton;
     const deleteReady = !settings.sessionDelete || existingDeleteButton?.dataset.agentKeyDeleteVersion === agentKeyDeleteVersion;
-    const groupReady = existingGroup?.dataset.agentKeyActionGroupVersion === agentKeyActionGroupVersion
-      || existingGroup?.dataset.codexActionGroupVersion === agentKeyActionGroupVersion;
+    const groupReady = existingGroup?.dataset.agentKeyActionGroupVersion === agentKeyActionGroupVersion;
     if (groupReady && deleteReady && !hasUnexpectedDelete && !hasUnexpectedMore && !hasUnexpectedExport && !hasUnexpectedMove && !missingDelete && !missingMore) {
       syncActionGroupLayout(row, existingGroup);
       return;

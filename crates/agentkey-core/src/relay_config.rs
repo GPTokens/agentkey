@@ -9,7 +9,7 @@ use toml_edit::{DocumentMut, Item, Table, TableLike};
 use crate::settings::{RelayContextSelection, RelayProfile, RelayProtocol};
 
 const RELAY_PROVIDER: &str = "custom";
-const LEGACY_RELAY_PROVIDERS: &[&str] = &["AgentKeyLegacy", "AgentKeyPP"];
+const LEGACY_RELAY_PROVIDERS: &[&str] = &["CodexPP", "AgentKeyLegacy", "AgentKeyPP"];
 const CHAT_UPSTREAM_BASE_URL_KEY: &str = "agentkey_chat_base_url";
 const RESERVED_MODEL_PROVIDER_IDS: &[&str] = &[
     "amazon-bedrock",

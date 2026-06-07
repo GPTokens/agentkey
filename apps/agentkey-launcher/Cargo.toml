@@ -8,6 +8,7 @@ repository.workspace = true
 [[bin]]
 name = "agentkey"
 path = "src/main.rs"
+test = false
 
 [dependencies]
 anyhow.workspace = true

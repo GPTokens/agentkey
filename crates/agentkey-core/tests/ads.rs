@@ -8,12 +8,12 @@ use agentkey_core::ads::{
 use serde_json::json;
 
 #[test]
-fn default_ad_urls_match_legacy_helper_sources() {
+fn default_recommendation_urls_match_helper_sources() {
     assert_eq!(
         DEFAULT_AD_LIST_URLS,
         [
-            "https://raw.githubusercontent.com/GPTokens/agentkey/main/ads.json",
-            "https://cdn.jsdelivr.net/gh/GPTokens/agentkey@main/ads.json",
+            "https://raw.githubusercontent.com/GPTokens/agentkey/main/assets/recommendations.json",
+            "https://cdn.jsdelivr.net/gh/GPTokens/agentkey@main/assets/recommendations.json",
         ]
     );
 }
