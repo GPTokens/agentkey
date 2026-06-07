@@ -38,10 +38,9 @@ impl BackupStore {
             "source_db": source_db.to_string_lossy(),
             "tables": tables,
         });
-        fs::write(
-            self.path_for(&token),
-            serde_json::to_string_pretty(&payload)?,
-        )?;
+        let path = self.path_for(&token);
+        fs::write(&path, serde_json::to_string_pretty(&payload)?)?;
+        agentkey_core::harden_sensitive_file(&path)?;
         Ok(token)
     }
 

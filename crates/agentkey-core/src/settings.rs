@@ -536,7 +536,7 @@ impl SettingsStore {
         settings.codex_extra_args = normalize_codex_extra_args(&settings.codex_extra_args);
         let bytes = serde_json::to_vec_pretty(&settings)?;
         atomic_write(&self.path, &bytes)?;
-        harden_settings_file(&self.path)
+        crate::harden_sensitive_file(&self.path)
     }
 
     pub fn update(&self, payload: Value) -> anyhow::Result<BackendSettings> {
@@ -559,7 +559,7 @@ impl SettingsStore {
         );
         let bytes = serde_json::to_vec_pretty(&Value::Object(raw))?;
         atomic_write(&self.path, &bytes)?;
-        harden_settings_file(&self.path)?;
+        crate::harden_sensitive_file(&self.path)?;
         Ok(settings)
     }
 
@@ -1078,27 +1078,6 @@ pub(crate) fn atomic_write(path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
             temp_path.display()
         )
     })?;
-    Ok(())
-}
-
-fn harden_settings_file(path: &Path) -> anyhow::Result<()> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-
-        if let Some(parent) = path.parent() {
-            fs::set_permissions(parent, fs::Permissions::from_mode(0o700)).with_context(|| {
-                format!("failed to restrict settings directory {}", parent.display())
-            })?;
-        }
-        fs::set_permissions(path, fs::Permissions::from_mode(0o600))
-            .with_context(|| format!("failed to restrict settings file {}", path.display()))?;
-    }
-    #[cfg(windows)]
-    {
-        crate::windows_integration::hide_file(path)
-            .with_context(|| format!("failed to hide settings file {}", path.display()))?;
-    }
     Ok(())
 }
 

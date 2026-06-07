@@ -107,6 +107,34 @@ fn backup_store_writes_reads_and_sanitizes_tokens() {
     assert!(store.read_backup("missing").is_err());
 }
 
+#[cfg(unix)]
+#[test]
+fn backup_store_restricts_backup_permissions() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let tmp = tempdir().unwrap();
+    let root = tmp.path().join("backups");
+    let store = BackupStore::new(&root);
+
+    let token = store
+        .write_backup(
+            "s1",
+            Path::new("/state/agentkey.sqlite"),
+            json!({"sessions": [{"id": "s1", "title": "Hello"}]}),
+        )
+        .unwrap();
+    let path = store.path_for(&token);
+
+    assert_eq!(
+        fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+        0o600
+    );
+    assert_eq!(
+        fs::metadata(&root).unwrap().permissions().mode() & 0o777,
+        0o700
+    );
+}
+
 #[test]
 fn delete_local_session_creates_backup_and_undo_restores_rows() {
     let tmp = tempdir().unwrap();

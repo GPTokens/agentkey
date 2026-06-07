@@ -31,6 +31,31 @@ pub mod watcher;
 mod windows_integration;
 pub mod zed_remote;
 
+pub fn harden_sensitive_file(path: &std::path::Path) -> anyhow::Result<()> {
+    #[cfg(unix)]
+    {
+        use anyhow::Context;
+        use std::fs;
+        use std::os::unix::fs::PermissionsExt;
+
+        if let Some(parent) = path.parent() {
+            fs::set_permissions(parent, fs::Permissions::from_mode(0o700)).with_context(|| {
+                format!("failed to restrict sensitive directory {}", parent.display())
+            })?;
+        }
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600))
+            .with_context(|| format!("failed to restrict sensitive file {}", path.display()))?;
+    }
+    #[cfg(windows)]
+    {
+        use anyhow::Context;
+
+        windows_integration::hide_file(path)
+            .with_context(|| format!("failed to hide sensitive file {}", path.display()))?;
+    }
+    Ok(())
+}
+
 #[cfg(windows)]
 pub fn windows_create_no_window() -> u32 {
     windows_integration::CREATE_NO_WINDOW
