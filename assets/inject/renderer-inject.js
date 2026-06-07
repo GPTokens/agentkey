@@ -54,8 +54,8 @@
   const codexConversationViewVersion = "1";
   const codexThreadScrollVersion = "1";
   const codexThreadServiceTierVersion = "1";
-  const codexServiceTierBadgeClass = "codex-service-tier-badge";
-  const codexServiceTierBadgeVersion = "3";
+  const agentKeyServiceTierBadgeClass = "agentkey-service-tier-badge";
+  const agentKeyServiceTierBadgeVersion = "3";
   let agentKeyVersion = window.__AGENTKEY_VERSION__ || "unknown";
   const agentKeyBuild = window.__AGENTKEY_BUILD__ || "unknown";
   const agentKeySettingsKey = "agentKeySettings";
@@ -63,7 +63,7 @@
   const codexThreadServiceTierKey = "codexThreadServiceTierOverrides";
   const codexThreadServiceTierMaxEntries = 120;
   const codexThreadServiceTierDraftBindWindowMs = 60 * 1000;
-  const codexServiceTierRequestOverrideVersion = "2";
+  const agentKeyServiceTierRequestOverrideVersion = "2";
   const codexAppServerModelRequestPatchVersion = "1";
   const codexPluginMarketplaceUnlockVersion = "10";
   const codexThreadScrollMaxEntries = 120;
@@ -715,7 +715,7 @@
       .agentkey-service-tier-button { border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: #3f3f46; color: #f3f4f6; font: 12px system-ui, sans-serif; padding: 5px 8px; white-space: nowrap; }
       .agentkey-service-tier-button[data-active="true"] { border-color: #10a37f; background: rgba(16,163,127,.22); color: #6ee7b7; }
       .agentkey-service-tier-button:disabled { opacity: .55; cursor: not-allowed; }
-      .${codexServiceTierBadgeClass} {
+      .${agentKeyServiceTierBadgeClass} {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -732,11 +732,11 @@
         white-space: nowrap;
         cursor: pointer;
       }
-      .${codexServiceTierBadgeClass}:hover { border-color: rgba(16,163,127,.44); background: rgba(16,163,127,.13); }
-      .${codexServiceTierBadgeClass}[data-tier="fast"] { border-color: rgba(16,163,127,.55); background: rgba(16,163,127,.18); color: #6ee7b7; }
-      .${codexServiceTierBadgeClass}[data-tier="loading"] { color: #a1a1aa; }
-      .${codexServiceTierBadgeClass}[data-tier="failed"] { border-color: rgba(248,113,113,.42); background: rgba(248,113,113,.12); color: #fca5a5; }
-      .${codexServiceTierBadgeClass}[data-disabled="true"] { cursor: not-allowed; opacity: .78; }
+      .${agentKeyServiceTierBadgeClass}:hover { border-color: rgba(16,163,127,.44); background: rgba(16,163,127,.13); }
+      .${agentKeyServiceTierBadgeClass}[data-tier="fast"] { border-color: rgba(16,163,127,.55); background: rgba(16,163,127,.18); color: #6ee7b7; }
+      .${agentKeyServiceTierBadgeClass}[data-tier="loading"] { color: #a1a1aa; }
+      .${agentKeyServiceTierBadgeClass}[data-tier="failed"] { border-color: rgba(248,113,113,.42); background: rgba(248,113,113,.12); color: #fca5a5; }
+      .${agentKeyServiceTierBadgeClass}[data-disabled="true"] { cursor: not-allowed; opacity: .78; }
       .agentkey-about { color: #a1a1aa; line-height: 1.5; }
       .agentkey-tabs { display: flex; gap: 8px; padding: 0 20px 6px; flex: 0 0 auto; }
       .agentkey-tab-button { border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: transparent; color: #d1d5db; font: 12px system-ui, sans-serif; padding: 5px 10px; }
@@ -1078,7 +1078,7 @@
   }
 
   let agentKeyBackendSettingsLoaded = false;
-  let codexServiceTierState = {
+  let agentKeyServiceTierState = {
     status: "loading",
     serviceTier: null,
     message: "正在读取…",
@@ -1091,10 +1091,10 @@
     effectiveMode: "standard",
   };
   const codexDefaultServiceTierSetting = { key: "default-service-tier", default: null };
-  const codexServiceTierFallbackFastValue = "priority";
-  const codexServiceTierModulePromises = new Map();
+  const agentKeyServiceTierFallbackFastValue = "priority";
+  const agentKeyServiceTierModulePromises = new Map();
   const codexThreadServiceTierModes = new Set(["inherit", "standard", "fast"]);
-  const codexServiceTierControlModes = new Set(["inherit", "global-standard", "global-fast", "custom"]);
+  const agentKeyServiceTierControlModes = new Set(["inherit", "global-standard", "global-fast", "custom"]);
 
   function codexAppAssetUrl(namePart) {
     const urls = [
@@ -1106,18 +1106,18 @@
   }
 
   async function loadCodexAppModule(namePart) {
-    if (!codexServiceTierModulePromises.has(namePart)) {
+    if (!agentKeyServiceTierModulePromises.has(namePart)) {
       const promise = Promise.resolve().then(async () => {
         const url = codexAppAssetUrl(namePart);
         if (!url) throw new Error(`未找到 Codex App asset: ${namePart}`);
         return await import(url);
       }).catch((error) => {
-        codexServiceTierModulePromises.delete(namePart);
+        agentKeyServiceTierModulePromises.delete(namePart);
         throw error;
       });
-      codexServiceTierModulePromises.set(namePart, promise);
+      agentKeyServiceTierModulePromises.set(namePart, promise);
     }
-    return await codexServiceTierModulePromises.get(namePart);
+    return await agentKeyServiceTierModulePromises.get(namePart);
   }
 
   async function codexSettingStorageModule() {
@@ -1147,42 +1147,42 @@
   }
 
   function codexFastServiceTierValue() {
-    return codexServiceTierState.fastTierValue || codexServiceTierFallbackFastValue;
+    return agentKeyServiceTierState.fastTierValue || agentKeyServiceTierFallbackFastValue;
   }
 
-  function codexServiceTierValueForMode(mode) {
+  function agentKeyServiceTierValueForMode(mode) {
     if (mode === "fast") return codexFastServiceTierValue();
     if (mode === "standard") return null;
-    return codexServiceTierState.serviceTier || null;
+    return agentKeyServiceTierState.serviceTier || null;
   }
 
-  function codexServiceTierDefaultModeForControlMode(controlMode, fallback = "inherit") {
+  function agentKeyServiceTierDefaultModeForControlMode(controlMode, fallback = "inherit") {
     if (controlMode === "global-fast") return "fast";
     if (controlMode === "global-standard") return "standard";
     if (controlMode === "inherit") return "inherit";
     return normalizeCodexThreadServiceTierMode(fallback);
   }
 
-  function codexServiceTierControlModeForDefaultMode(defaultMode) {
+  function agentKeyServiceTierControlModeForDefaultMode(defaultMode) {
     if (defaultMode === "fast") return "global-fast";
     if (defaultMode === "standard") return "global-standard";
     return "inherit";
   }
 
-  function codexServiceTierEffectiveThreadMode(threadMode = "inherit", defaultMode = "inherit") {
+  function agentKeyServiceTierEffectiveThreadMode(threadMode = "inherit", defaultMode = "inherit") {
     const normalizedThreadMode = normalizeCodexThreadServiceTierMode(threadMode);
     if (normalizedThreadMode !== "inherit") return normalizedThreadMode;
     return normalizeCodexThreadServiceTierMode(defaultMode);
   }
 
-  function codexServiceTierValueForControlMode(controlMode, threadMode = "inherit", defaultMode = "inherit") {
+  function agentKeyServiceTierValueForControlMode(controlMode, threadMode = "inherit", defaultMode = "inherit") {
     if (controlMode === "global-fast") return codexFastServiceTierValue();
     if (controlMode === "global-standard") return null;
-    if (controlMode === "custom") return codexServiceTierValueForMode(codexServiceTierEffectiveThreadMode(threadMode, defaultMode));
-    return codexServiceTierState.serviceTier || null;
+    if (controlMode === "custom") return agentKeyServiceTierValueForMode(agentKeyServiceTierEffectiveThreadMode(threadMode, defaultMode));
+    return agentKeyServiceTierState.serviceTier || null;
   }
 
-  function codexServiceTierEffectiveMode(value) {
+  function agentKeyServiceTierEffectiveMode(value) {
     return isFastServiceTierValue(value) ? "fast" : "standard";
   }
 
@@ -1193,7 +1193,7 @@
 
   function normalizeCodexServiceTierControlMode(mode) {
     const normalized = String(mode || "").trim().toLowerCase();
-    return codexServiceTierControlModes.has(normalized) ? normalized : "inherit";
+    return agentKeyServiceTierControlModes.has(normalized) ? normalized : "inherit";
   }
 
   function serviceTierGlobalStatusMessage(serviceTier) {
@@ -1203,13 +1203,13 @@
   }
 
   function serviceTierStatusMessage(
-    controlMode = codexServiceTierState.controlMode || "inherit",
-    threadMode = codexServiceTierState.threadMode || "inherit",
-    effectiveMode = codexServiceTierState.effectiveMode || "standard",
-    defaultMode = codexServiceTierState.defaultMode || "inherit"
+    controlMode = agentKeyServiceTierState.controlMode || "inherit",
+    threadMode = agentKeyServiceTierState.threadMode || "inherit",
+    effectiveMode = agentKeyServiceTierState.effectiveMode || "standard",
+    defaultMode = agentKeyServiceTierState.defaultMode || "inherit"
   ) {
-    if (codexServiceTierState.status === "loading") return "正在读取…";
-    if (codexServiceTierState.status === "failed") return "读取失败";
+    if (agentKeyServiceTierState.status === "loading") return "正在读取…";
+    if (agentKeyServiceTierState.status === "failed") return "读取失败";
     if (controlMode === "inherit") return `继承 config.toml：${effectiveMode}`;
     if (controlMode === "global-standard") return "全局 Standard";
     if (controlMode === "global-fast") return "全局 Fast";
@@ -1234,7 +1234,7 @@
       const mode = parsed?.mode ? normalizeCodexServiceTierControlMode(parsed.mode) : (hasCustomState ? "custom" : "inherit");
       return {
         mode,
-        defaultMode: normalizeCodexThreadServiceTierMode(parsed?.defaultMode || codexServiceTierDefaultModeForControlMode(mode)),
+        defaultMode: normalizeCodexThreadServiceTierMode(parsed?.defaultMode || agentKeyServiceTierDefaultModeForControlMode(mode)),
         entries,
         draft,
       };
@@ -1245,7 +1245,7 @@
 
   function writeThreadServiceTierState(state) {
     const mode = normalizeCodexServiceTierControlMode(state?.mode);
-    const defaultMode = normalizeCodexThreadServiceTierMode(state?.defaultMode || codexServiceTierDefaultModeForControlMode(mode));
+    const defaultMode = normalizeCodexThreadServiceTierMode(state?.defaultMode || agentKeyServiceTierDefaultModeForControlMode(mode));
     const rawEntries = state?.entries && typeof state.entries === "object" ? state.entries : {};
     const entries = Object.create(null);
     Object.entries(rawEntries)
@@ -1340,7 +1340,7 @@
     const state = readThreadServiceTierState();
     state.mode = normalizedMode;
     if (normalizedMode !== "custom") {
-      state.defaultMode = codexServiceTierDefaultModeForControlMode(normalizedMode);
+      state.defaultMode = agentKeyServiceTierDefaultModeForControlMode(normalizedMode);
       state.entries = Object.create(null);
       state.draft = null;
     } else {
@@ -1359,12 +1359,12 @@
 
   function syncCodexServiceTierEffectiveState() {
     if (!agentKeySettings().serviceTierControls) {
-      codexServiceTierState = {
-        ...codexServiceTierState,
+      agentKeyServiceTierState = {
+        ...agentKeyServiceTierState,
         activeThreadId: "",
         threadMode: "inherit",
-        effectiveServiceTier: codexServiceTierState.serviceTier || null,
-        effectiveMode: codexServiceTierEffectiveMode(codexServiceTierState.serviceTier),
+        effectiveServiceTier: agentKeyServiceTierState.serviceTier || null,
+        effectiveMode: agentKeyServiceTierEffectiveMode(agentKeyServiceTierState.serviceTier),
         message: "未启用",
       };
       return;
@@ -1376,10 +1376,10 @@
     const defaultMode = normalizeCodexThreadServiceTierMode(storedState.defaultMode);
     const override = activeThreadId ? codexThreadServiceTierOverride(activeThreadId) : codexThreadServiceTierDraft();
     const threadMode = normalizeCodexThreadServiceTierMode(override?.mode);
-    const effectiveServiceTier = codexServiceTierValueForControlMode(controlMode, threadMode, defaultMode);
-    const effectiveMode = codexServiceTierEffectiveMode(effectiveServiceTier);
-    codexServiceTierState = {
-      ...codexServiceTierState,
+    const effectiveServiceTier = agentKeyServiceTierValueForControlMode(controlMode, threadMode, defaultMode);
+    const effectiveMode = agentKeyServiceTierEffectiveMode(effectiveServiceTier);
+    agentKeyServiceTierState = {
+      ...agentKeyServiceTierState,
       controlMode,
       defaultMode,
       activeThreadId,
@@ -1390,15 +1390,15 @@
     };
   }
 
-  function codexServiceTierBadgeState() {
+  function agentKeyServiceTierBadgeState() {
     if (agentKeyBackendStatus.status === "checking") return { tier: "loading", label: "...", disabled: true, title: "服务模式：正在检查后端连接" };
     if (agentKeyBackendStatus.status && agentKeyBackendStatus.status !== "ok") return { tier: "failed", label: "未连接", disabled: true, title: "服务模式：后端未连接，无法切换" };
-    if (codexServiceTierState.status === "loading") return { tier: "loading", label: "...", title: "服务模式：正在读取" };
-    if (codexServiceTierState.status === "failed") return { tier: "failed", label: "?", title: "服务模式：读取失败" };
-    const effectiveMode = codexServiceTierState.effectiveMode || "standard";
-    const scope = codexServiceTierState.controlMode === "custom" && codexServiceTierState.threadMode !== "inherit"
-      ? `当前 thread：${codexServiceTierState.threadMode}`
-      : serviceTierStatusMessage(codexServiceTierState.controlMode, codexServiceTierState.threadMode, effectiveMode, codexServiceTierState.defaultMode);
+    if (agentKeyServiceTierState.status === "loading") return { tier: "loading", label: "...", title: "服务模式：正在读取" };
+    if (agentKeyServiceTierState.status === "failed") return { tier: "failed", label: "?", title: "服务模式：读取失败" };
+    const effectiveMode = agentKeyServiceTierState.effectiveMode || "standard";
+    const scope = agentKeyServiceTierState.controlMode === "custom" && agentKeyServiceTierState.threadMode !== "inherit"
+      ? `当前 thread：${agentKeyServiceTierState.threadMode}`
+      : serviceTierStatusMessage(agentKeyServiceTierState.controlMode, agentKeyServiceTierState.threadMode, effectiveMode, agentKeyServiceTierState.defaultMode);
     const title = [
       `服务模式：${scope}`,
       "Standard：使用标准处理；不在请求上设置 priority。",
@@ -1409,8 +1409,8 @@
   }
 
   function refreshCodexServiceTierBadges() {
-    const state = codexServiceTierBadgeState();
-    document.querySelectorAll(`[data-codex-service-tier-badge="true"]`).forEach((node) => {
+    const state = agentKeyServiceTierBadgeState();
+    document.querySelectorAll(`[data-agentkey-service-tier-badge="true"]`).forEach((node) => {
       node.dataset.tier = state.tier;
       node.dataset.disabled = String(!!state.disabled);
       node.textContent = state.label;
@@ -1424,66 +1424,66 @@
     const featureEnabled = !!agentKeySettings().serviceTierControls;
     const backendConnected = agentKeyBackendStatus.status === "ok";
     const backendChecking = agentKeyBackendStatus.status === "checking";
-    document.querySelectorAll("[data-codex-service-tier-controls]").forEach((node) => {
+    document.querySelectorAll("[data-agentkey-service-tier-controls]").forEach((node) => {
       node.hidden = !featureEnabled;
     });
-    document.querySelectorAll("[data-codex-service-tier-status]").forEach((node) => {
-      node.dataset.status = featureEnabled && backendConnected ? (codexServiceTierState.status || "loading") : (backendChecking ? "loading" : "failed");
+    document.querySelectorAll("[data-agentkey-service-tier-status]").forEach((node) => {
+      node.dataset.status = featureEnabled && backendConnected ? (agentKeyServiceTierState.status || "loading") : (backendChecking ? "loading" : "failed");
       node.textContent = featureEnabled
-        ? (backendConnected ? (codexServiceTierState.message || "未读取") : (backendChecking ? "正在检查后端…" : "未连接"))
+        ? (backendConnected ? (agentKeyServiceTierState.message || "未读取") : (backendChecking ? "正在检查后端…" : "未连接"))
         : "未启用";
     });
-    document.querySelectorAll("[data-codex-service-tier-inherit]").forEach((button) => {
-      button.disabled = !featureEnabled || !backendConnected || codexServiceTierState.status === "loading";
-      button.dataset.active = String(codexServiceTierState.controlMode === "inherit");
+    document.querySelectorAll("[data-agentkey-service-tier-inherit]").forEach((button) => {
+      button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
+      button.dataset.active = String(agentKeyServiceTierState.controlMode === "inherit");
     });
-    document.querySelectorAll("[data-codex-service-tier-standard]").forEach((button) => {
-      button.disabled = !featureEnabled || !backendConnected || codexServiceTierState.status === "loading";
-      button.dataset.active = String(codexServiceTierState.controlMode === "global-standard");
+    document.querySelectorAll("[data-agentkey-service-tier-standard]").forEach((button) => {
+      button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
+      button.dataset.active = String(agentKeyServiceTierState.controlMode === "global-standard");
     });
-    document.querySelectorAll("[data-codex-service-tier-fast]").forEach((button) => {
-      button.disabled = !featureEnabled || !backendConnected || codexServiceTierState.status === "loading";
-      button.dataset.active = String(codexServiceTierState.controlMode === "global-fast");
+    document.querySelectorAll("[data-agentkey-service-tier-fast]").forEach((button) => {
+      button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
+      button.dataset.active = String(agentKeyServiceTierState.controlMode === "global-fast");
     });
-    document.querySelectorAll("[data-codex-service-tier-custom]").forEach((button) => {
-      button.disabled = !featureEnabled || !backendConnected || codexServiceTierState.status === "loading";
-      button.dataset.active = String(codexServiceTierState.controlMode === "custom");
+    document.querySelectorAll("[data-agentkey-service-tier-custom]").forEach((button) => {
+      button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
+      button.dataset.active = String(agentKeyServiceTierState.controlMode === "custom");
     });
-    document.querySelectorAll("[data-codex-service-tier-thread-inherit]").forEach((button) => {
-      button.disabled = !featureEnabled || !backendConnected || codexServiceTierState.status === "loading";
-      button.dataset.active = String(codexServiceTierState.controlMode === "custom" && codexServiceTierState.threadMode === "inherit");
-      button.title = `当前 thread 不单独覆盖，继承自定义默认 ${codexServiceTierState.defaultMode || "inherit"}`;
+    document.querySelectorAll("[data-agentkey-service-tier-thread-inherit]").forEach((button) => {
+      button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
+      button.dataset.active = String(agentKeyServiceTierState.controlMode === "custom" && agentKeyServiceTierState.threadMode === "inherit");
+      button.title = `当前 thread 不单独覆盖，继承自定义默认 ${agentKeyServiceTierState.defaultMode || "inherit"}`;
     });
-    document.querySelectorAll("[data-codex-service-tier-thread-standard]").forEach((button) => {
-      button.disabled = !featureEnabled || !backendConnected || codexServiceTierState.status === "loading";
-      button.dataset.active = String(codexServiceTierState.controlMode === "custom" && codexServiceTierState.threadMode === "standard");
+    document.querySelectorAll("[data-agentkey-service-tier-thread-standard]").forEach((button) => {
+      button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
+      button.dataset.active = String(agentKeyServiceTierState.controlMode === "custom" && agentKeyServiceTierState.threadMode === "standard");
     });
-    document.querySelectorAll("[data-codex-service-tier-thread-fast]").forEach((button) => {
-      button.disabled = !featureEnabled || !backendConnected || codexServiceTierState.status === "loading";
-      button.dataset.active = String(codexServiceTierState.controlMode === "custom" && codexServiceTierState.threadMode === "fast");
+    document.querySelectorAll("[data-agentkey-service-tier-thread-fast]").forEach((button) => {
+      button.disabled = !featureEnabled || !backendConnected || agentKeyServiceTierState.status === "loading";
+      button.dataset.active = String(agentKeyServiceTierState.controlMode === "custom" && agentKeyServiceTierState.threadMode === "fast");
     });
     refreshCodexServiceTierBadges();
   }
 
   async function loadCodexServiceTierState() {
     if (!agentKeySettings().serviceTierControls) {
-      codexServiceTierState = { ...codexServiceTierState, status: "idle", message: "未启用" };
+      agentKeyServiceTierState = { ...agentKeyServiceTierState, status: "idle", message: "未启用" };
       refreshCodexServiceTierControls();
       return;
     }
-    codexServiceTierState = { ...codexServiceTierState, status: "loading", message: "正在读取…" };
+    agentKeyServiceTierState = { ...agentKeyServiceTierState, status: "loading", message: "正在读取…" };
     refreshCodexServiceTierControls();
     try {
       const serviceTier = await getCodexServiceTierSetting();
-      codexServiceTierState = {
-        ...codexServiceTierState,
+      agentKeyServiceTierState = {
+        ...agentKeyServiceTierState,
         status: "ok",
         serviceTier,
         message: serviceTierGlobalStatusMessage(serviceTier),
       };
     } catch (error) {
-      codexServiceTierState = {
-        ...codexServiceTierState,
+      agentKeyServiceTierState = {
+        ...agentKeyServiceTierState,
         status: "failed",
         message: "读取失败",
       };
@@ -1517,16 +1517,16 @@
       return;
     }
     syncCodexServiceTierEffectiveState();
-    setCodexThreadServiceTierMode(codexServiceTierState.effectiveMode === "fast" ? "standard" : "fast");
+    setCodexThreadServiceTierMode(agentKeyServiceTierState.effectiveMode === "fast" ? "standard" : "fast");
   }
 
-  function codexServiceTierRequestMethods() {
+  function agentKeyServiceTierRequestMethods() {
     return new Set(["thread/start", "thread/resume", "turn/start"]);
   }
 
-  function codexServiceTierOverrideForRequest(method, params, threadIdHint = "") {
+  function agentKeyServiceTierOverrideForRequest(method, params, threadIdHint = "") {
     if (!agentKeySettings().serviceTierControls) return null;
-    if (!codexServiceTierRequestMethods().has(method) || !params || typeof params !== "object") return null;
+    if (!agentKeyServiceTierRequestMethods().has(method) || !params || typeof params !== "object") return null;
     const state = readThreadServiceTierState();
     const controlMode = normalizeCodexServiceTierControlMode(state.mode);
     const defaultMode = normalizeCodexThreadServiceTierMode(state.defaultMode);
@@ -1542,7 +1542,7 @@
       ? validThreadScrollSessionKey(params.threadId || threadIdHint)
       : validThreadScrollSessionKey(params.threadId || params.conversationId || threadIdHint || currentSessionRef().session_id);
     const override = threadId ? codexThreadServiceTierOverride(threadId) : codexThreadServiceTierDraft();
-    const mode = codexServiceTierEffectiveThreadMode(override?.mode, defaultMode);
+    const mode = agentKeyServiceTierEffectiveThreadMode(override?.mode, defaultMode);
     if (mode === "inherit") return null;
     return {
       threadId,
@@ -1552,7 +1552,7 @@
   }
 
   function applyCodexServiceTierRequestOverride(method, params, threadIdHint = "") {
-    const override = codexServiceTierOverrideForRequest(method, params, threadIdHint);
+    const override = agentKeyServiceTierOverrideForRequest(method, params, threadIdHint);
     if (!override) return params;
     const nextParams = { ...(params || {}), serviceTier: override.serviceTier };
     sendAgentKeyDiagnostic("service_tier_request_override_applied", {
@@ -1564,7 +1564,7 @@
     return nextParams;
   }
 
-  function codexServiceTierRequestOverride(message) {
+  function agentKeyServiceTierRequestOverride(message) {
     if (!agentKeySettings().serviceTierControls) return message;
     if (!message || typeof message !== "object") return message;
     if (message.type === "send-cli-request-for-host") {
@@ -1596,7 +1596,7 @@
       if (controlMode === "global-fast") return { ...message, serviceTier: codexFastServiceTierValue() };
       if (controlMode === "inherit") return message;
       const draft = codexThreadServiceTierDraft();
-      const mode = codexServiceTierEffectiveThreadMode(draft?.mode, state.defaultMode);
+      const mode = agentKeyServiceTierEffectiveThreadMode(draft?.mode, state.defaultMode);
       if (mode === "inherit") return message;
       return { ...message, serviceTier: mode === "fast" ? codexFastServiceTierValue() : null };
     }
@@ -1616,25 +1616,25 @@
   }
 
   function installCodexServiceTierDispatcherPatch() {
-    if (window.__codexServiceTierRequestOverrideInstalled === codexServiceTierRequestOverrideVersion) return;
+    if (window.__agentKeyServiceTierRequestOverrideInstalled === agentKeyServiceTierRequestOverrideVersion) return;
     const patch = async () => {
       try {
         const module = await loadCodexAppModule("setting-storage-");
         const dispatcherClass = typeof module.v === "function" && String(module.v).includes("dispatchMessage") ? module.v : null;
         const dispatcher = dispatcherClass?.getInstance?.();
         if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Codex dispatcher unavailable");
-        if (dispatcher.__codexServiceTierOriginalDispatchMessage) {
-          window.__codexServiceTierRequestOverrideInstalled = codexServiceTierRequestOverrideVersion;
+        if (dispatcher.__agentKeyServiceTierOriginalDispatchMessage) {
+          window.__agentKeyServiceTierRequestOverrideInstalled = agentKeyServiceTierRequestOverrideVersion;
           return;
         }
-        dispatcher.__codexServiceTierOriginalDispatchMessage = dispatcher.dispatchMessage.bind(dispatcher);
+        dispatcher.__agentKeyServiceTierOriginalDispatchMessage = dispatcher.dispatchMessage.bind(dispatcher);
         dispatcher.dispatchMessage = (type, payload) => {
-          const message = codexServiceTierRequestOverride({ ...(payload || {}), type });
+          const message = agentKeyServiceTierRequestOverride({ ...(payload || {}), type });
           const nextType = message?.type || type;
           const { type: _type, ...nextPayload } = message || {};
-          return dispatcher.__codexServiceTierOriginalDispatchMessage(nextType, nextPayload);
+          return dispatcher.__agentKeyServiceTierOriginalDispatchMessage(nextType, nextPayload);
         };
-        window.__codexServiceTierRequestOverrideInstalled = codexServiceTierRequestOverrideVersion;
+        window.__agentKeyServiceTierRequestOverrideInstalled = agentKeyServiceTierRequestOverrideVersion;
         sendAgentKeyDiagnostic("service_tier_dispatcher_patch_installed", {});
       } catch (error) {
         sendAgentKeyDiagnostic("service_tier_dispatcher_patch_failed", {
@@ -1982,21 +1982,21 @@
               <div><div class="agentkey-row-title">Fast 按钮</div><div class="agentkey-row-description">显示服务模式切换按钮，并允许把请求切到 Fast / priority；默认关闭以避免误触高价服务模式。</div></div>
               <button type="button" class="agentkey-toggle" data-agentkey-setting="serviceTierControls"><span></span></button>
             </div>
-            <div class="agentkey-row" data-codex-service-tier-controls="true">
+            <div class="agentkey-row" data-agentkey-service-tier-controls="true">
               <div><div class="agentkey-row-title">服务模式</div><div class="agentkey-row-description">继承使用 config.toml 的 service tier；全局模式覆盖全部 thread；自定义允许按 thread 覆盖。</div></div>
               <div class="agentkey-service-tier-control">
-                <div class="agentkey-service-tier-status" data-codex-service-tier-status="true" data-status="loading">正在读取…</div>
+                <div class="agentkey-service-tier-status" data-agentkey-service-tier-status="true" data-status="loading">正在读取…</div>
                 <div class="agentkey-service-tier-actions">
-                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-inherit="true">继承</button>
-                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-standard="true">全局 Standard</button>
-                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-fast="true">全局 Fast</button>
-                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-custom="true">自定义</button>
+                  <button type="button" class="agentkey-service-tier-button" data-agentkey-service-tier-inherit="true">继承</button>
+                  <button type="button" class="agentkey-service-tier-button" data-agentkey-service-tier-standard="true">全局 Standard</button>
+                  <button type="button" class="agentkey-service-tier-button" data-agentkey-service-tier-fast="true">全局 Fast</button>
+                  <button type="button" class="agentkey-service-tier-button" data-agentkey-service-tier-custom="true">自定义</button>
                 </div>
                 <div class="agentkey-service-tier-actions agentkey-service-tier-thread-actions">
                   <span class="agentkey-service-tier-thread-label">当前 thread 覆盖</span>
-                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-thread-inherit="true" title="当前 thread 不单独覆盖，继承 config.toml">继承</button>
-                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-thread-standard="true" title="仅当前 thread 使用 Standard，并切到自定义模式">Standard</button>
-                  <button type="button" class="agentkey-service-tier-button" data-codex-service-tier-thread-fast="true" title="仅当前 thread 使用 Fast，并切到自定义模式">Fast</button>
+                  <button type="button" class="agentkey-service-tier-button" data-agentkey-service-tier-thread-inherit="true" title="当前 thread 不单独覆盖，继承 config.toml">继承</button>
+                  <button type="button" class="agentkey-service-tier-button" data-agentkey-service-tier-thread-standard="true" title="仅当前 thread 使用 Standard，并切到自定义模式">Standard</button>
+                  <button type="button" class="agentkey-service-tier-button" data-agentkey-service-tier-thread-fast="true" title="仅当前 thread 使用 Fast，并切到自定义模式">Fast</button>
                 </div>
               </div>
             </div>
@@ -2151,31 +2151,31 @@
         loadUserScripts("/user-scripts/set-enabled", { enabled: userScriptsEnabled.dataset.enabled !== "true" });
         return;
       }
-      if (target?.closest("[data-codex-service-tier-inherit]")) {
+      if (target?.closest("[data-agentkey-service-tier-inherit]")) {
         setCodexServiceTierControlMode("inherit");
         return;
       }
-      if (target?.closest("[data-codex-service-tier-standard]")) {
+      if (target?.closest("[data-agentkey-service-tier-standard]")) {
         setCodexServiceTierControlMode("global-standard");
         return;
       }
-      if (target?.closest("[data-codex-service-tier-fast]")) {
+      if (target?.closest("[data-agentkey-service-tier-fast]")) {
         setCodexServiceTierControlMode("global-fast");
         return;
       }
-      if (target?.closest("[data-codex-service-tier-custom]")) {
+      if (target?.closest("[data-agentkey-service-tier-custom]")) {
         setCodexServiceTierControlMode("custom");
         return;
       }
-      if (target?.closest("[data-codex-service-tier-thread-inherit]")) {
+      if (target?.closest("[data-agentkey-service-tier-thread-inherit]")) {
         setCodexThreadServiceTierMode("inherit");
         return;
       }
-      if (target?.closest("[data-codex-service-tier-thread-standard]")) {
+      if (target?.closest("[data-agentkey-service-tier-thread-standard]")) {
         setCodexThreadServiceTierMode("standard");
         return;
       }
-      if (target?.closest("[data-codex-service-tier-thread-fast]")) {
+      if (target?.closest("[data-agentkey-service-tier-thread-fast]")) {
         setCodexThreadServiceTierMode("fast");
         return;
       }
@@ -6723,7 +6723,7 @@
     return conversationViewFindByClasses(conversationViewComposerClasses);
   }
 
-  function codexServiceTierBadgeVisibleElement(element) {
+  function agentKeyServiceTierBadgeVisibleElement(element) {
     if (!(element instanceof HTMLElement) || !element.isConnected) return false;
     const style = getComputedStyle(element);
     if (style.display === "none" || style.visibility === "hidden") return false;
@@ -6731,19 +6731,19 @@
     return rect.width > 0 && rect.height > 0;
   }
 
-  function codexServiceTierBadgeText(element) {
+  function agentKeyServiceTierBadgeText(element) {
     return String(element?.textContent || "").replace(/\s+/g, " ").trim();
   }
 
-  function codexServiceTierKnownProviderNames() {
+  function agentKeyServiceTierKnownProviderNames() {
     return uniqueValues([
       codexModelCatalog.provider_name,
       codexModelCatalog.model_provider,
     ]).map((value) => value.toLowerCase());
   }
 
-  function codexServiceTierLooksLikeProviderButton(button, providerNames) {
-    const text = codexServiceTierBadgeText(button);
+  function agentKeyServiceTierLooksLikeProviderButton(button, providerNames) {
+    const text = agentKeyServiceTierBadgeText(button);
     if (!text || text.length > 32) return false;
     const lower = text.toLowerCase();
     if (providerNames.includes(lower)) return true;
@@ -6755,11 +6755,11 @@
     return true;
   }
 
-  function codexServiceTierBadgeButtonCandidates(composer) {
+  function agentKeyServiceTierBadgeButtonCandidates(composer) {
     const composerRect = composer.getBoundingClientRect();
     return Array.from(composer.querySelectorAll("button, [role='button']"))
-      .filter((button) => !button.closest?.(`[data-codex-service-tier-badge="true"]`))
-      .filter(codexServiceTierBadgeVisibleElement)
+      .filter((button) => !button.closest?.(`[data-agentkey-service-tier-badge="true"]`))
+      .filter(agentKeyServiceTierBadgeVisibleElement)
       .filter((button) => {
         const rect = button.getBoundingClientRect();
         return rect.bottom >= composerRect.top + composerRect.height * 0.35;
@@ -6771,13 +6771,13 @@
       });
   }
 
-  function codexServiceTierVisibleComposerFooters(root = document) {
+  function agentKeyServiceTierVisibleComposerFooters(root = document) {
     const footers = [
       ...(root?.matches?.(".composer-footer") ? [root] : []),
       ...Array.from(root?.querySelectorAll?.(".composer-footer") || []),
     ];
     return footers
-      .filter(codexServiceTierBadgeVisibleElement)
+      .filter(agentKeyServiceTierBadgeVisibleElement)
       .sort((left, right) => {
         const leftRect = left.getBoundingClientRect();
         const rightRect = right.getBoundingClientRect();
@@ -6785,101 +6785,101 @@
       });
   }
 
-  function codexServiceTierComposerScore(composer) {
-    const text = codexServiceTierBadgeText(composer).toLowerCase();
-    const providerNames = codexServiceTierKnownProviderNames();
+  function agentKeyServiceTierComposerScore(composer) {
+    const text = agentKeyServiceTierBadgeText(composer).toLowerCase();
+    const providerNames = agentKeyServiceTierKnownProviderNames();
     let score = 0;
     if (providerNames.some((name) => name && text.includes(name))) score += 40;
     if (/完全访问权限|full access|model|超高|high|sub2api|provider/i.test(text)) score += 20;
     if (/本地模式|local mode|worktree|branch|codex\//i.test(text)) score -= 30;
     if (composer.matches?.(".composer-footer")) score += 4;
     if (composer.querySelector?.(".composer-footer")) score += 8;
-    const buttons = Array.from(composer.querySelectorAll?.("button, [role='button']") || []).filter(codexServiceTierBadgeVisibleElement);
-    if (buttons.some((button) => codexServiceTierLooksLikeProviderButton(button, providerNames))) score += 30;
+    const buttons = Array.from(composer.querySelectorAll?.("button, [role='button']") || []).filter(agentKeyServiceTierBadgeVisibleElement);
+    if (buttons.some((button) => agentKeyServiceTierLooksLikeProviderButton(button, providerNames))) score += 30;
     score += Math.min(10, buttons.length);
     return score;
   }
 
-  function codexServiceTierComposerCandidates() {
+  function agentKeyServiceTierComposerCandidates() {
     const candidates = new Set();
     const threadComposer = conversationViewFindComposerEl();
-    if (threadComposer && codexServiceTierBadgeVisibleElement(threadComposer)) candidates.add(threadComposer);
-    codexServiceTierVisibleComposerFooters().forEach((footer) => {
+    if (threadComposer && agentKeyServiceTierBadgeVisibleElement(threadComposer)) candidates.add(threadComposer);
+    agentKeyServiceTierVisibleComposerFooters().forEach((footer) => {
       candidates.add(footer);
       let node = footer.parentElement;
       for (let depth = 0; node instanceof HTMLElement && depth < 6; depth += 1, node = node.parentElement) {
-        if (codexServiceTierBadgeVisibleElement(node)) candidates.add(node);
+        if (agentKeyServiceTierBadgeVisibleElement(node)) candidates.add(node);
       }
     });
     return Array.from(candidates);
   }
 
-  function codexServiceTierBestComposerFooter(root = document) {
-    return codexServiceTierVisibleComposerFooters(root)
-      .map((footer, index) => ({ footer, index, score: codexServiceTierComposerScore(footer) }))
+  function agentKeyServiceTierBestComposerFooter(root = document) {
+    return agentKeyServiceTierVisibleComposerFooters(root)
+      .map((footer, index) => ({ footer, index, score: agentKeyServiceTierComposerScore(footer) }))
       .sort((left, right) => (right.score - left.score) || (left.index - right.index))[0]?.footer || null;
   }
 
-  function codexServiceTierFindComposerEl() {
-    return codexServiceTierComposerCandidates()
-      .map((composer, index) => ({ composer, index, score: codexServiceTierComposerScore(composer) }))
+  function agentKeyServiceTierFindComposerEl() {
+    return agentKeyServiceTierComposerCandidates()
+      .map((composer, index) => ({ composer, index, score: agentKeyServiceTierComposerScore(composer) }))
       .sort((left, right) => (right.score - left.score) || (left.index - right.index))[0]?.composer || null;
   }
 
-  function codexServiceTierBadgeAnchor(composer) {
-    const providerNames = codexServiceTierKnownProviderNames();
-    const buttons = codexServiceTierBadgeButtonCandidates(composer);
-    const exact = buttons.find((button) => providerNames.includes(codexServiceTierBadgeText(button).toLowerCase()));
+  function agentKeyServiceTierBadgeAnchor(composer) {
+    const providerNames = agentKeyServiceTierKnownProviderNames();
+    const buttons = agentKeyServiceTierBadgeButtonCandidates(composer);
+    const exact = buttons.find((button) => providerNames.includes(agentKeyServiceTierBadgeText(button).toLowerCase()));
     if (exact) return exact;
     const composerRect = composer.getBoundingClientRect();
     return buttons.find((button) => {
       const rect = button.getBoundingClientRect();
-      return rect.left >= composerRect.left + composerRect.width * 0.42 && codexServiceTierLooksLikeProviderButton(button, providerNames);
+      return rect.left >= composerRect.left + composerRect.width * 0.42 && agentKeyServiceTierLooksLikeProviderButton(button, providerNames);
     }) || null;
   }
 
-  function codexServiceTierComposerFooter(composer) {
+  function agentKeyServiceTierComposerFooter(composer) {
     if (composer?.matches?.(".composer-footer")) return composer;
-    return codexServiceTierBestComposerFooter(composer) || codexServiceTierBestComposerFooter() || null;
+    return agentKeyServiceTierBestComposerFooter(composer) || agentKeyServiceTierBestComposerFooter() || null;
   }
 
-  function codexServiceTierBadgeFooterGroup(composer) {
-    const footer = codexServiceTierComposerFooter(composer);
+  function agentKeyServiceTierBadgeFooterGroup(composer) {
+    const footer = agentKeyServiceTierComposerFooter(composer);
     if (!footer) return null;
-    const children = Array.from(footer.children).filter(codexServiceTierBadgeVisibleElement);
+    const children = Array.from(footer.children).filter(agentKeyServiceTierBadgeVisibleElement);
     if (!children.length) return footer;
-    const providerNames = codexServiceTierKnownProviderNames();
+    const providerNames = agentKeyServiceTierKnownProviderNames();
     const providerGroup = children.find((child) => {
-      const text = codexServiceTierBadgeText(child).toLowerCase();
+      const text = agentKeyServiceTierBadgeText(child).toLowerCase();
       return providerNames.some((name) => name && text.includes(name));
     });
     return providerGroup || children[children.length - 1] || footer;
   }
 
-  function codexServiceTierBadgePlacement(composer) {
-    const anchor = composer ? codexServiceTierBadgeAnchor(composer) : null;
+  function agentKeyServiceTierBadgePlacement(composer) {
+    const anchor = composer ? agentKeyServiceTierBadgeAnchor(composer) : null;
     if (anchor?.parentElement) return { parent: anchor.parentElement, before: anchor };
-    const group = composer ? codexServiceTierBadgeFooterGroup(composer) : null;
+    const group = composer ? agentKeyServiceTierBadgeFooterGroup(composer) : null;
     if (group) return { parent: group, before: group.firstChild };
     return null;
   }
 
   function wireCodexServiceTierBadge(badge) {
-    if (!badge || badge.dataset.codexServiceTierBadgeWired === codexServiceTierBadgeVersion) return;
-    badge.dataset.codexServiceTierBadgeWired = codexServiceTierBadgeVersion;
+    if (!badge || badge.dataset.agentKeyServiceTierBadgeWired === agentKeyServiceTierBadgeVersion) return;
+    badge.dataset.agentKeyServiceTierBadgeWired = agentKeyServiceTierBadgeVersion;
     badge.setAttribute("role", "button");
     badge.setAttribute("tabindex", "0");
     badge.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      if (codexServiceTierState.status === "loading") return;
+      if (agentKeyServiceTierState.status === "loading") return;
       toggleCodexServiceTierFromBadge();
     });
     badge.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
       event.stopPropagation();
-      if (codexServiceTierState.status === "loading") return;
+      if (agentKeyServiceTierState.status === "loading") return;
       toggleCodexServiceTierFromBadge();
     });
   }
@@ -6889,9 +6889,9 @@
       removeCodexServiceTierBadges();
       return;
     }
-    const composer = codexServiceTierFindComposerEl();
-    const placement = composer ? codexServiceTierBadgePlacement(composer) : null;
-    const existingBadges = Array.from(document.querySelectorAll(`[data-codex-service-tier-badge="true"]`));
+    const composer = agentKeyServiceTierFindComposerEl();
+    const placement = composer ? agentKeyServiceTierBadgePlacement(composer) : null;
+    const existingBadges = Array.from(document.querySelectorAll(`[data-agentkey-service-tier-badge="true"]`));
     if (!composer || !placement?.parent) {
       existingBadges.forEach((badge) => badge.remove());
       return;
@@ -6900,12 +6900,12 @@
     existingBadges.forEach((node) => {
       if (node !== badge) node.remove();
     });
-    if (!badge || badge.dataset.codexServiceTierBadgeVersion !== codexServiceTierBadgeVersion) {
+    if (!badge || badge.dataset.agentKeyServiceTierBadgeVersion !== agentKeyServiceTierBadgeVersion) {
       badge?.remove();
       badge = document.createElement("span");
-      badge.className = codexServiceTierBadgeClass;
-      badge.dataset.codexServiceTierBadge = "true";
-      badge.dataset.codexServiceTierBadgeVersion = codexServiceTierBadgeVersion;
+      badge.className = agentKeyServiceTierBadgeClass;
+      badge.dataset.agentKeyServiceTierBadge = "true";
+      badge.dataset.agentKeyServiceTierBadgeVersion = agentKeyServiceTierBadgeVersion;
     }
     wireCodexServiceTierBadge(badge);
     const before = placement.before?.parentElement === placement.parent ? placement.before : null;
@@ -6916,7 +6916,7 @@
   }
 
   function removeCodexServiceTierBadges() {
-    document.querySelectorAll(`[data-codex-service-tier-badge="true"]`).forEach((badge) => badge.remove());
+    document.querySelectorAll(`[data-agentkey-service-tier-badge="true"]`).forEach((badge) => badge.remove());
   }
 
   function conversationViewRememberOriginals(el) {
@@ -7748,7 +7748,7 @@
   }
 
   function isExtensionUiNode(node) {
-    return !!node?.closest?.(`.agentkey-delete-toast, .agentkey-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${codexServiceTierBadgeClass}, .agentkey-zed-remote-button, .agentkey-zed-remote-toast, #agentkey-menu`);
+    return !!node?.closest?.(`.agentkey-delete-toast, .agentkey-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${agentKeyServiceTierBadgeClass}, .agentkey-zed-remote-button, .agentkey-zed-remote-toast, #agentkey-menu`);
   }
 
   function scanRelevantSelector() {
