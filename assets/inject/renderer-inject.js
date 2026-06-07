@@ -19,9 +19,9 @@
   const conversationViewMaxAllowedWidth = 4000;
   const conversationViewDefaultWidth = 900;
   const conversationViewLegacyWidthKey = "agentKey.threadCenter.maxWidth";
-  const zedRemoteButtonClass = "codex-zed-remote-button";
-  const zedRemoteOpenInMenuItemClass = "codex-zed-open-in-menu-item";
-  const zedRemoteToastClass = "codex-zed-remote-toast";
+  const zedRemoteButtonClass = "agentkey-zed-remote-button";
+  const zedRemoteOpenInMenuItemClass = "agentkey-zed-open-in-menu-item";
+  const zedRemoteToastClass = "agentkey-zed-remote-toast";
   const upstreamWorktreeDialogClass = "codex-upstream-worktree-dialog";
   const upstreamBranchOptionAttribute = "data-codex-upstream-branch-option";
   const upstreamBranchSelectionKey = "codexUpstreamBranchSelection";
@@ -254,7 +254,7 @@
       .${zedRemoteOpenInMenuItemClass} {
         cursor: pointer;
       }
-      .codex-zed-open-in-menu-icon {
+      .agentkey-zed-open-in-menu-icon {
         width: 18px;
         height: 18px;
         display: inline-flex;
@@ -7541,8 +7541,8 @@
 
   function attachZedRemoteButton(candidate) {
     const anchor = candidate.node;
-    if (anchor.dataset.codexZedRemoteVersion === zedRemoteOpenVersion) return;
-    anchor.dataset.codexZedRemoteVersion = zedRemoteOpenVersion;
+    if (anchor.dataset.agentKeyZedRemoteVersion === zedRemoteOpenVersion) return;
+    anchor.dataset.agentKeyZedRemoteVersion = zedRemoteOpenVersion;
     const button = document.createElement("button");
     button.type = "button";
     button.className = zedRemoteButtonClass;
@@ -7556,8 +7556,8 @@
   }
 
   function removeZedRemoteButtons() {
-    document.querySelectorAll(`[data-codex-zed-remote-version]`).forEach((node) => {
-      delete node.dataset.codexZedRemoteVersion;
+    document.querySelectorAll(`[data-agentkey-zed-remote-version]`).forEach((node) => {
+      delete node.dataset.agentKeyZedRemoteVersion;
     });
     document.querySelectorAll(`.${zedRemoteButtonClass}`).forEach((node) => node.remove());
   }
@@ -7572,7 +7572,7 @@
     item.innerHTML = `
       <div class="flex w-full items-center gap-1.5">
         <span class="inline-flex size-[18px] items-center justify-center leading-none shrink-0 opacity-75 group-focus:opacity-100 group-hover:opacity-100">
-          <img alt="" class="codex-zed-open-in-menu-icon icon-sm" src="apps/zed.png">
+          <img alt="" class="agentkey-zed-open-in-menu-icon icon-sm" src="apps/zed.png">
         </span>
         <span class="flex-1 min-w-0 truncate">Zed</span>
       </div>
@@ -7584,9 +7584,9 @@
   function zedRemoteOpenInMenuActivationIsDuplicate(target) {
     if (!(target instanceof HTMLElement)) return false;
     const now = Date.now();
-    const activatedAt = Number(target.dataset.codexZedOpenInMenuActivatedAt || 0);
+    const activatedAt = Number(target.dataset.agentKeyZedOpenInMenuActivatedAt || 0);
     if (activatedAt && now - activatedAt < zedRemoteOpenInMenuActivationWindowMs) return true;
-    target.dataset.codexZedOpenInMenuActivatedAt = String(now);
+    target.dataset.agentKeyZedOpenInMenuActivatedAt = String(now);
     return false;
   }
 
@@ -7608,10 +7608,10 @@
   }
 
   function bindZedRemoteOpenInMenuItem(item, source) {
-    item.setAttribute("data-codex-zed-open-in-menu", source);
-    if (item.dataset.codexZedOpenInMenuBound === zedRemoteOpenInMenuVersion) return;
-    item.dataset.codexZedOpenInMenuBound = zedRemoteOpenInMenuVersion;
-    item.dataset.codexZedOpenInMenuVersion = zedRemoteOpenInMenuVersion;
+    item.setAttribute("data-agentkey-zed-open-in-menu", source);
+    if (item.dataset.agentKeyZedOpenInMenuBound === zedRemoteOpenInMenuVersion) return;
+    item.dataset.agentKeyZedOpenInMenuBound = zedRemoteOpenInMenuVersion;
+    item.dataset.agentKeyZedOpenInMenuVersion = zedRemoteOpenInMenuVersion;
     item.addEventListener("pointerup", activateZedRemoteOpenInMenuItem, true);
     item.addEventListener("click", activateZedRemoteOpenInMenuItem, true);
     item.addEventListener("keydown", activateZedRemoteOpenInMenuItem, true);
@@ -7619,7 +7619,7 @@
 
   function removeZedRemoteOpenInMenuItems(scope = document) {
     const root = scope?.querySelectorAll ? scope : document;
-    root.querySelectorAll(`.${zedRemoteOpenInMenuItemClass}, [data-codex-zed-open-in-menu="injected"]`).forEach((node) => node.remove());
+    root.querySelectorAll(`.${zedRemoteOpenInMenuItemClass}, [data-agentkey-zed-open-in-menu="injected"]`).forEach((node) => node.remove());
   }
 
   function zedRemoteOpenInMenuScopes(scope = document) {
@@ -7673,9 +7673,9 @@
   }
 
   function runScheduledZedRemoteMenuRefresh() {
-    window.__codexZedRemoteMenuRefreshPending = false;
-    clearTimeout(window.__codexZedRemoteMenuRefreshTimer);
-    window.__codexZedRemoteMenuRefreshTimer = null;
+    window.__agentKeyZedRemoteMenuRefreshPending = false;
+    clearTimeout(window.__agentKeyZedRemoteMenuRefreshTimer);
+    window.__agentKeyZedRemoteMenuRefreshTimer = null;
     refreshZedRemoteOpenControls().catch(() => {
       removeZedRemoteOpenInMenuItems();
     });
@@ -7697,9 +7697,9 @@
 
   function scheduleZedRemoteMenuRefresh(mutations) {
     if (!shouldRefreshZedRemoteMenus(mutations)) return;
-    if (window.__codexZedRemoteMenuRefreshPending) return;
-    window.__codexZedRemoteMenuRefreshPending = true;
-    window.__codexZedRemoteMenuRefreshTimer = setTimeout(runScheduledZedRemoteMenuRefresh, 50);
+    if (window.__agentKeyZedRemoteMenuRefreshPending) return;
+    window.__agentKeyZedRemoteMenuRefreshPending = true;
+    window.__agentKeyZedRemoteMenuRefreshTimer = setTimeout(runScheduledZedRemoteMenuRefresh, 50);
   }
 
   function scanDeferred() {
@@ -7748,7 +7748,7 @@
   }
 
   function isExtensionUiNode(node) {
-    return !!node?.closest?.(`.agentkey-delete-toast, .agentkey-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${codexServiceTierBadgeClass}, .codex-zed-remote-button, .codex-zed-remote-toast, #agentkey-menu`);
+    return !!node?.closest?.(`.agentkey-delete-toast, .agentkey-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${codexServiceTierBadgeClass}, .agentkey-zed-remote-button, .agentkey-zed-remote-toast, #agentkey-menu`);
   }
 
   function scanRelevantSelector() {
