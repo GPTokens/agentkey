@@ -703,6 +703,8 @@ fn user_script_manager_tolerates_bad_config_fields_and_updates_atomically() {
 
 #[test]
 fn script_market_manifest_filters_invalid_entries() {
+    let demo_hash = sha256_hex(b"demo");
+    let homepage_hash = sha256_hex(b"no homepage");
     let raw = serde_json::json!({
         "version": 1,
         "updated_at": "2026-05-21T00:00:00Z",
@@ -716,12 +718,14 @@ fn script_market_manifest_filters_invalid_entries() {
                 "tags": ["ui", 42],
                 "homepage": "https://example.com/demo",
                 "script_url": "https://example.com/demo.js",
-                "sha256": ""
+                "sha256": format!("sha256:{demo_hash}")
             },
             { "id": "", "name": "Bad", "version": "1", "script_url": "https://example.com/bad.js" },
             { "id": "missing-url", "name": "Bad", "version": "1" },
+            { "id": "missing-checksum", "name": "Bad", "version": "1", "script_url": "https://example.com/no-checksum.js" },
+            { "id": "bad-checksum", "name": "Bad", "version": "1", "script_url": "https://example.com/bad-checksum.js", "sha256": "bad" },
             { "id": "http-url", "name": "Bad", "version": "1", "script_url": format!("{}{}", concat!("http", "://"), "example.com/bad.js") },
-            { "id": "http-homepage", "name": "No Homepage", "version": "1", "homepage": format!("{}{}", concat!("http", "://"), "example.com/demo"), "script_url": "https://example.com/no-homepage.js" }
+            { "id": "http-homepage", "name": "No Homepage", "version": "1", "homepage": format!("{}{}", concat!("http", "://"), "example.com/demo"), "script_url": "https://example.com/no-homepage.js", "sha256": homepage_hash }
         ]
     });
 
@@ -731,6 +735,7 @@ fn script_market_manifest_filters_invalid_entries() {
     assert_eq!(manifest.updated_at.as_deref(), Some("2026-05-21T00:00:00Z"));
     assert_eq!(manifest.scripts.len(), 2);
     assert_eq!(manifest.scripts[0].id, "demo");
+    assert_eq!(manifest.scripts[0].sha256, demo_hash);
     assert_eq!(manifest.scripts[0].tags, vec!["ui"]);
     assert_eq!(manifest.scripts[1].id, "http-homepage");
     assert_eq!(manifest.scripts[1].homepage, "");

@@ -49,4 +49,4 @@ The Codex CLI wrapper source and compiled executable must not embed provider API
 
 Market scripts must provide a valid SHA-256 checksum before installation. AgentKey verifies the downloaded bytes before writing the script file. Newly installed market scripts are disabled by default and must be enabled explicitly.
 
-Script market index URLs and script download URLs must use HTTPS. Manifest entries with non-HTTPS script URLs are ignored, and non-HTTPS homepage URLs are omitted from the UI payload.
+Script market index URLs and script download URLs must use HTTPS. Manifest entries with non-HTTPS script URLs or missing/invalid SHA-256 checksums are ignored, and non-HTTPS homepage URLs are omitted from the UI payload.

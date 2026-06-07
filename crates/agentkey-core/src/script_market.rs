@@ -133,6 +133,7 @@ fn parse_market_script(raw: Value) -> Option<MarketScript> {
     if !https_url_allowed(&script_url) {
         return None;
     }
+    let sha256 = normalize_sha256(&optional_string(&raw, "sha256"))?;
     let homepage = optional_string(&raw, "homepage");
     let homepage = if homepage.is_empty() || https_url_allowed(&homepage) {
         homepage
@@ -160,7 +161,7 @@ fn parse_market_script(raw: Value) -> Option<MarketScript> {
             .unwrap_or_default(),
         homepage,
         script_url,
-        sha256: optional_string(&raw, "sha256"),
+        sha256,
     })
 }
 
