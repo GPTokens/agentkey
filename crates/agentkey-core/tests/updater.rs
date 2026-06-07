@@ -1,7 +1,7 @@
 use agentkey_core::update::{
     Release, download_asset_to, is_newer_version, parse_version_tag, release_from_github_payload,
     release_from_latest_json_payload, safe_asset_name, select_update_asset, sha256_hex,
-    verify_release_asset_sha256,
+    update_url_allowed, verify_release_asset_sha256,
 };
 use serde_json::json;
 
@@ -119,6 +119,30 @@ fn asset_selection_prefers_current_platform_artifacts() {
     } else {
         assert!(select_update_asset(&assets).is_none());
     }
+}
+
+#[test]
+fn update_urls_must_use_https() {
+    assert!(update_url_allowed("https://example.test/pkg.zip"));
+    assert!(!update_url_allowed("http://example.test/pkg.zip"));
+    assert!(!update_url_allowed("file:///tmp/pkg.zip"));
+}
+
+#[test]
+fn asset_selection_ignores_non_https_urls() {
+    let insecure_prefix = concat!("http", "://");
+    let assets = vec![
+        (
+            "AgentKey_1.0.9_x64-setup.exe".to_string(),
+            format!("{insecure_prefix}example.test/setup.exe"),
+        ),
+        (
+            "AgentKey_1.0.9_x64.dmg".to_string(),
+            format!("{insecure_prefix}example.test/app.dmg"),
+        ),
+    ];
+
+    assert!(select_update_asset(&assets).is_none());
 }
 
 #[test]

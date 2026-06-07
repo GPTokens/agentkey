@@ -12,6 +12,7 @@ AgentKey exposes local desktop-client functionality through a loopback helper. T
 - Never allow wildcard CORS on privileged helper routes.
 - Redact API keys and bearer tokens from diagnostics.
 - Verify downloaded update assets before execution.
+- Require HTTPS for update metadata and release asset downloads.
 - Require HTTPS for script market indexes and script downloads.
 - Validate script integrity before enabling installed scripts.
 
@@ -25,9 +26,9 @@ CORS is not an authentication mechanism. It is a browser access boundary. AgentK
 
 ## Updater
 
-Updater code must verify release artifacts before execution. Acceptable verification options include detached signatures, trusted checksums, or platform-native signing where available.
+Updater code must use HTTPS for update metadata and release asset downloads. It must also verify release artifacts before execution. Acceptable verification options include detached signatures, trusted checksums, or platform-native signing where available.
 
-AgentKey currently requires a SHA-256 checksum for the selected release asset. The checksum can be supplied as `sha256`, `checksum`, or a GitHub-style `digest` value such as `sha256:<hex>`. Assets without a valid checksum are downloaded but not executed.
+AgentKey currently requires a SHA-256 checksum for the selected release asset. The checksum can be supplied as `sha256`, `checksum`, or a GitHub-style `digest` value such as `sha256:<hex>`. Assets without a valid checksum are downloaded but not executed. Assets with non-HTTPS URLs are ignored.
 
 ## Diagnostics
 

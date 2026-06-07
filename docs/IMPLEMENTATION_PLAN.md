@@ -39,6 +39,7 @@ AgentKey is being built from the local desktop bridge worktree into a desktop br
 ## Phase 5: Updater and Script Hardening
 
 - Verify update artifacts before execution through signatures or trusted hashes.
+- Require HTTPS for update metadata and release asset downloads.
 - Require HTTPS for script market indexes and script downloads.
 - Enforce script integrity checks before enabling installed scripts.
 - Disable newly installed community scripts by default unless explicitly trusted.

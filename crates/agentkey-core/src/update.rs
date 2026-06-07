@@ -165,10 +165,25 @@ pub fn select_update_asset(assets: &[(String, String)]) -> Option<ReleaseAsset> 
     select_update_asset_with_hash(&assets)
 }
 
+pub fn update_url_allowed(url: &str) -> bool {
+    match reqwest::Url::parse(url.trim()) {
+        Ok(parsed) => parsed.scheme() == "https",
+        Err(_) => false,
+    }
+}
+
+fn ensure_https_update_url(url: &str, label: &str) -> anyhow::Result<()> {
+    if update_url_allowed(url) {
+        Ok(())
+    } else {
+        anyhow::bail!("{label} URL 必须使用 HTTPS")
+    }
+}
+
 fn select_update_asset_with_hash(assets: &[(String, String, Option<String>)]) -> Option<ReleaseAsset> {
     let named = assets
         .iter()
-        .filter(|(name, url, _)| !name.trim().is_empty() && !url.trim().is_empty())
+        .filter(|(name, url, _)| !name.trim().is_empty() && update_url_allowed(url))
         .collect::<Vec<_>>();
     for (name, url, sha256) in &named {
         let lower = name.to_ascii_lowercase();
@@ -184,6 +199,7 @@ fn select_update_asset_with_hash(assets: &[(String, String, Option<String>)]) ->
 }
 
 pub async fn fetch_latest_release(latest_json_url: &str) -> anyhow::Result<Release> {
+    ensure_https_update_url(latest_json_url, "latest.json")?;
     let client =
         crate::http_client::proxied_client(&format!("AgentKey/{}", crate::version::VERSION))?;
     let payload = client
@@ -219,6 +235,7 @@ pub async fn perform_update(
         .asset_url
         .as_ref()
         .ok_or_else(|| anyhow::anyhow!("没有可下载的 Release asset"))?;
+    ensure_https_update_url(url, "Release asset")?;
     let bytes =
         crate::http_client::proxied_client(&format!("AgentKey/{}", crate::version::VERSION))?
             .get(url)
