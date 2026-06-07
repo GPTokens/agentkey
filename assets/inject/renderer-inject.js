@@ -1979,7 +1979,7 @@
               <button type="button" class="agentkey-toggle" data-agentkey-setting="pluginMarketplaceUnlock" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">强制解锁入口</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；账号兼容模式会保留插件入口。" : "恢复 1.1.9 的入口解锁方式，强制显示并启用插件入口。"}</div></div>
+              <div><div class="agentkey-row-title">强制解锁入口</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；账号兼容模式会保留插件入口。" : "使用兼容入口修复，强制显示并启用插件入口。"}</div></div>
               <button type="button" class="agentkey-toggle" data-agentkey-setting="pluginEntryUnlock" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
             <div class="agentkey-row">

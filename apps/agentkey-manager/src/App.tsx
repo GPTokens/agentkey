@@ -1083,7 +1083,7 @@ export function App() {
     if (result) {
       setRelay(result);
       await refreshRelayFiles(true);
-      if (!silent || !isSuccessStatus(result.status)) showNotice("官方混入 API Key", result.message, result.status);
+      if (!silent || !isSuccessStatus(result.status)) showNotice("账号兼容混入 API Key", result.message, result.status);
     }
     return !!result && isSuccessStatus(result.status) && result.configured;
   };
@@ -2136,8 +2136,8 @@ function EnhanceScreen({
             </div>
           ) : null}
           <div className="feature-switch-grid">
-            <FeatureToggle title="插件市场解锁" detail="API Key 模式下扩展插件市场请求，尽量显示完整插件列表；官方/混合模式通常不需要。" checked={form.desktopClientPluginMarketplaceUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginMarketplaceUnlock", value)} />
-            <FeatureToggle title="强制解锁入口" detail="恢复 1.1.9 的入口解锁方式，强制显示并启用插件入口。" checked={form.desktopClientPluginEntryUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginEntryUnlock", value)} />
+            <FeatureToggle title="插件市场解锁" detail="API Key 模式下扩展插件市场请求，尽量显示完整插件列表；账号兼容/混合模式通常不需要。" checked={form.desktopClientPluginMarketplaceUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginMarketplaceUnlock", value)} />
+            <FeatureToggle title="强制解锁入口" detail="使用兼容入口修复，强制显示并启用插件入口。" checked={form.desktopClientPluginEntryUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginEntryUnlock", value)} />
             <FeatureToggle title="特殊插件强制安装" detail="解除 App unavailable / 应用不可用导致的前端安装禁用。" checked={form.desktopClientForcePluginInstall} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientForcePluginInstall", value)} />
             <FeatureToggle title="模型白名单解锁" detail="从环境变量和 config.toml 的 /v1/models 拉取模型并补进模型列表。" checked={form.desktopClientModelWhitelistUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientModelWhitelistUnlock", value)} />
             <FeatureToggle title="Fast 按钮" detail="显示服务模式切换按钮，可控制 Standard / Fast / priority。" checked={form.desktopClientServiceTierControls} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientServiceTierControls", value)} />
@@ -2153,7 +2153,7 @@ function EnhanceScreen({
           </div>
           <div className="hint-line">
             <Info className="h-4 w-4" />
-            <span>如果使用官方模式或官方混入 API 模式，通常不需要开启插件市场解锁、强制解锁入口和特殊插件强制安装。</span>
+            <span>如果使用账号兼容或账号兼容混入 API 模式，通常不需要开启插件市场解锁、强制解锁入口和特殊插件强制安装。</span>
           </div>
           <Toolbar>
             <Button onClick={() => void actions.saveSettings()}>保存增强设置</Button>
@@ -2310,7 +2310,7 @@ function SessionsScreen({
             />
             <span>
               <strong>启动前自动修复历史会话</strong>
-              <small>开启后，通过 AgentKey 启动 Codex 前自动整理一次旧对话的归属标记。</small>
+              <small>开启后，通过 AgentKey 启动桌面客户端前自动整理一次旧对话的归属标记。</small>
             </span>
           </label>
           <Toolbar>
@@ -5086,7 +5086,7 @@ function relayProfileSwitchValidation(profile: RelayProfile): string | null {
     return `供应商「${profile.name || profile.id}」缺少独立 config.toml，已停止切换，避免继续显示上一套配置文件。请先在该供应商详情里保存 config.toml。`;
   }
   if (profile.relayMode !== "official" || !authJsonHasOpenAiApiKey(profile.authContents)) return null;
-  return "官方混合 API 不应在 auth.json 中保存 OPENAI_API_KEY。请清理此供应商的 auth.json 后再切换。";
+  return "账号兼容混合 API 不应在 auth.json 中保存 OPENAI_API_KEY。请清理此供应商的 auth.json 后再切换。";
 }
 
 function authJsonHasOpenAiApiKey(contents: string): boolean {

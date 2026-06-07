@@ -113,7 +113,7 @@ fn injection_script_menu_exposes_three_independent_plugin_switches() {
     assert!(script.contains("data-agentkey-setting=\"pluginEntryUnlock\""));
     assert!(script.contains("特殊插件强制安装"));
     assert!(script.contains("data-agentkey-setting=\"forcePluginInstall\""));
-    assert!(script.contains("恢复 1.1.9 的入口解锁方式"));
+    assert!(script.contains("使用兼容入口修复"));
 }
 
 #[test]
@@ -575,7 +575,7 @@ fn manager_ui_exposes_pure_api_relay_mode_button() {
     let commands =
         std::fs::read_to_string(repo.join("apps/agentkey-manager/src-tauri/src/lib.rs")).unwrap();
 
-    assert!(source.contains("官方混入 API Key"));
+    assert!(source.contains("账号兼容混入 API Key"));
     assert!(source.contains("纯 API"));
     assert!(source.contains("apply_pure_api_injection"));
     assert!(commands.contains("commands::apply_pure_api_injection"));
