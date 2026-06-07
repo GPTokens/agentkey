@@ -253,7 +253,11 @@ fn provider_sync_backup_metadata_contains_reference_fields_and_managed_marker() 
             .unwrap();
     assert_eq!(metadata["version"], 1);
     assert_eq!(metadata["namespace"], "provider-sync");
-    assert_eq!(metadata["codexHome"], home.to_string_lossy().to_string());
+    assert_eq!(
+        metadata["desktopClientHome"],
+        home.to_string_lossy().to_string()
+    );
+    assert!(metadata.get("codexHome").is_none());
     assert_eq!(metadata["targetProvider"], "apigather");
     assert_eq!(metadata["changedSessionFiles"], 1);
     assert_eq!(metadata["managedBy"], "AgentKey provider sync");

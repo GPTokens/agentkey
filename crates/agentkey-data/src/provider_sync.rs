@@ -687,7 +687,7 @@ fn create_backup(
         serde_json::to_string_pretty(&json!({
             "version": 1,
             "namespace": "provider-sync",
-            "codexHome": home.to_string_lossy(),
+            "desktopClientHome": home.to_string_lossy(),
             "targetProvider": target_provider,
             "createdAt": chrono::Utc::now().to_rfc3339(),
             "dbFiles": db_files,

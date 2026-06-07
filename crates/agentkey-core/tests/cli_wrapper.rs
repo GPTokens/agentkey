@@ -9,7 +9,7 @@ use agentkey_core::cli_wrapper::{
 use agentkey_core::settings::BackendSettings;
 
 #[test]
-fn wrapper_source_embeds_absolute_real_codex_path() {
+fn wrapper_source_embeds_absolute_desktop_client_path() {
     let settings = BackendSettings {
         cli_wrapper_enabled: true,
         cli_wrapper_base_url: "https://proxy.example/v1".to_string(),
@@ -25,8 +25,12 @@ fn wrapper_source_embeds_absolute_real_codex_path() {
 
     assert!(source.contains(r#"class AgentKeyCliBridge"#));
     assert!(!source.contains(r#"class CodexWrapper"#));
-    assert!(source.contains(r#"string realCodex = @"C:\AgentKey\Runtime\codex.exe";"#));
-    assert!(!source.contains(r#"string realCodex = @"codex";"#));
+    assert!(source.contains(
+        r#"string desktopClientCli = @"C:\AgentKey\Runtime\codex.exe";"#
+    ));
+    assert!(!source.contains("string realCodex"));
+    assert!(!source.contains("string codexHome"));
+    assert!(!source.contains(r#"string desktopClientCli = @"codex";"#));
     assert!(source.contains("ReadConfig(configPath)"));
     assert!(source.contains("agentkey-cli-wrapper.env"));
     assert!(source.contains(r#"startInfo.EnvironmentVariables["OPENAI_BASE_URL"]"#));

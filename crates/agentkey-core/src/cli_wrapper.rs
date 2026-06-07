@@ -291,23 +291,23 @@ class AgentKeyCliBridge
 {{
     static int Main(string[] args)
     {{
-        string realCodex = @{real_codex};
-        string codexHome = @{codex_home};
+        string desktopClientCli = @{real_codex};
+        string desktopClientHome = @{codex_home};
         string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agentkey-cli-wrapper.env");
         WrapperConfig config = ReadConfig(configPath);
         string apiKeyEnv = String.IsNullOrWhiteSpace(config.ApiKeyEnv) ? "CUSTOM_OPENAI_API_KEY" : config.ApiKeyEnv.Trim();
-        Directory.CreateDirectory(codexHome);
-        string logPath = Path.Combine(codexHome, "agentkey-cli-wrapper.log");
+        Directory.CreateDirectory(desktopClientHome);
+        string logPath = Path.Combine(desktopClientHome, "agentkey-cli-wrapper.log");
         AppendLog(logPath, "agentkey-cli-wrapper start args=" + RedactArguments(args));
-        AppendLog(logPath, "target_cli=" + realCodex);
-        AppendLog(logPath, "CODEX_HOME=" + codexHome);
+        AppendLog(logPath, "target_cli=" + desktopClientCli);
+        AppendLog(logPath, "CODEX_HOME=" + desktopClientHome);
         AppendLog(logPath, "api_key_env=" + apiKeyEnv + " api_key_present=" + (!String.IsNullOrWhiteSpace(config.ApiKey)).ToString().ToLowerInvariant());
-        var startInfo = new ProcessStartInfo(realCodex);
+        var startInfo = new ProcessStartInfo(desktopClientCli);
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = false;
         startInfo.RedirectStandardOutput = false;
         startInfo.RedirectStandardError = false;
-        startInfo.EnvironmentVariables["CODEX_HOME"] = codexHome;
+        startInfo.EnvironmentVariables["CODEX_HOME"] = desktopClientHome;
         if (!String.IsNullOrWhiteSpace(config.BaseUrl)) startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = config.BaseUrl.Trim();
         if (!String.IsNullOrWhiteSpace(config.ApiKey)) startInfo.EnvironmentVariables[apiKeyEnv] = config.ApiKey.Trim();
         foreach (string arg in args) startInfo.Arguments += QuoteArgument(arg) + " ";
