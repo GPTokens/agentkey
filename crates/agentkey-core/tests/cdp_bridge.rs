@@ -28,17 +28,17 @@ fn target(id: &str, kind: &str, title: &str, url: &str, websocket_url: Option<&s
 fn bridge_script_defines_expected_globals_and_binding() {
     let script = bridge::build_bridge_script(BRIDGE_BINDING_NAME);
 
-    assert!(script.contains("window.__codexSessionDeleteBridge"));
-    assert!(script.contains("window.__codexSessionDeleteResolve"));
-    assert!(script.contains("window.__codexSessionDeleteReject"));
-    assert!(script.contains("codexSessionDeleteV2"));
+    assert!(script.contains("window.__agentKeyBridge"));
+    assert!(script.contains("window.__agentKeyBridgeResolve"));
+    assert!(script.contains("window.__agentKeyBridgeReject"));
+    assert!(script.contains("agentKeyBridgeV1"));
 }
 
 #[test]
 fn injection_script_prefixes_helper_url_and_session_metadata() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("window.__CODEX_SESSION_DELETE_HELPER__"));
+    assert!(script.contains("window.__AGENTKEY_HELPER_BASE__"));
     assert!(script.contains("window.__AGENTKEY_HELPER_TOKEN__"));
     assert!(script.contains("test-token"));
     assert!(script.contains("http://127.0.0.1:57321"));
@@ -577,7 +577,7 @@ fn runtime_evaluate_params_can_await_promise_for_bridge_health_checks() {
 fn bridge_health_check_script_uses_real_backend_round_trip() {
     let script = bridge::bridge_health_check_script();
 
-    assert!(script.contains("__codexSessionDeleteBridge"));
+    assert!(script.contains("__agentKeyBridge"));
     assert!(script.contains("/backend/status"));
     assert!(script.contains("Promise.race"));
     assert!(script.contains("setTimeout"));
@@ -592,11 +592,11 @@ fn bridge_result_expressions_json_escape_inputs() {
 
     assert_eq!(
         resolve,
-        r#"window.__codexSessionDeleteResolve("request\"1", {"status":"ok"})"#
+        r#"window.__agentKeyBridgeResolve("request\"1", {"status":"ok"})"#
     );
     assert_eq!(
         reject,
-        r#"window.__codexSessionDeleteReject("request\"1", "bad \"value\"")"#
+        r#"window.__agentKeyBridgeReject("request\"1", "bad \"value\"")"#
     );
 }
 
@@ -761,7 +761,7 @@ async fn install_bridge_routes_binding_while_waiting_for_command_response() {
             response["params"]["expression"]
                 .as_str()
                 .expect("expression should be string")
-                .contains("__codexSessionDeleteResolve")
+                .contains("__agentKeyBridgeResolve")
         );
         send_json(&mut socket, json!({ "id": response["id"], "result": {} })).await;
         close_socket(&mut socket).await;
@@ -1022,7 +1022,7 @@ async fn install_bridge_rejects_bad_payload_with_id_and_continues_after_unparsea
             reject["params"]["expression"]
                 .as_str()
                 .expect("expression should be string")
-                .contains("__codexSessionDeleteReject")
+                .contains("__agentKeyBridgeReject")
         );
         assert!(
             reject["params"]["expression"]
@@ -1037,7 +1037,7 @@ async fn install_bridge_rejects_bad_payload_with_id_and_continues_after_unparsea
             resolve["params"]["expression"]
                 .as_str()
                 .expect("expression should be string")
-                .contains("__codexSessionDeleteResolve")
+                .contains("__agentKeyBridgeResolve")
         );
         assert!(
             resolve["params"]["expression"]
@@ -1246,7 +1246,7 @@ fn assert_expression_contains_request(command: &serde_json::Value, request_id: &
         .as_str()
         .expect("expression should be string");
     assert!(
-        expression.contains("__codexSessionDeleteResolve"),
+        expression.contains("__agentKeyBridgeResolve"),
         "{expression}"
     );
     assert!(expression.contains(request_id), "{expression}");

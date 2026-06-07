@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
 
-pub const BRIDGE_BINDING_NAME: &str = "codexSessionDeleteV2";
+pub const BRIDGE_BINDING_NAME: &str = "agentKeyBridgeV1";
 const CDP_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const CDP_COMMAND_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -28,23 +28,23 @@ pub fn build_bridge_script(binding_name: &str) -> String {
     format!(
         r#"
 (() => {{
-  window.__codexSessionDeleteCallbacks = new Map();
-  window.__codexSessionDeleteSeq = 0;
-  window.__codexSessionDeleteResolve = (id, result) => {{
-    const callback = window.__codexSessionDeleteCallbacks.get(id);
+  window.__agentKeyBridgeCallbacks = new Map();
+  window.__agentKeyBridgeSeq = 0;
+  window.__agentKeyBridgeResolve = (id, result) => {{
+    const callback = window.__agentKeyBridgeCallbacks.get(id);
     if (!callback) return;
-    window.__codexSessionDeleteCallbacks.delete(id);
+    window.__agentKeyBridgeCallbacks.delete(id);
     callback.resolve(result);
   }};
-  window.__codexSessionDeleteReject = (id, message) => {{
-    const callback = window.__codexSessionDeleteCallbacks.get(id);
+  window.__agentKeyBridgeReject = (id, message) => {{
+    const callback = window.__agentKeyBridgeCallbacks.get(id);
     if (!callback) return;
-    window.__codexSessionDeleteCallbacks.delete(id);
+    window.__agentKeyBridgeCallbacks.delete(id);
     callback.resolve({{ status: "failed", message }});
   }};
-  window.__codexSessionDeleteBridge = (path, payload) => new Promise((resolve) => {{
-    const id = String(++window.__codexSessionDeleteSeq);
-    window.__codexSessionDeleteCallbacks.set(id, {{ resolve }});
+  window.__agentKeyBridge = (path, payload) => new Promise((resolve) => {{
+    const id = String(++window.__agentKeyBridgeSeq);
+    window.__agentKeyBridgeCallbacks.set(id, {{ resolve }});
     window.{binding_name}(JSON.stringify({{ id, path, payload }}));
   }});
 }})();
@@ -55,7 +55,7 @@ pub fn build_bridge_script(binding_name: &str) -> String {
 pub fn bridge_health_check_script() -> &'static str {
     r#"
 (() => {
-  const bridge = window.__codexSessionDeleteBridge;
+  const bridge = window.__agentKeyBridge;
   if (typeof bridge !== "function") return false;
   try {
     return Promise.race([
@@ -186,7 +186,7 @@ pub fn runtime_evaluate_params_with_await_promise(script: &str, await_promise: b
 
 pub fn resolve_bridge_expression(request_id: &str, result: &Value) -> anyhow::Result<String> {
     Ok(format!(
-        "window.__codexSessionDeleteResolve({}, {})",
+        "window.__agentKeyBridgeResolve({}, {})",
         serde_json::to_string(request_id)?,
         serde_json::to_string(result)?,
     ))
@@ -194,7 +194,7 @@ pub fn resolve_bridge_expression(request_id: &str, result: &Value) -> anyhow::Re
 
 pub fn reject_bridge_expression(request_id: &str, message: &str) -> anyhow::Result<String> {
     Ok(format!(
-        "window.__codexSessionDeleteReject({}, {})",
+        "window.__agentKeyBridgeReject({}, {})",
         serde_json::to_string(request_id)?,
         serde_json::to_string(message)?,
     ))

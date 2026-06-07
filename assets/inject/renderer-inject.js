@@ -1,5 +1,5 @@
 (() => {
-  const helperBase = window.__CODEX_SESSION_DELETE_HELPER__ || "http://127.0.0.1:57321";
+  const helperBase = window.__AGENTKEY_HELPER_BASE__ || "http://127.0.0.1:57321";
   const helperToken = window.__AGENTKEY_HELPER_TOKEN__ || "";
   const buttonClass = "codex-delete-button";
   const exportButtonClass = "codex-export-button";
@@ -2918,7 +2918,7 @@
       event,
       detail: detail || {},
       helperBase,
-      hasBridge: !!window.__codexSessionDeleteBridge,
+      hasBridge: !!window.__agentKeyBridge,
       location: window.location?.href || "",
       userAgent: navigator.userAgent || "",
       timestamp: new Date().toISOString(),
@@ -2927,8 +2927,8 @@
 
   function sendAgentKeyDiagnostic(event, detail) {
     const payload = agentKeyDiagnosticPayload(event, detail);
-    if (window.__codexSessionDeleteBridge) {
-      window.__codexSessionDeleteBridge("/diagnostics/log", payload).catch(() => {});
+    if (window.__agentKeyBridge) {
+      window.__agentKeyBridge("/diagnostics/log", payload).catch(() => {});
     }
     const body = JSON.stringify(payload);
     fetch(`${helperBase}/diagnostics/log`, {
@@ -3564,7 +3564,7 @@
   }
 
   async function postJson(path, payload) {
-    if (!window.__codexSessionDeleteBridge) {
+    if (!window.__agentKeyBridge) {
       if (path === "/backend/status" || path === "/backend/repair") {
         try {
           const response = await fetch(`${helperBase}${path}`, {
@@ -3582,7 +3582,7 @@
     }
     function bridgeWithBackendTimeout(path, payload) {
       return Promise.race([
-        window.__codexSessionDeleteBridge(path, payload),
+        window.__agentKeyBridge(path, payload),
         new Promise((resolve) => setTimeout(() => resolve({ status: "failed", message: "后端检查超时", timeout: true }), 2000)),
       ]);
     }
@@ -3619,7 +3619,7 @@
         });
         return fallback;
       }
-      return await window.__codexSessionDeleteBridge(path, payload);
+      return await window.__agentKeyBridge(path, payload);
     } catch (error) {
       sendAgentKeyDiagnostic("bridge_call_failed", {
         path,
