@@ -357,7 +357,8 @@ fn injection_script_unlocks_custom_model_catalog() {
 
     assert!(script.contains("/desktop-client-model-catalog"));
     assert!(!script.contains("/codex-model-catalog"));
-    assert!(script.contains("codexModelCatalog"));
+    assert!(script.contains("desktopClientModelCatalog"));
+    assert!(!script.contains("codexModelCatalog"));
     assert!(script.contains("patchModelArray"));
     assert!(script.contains("patchStatsigModelDynamicConfig"));
     assert!(script.contains("patchModelJsonResponse"));

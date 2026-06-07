@@ -4775,21 +4775,21 @@ function buildOfficialRelayAuthJson(contents: string): string {
 function deriveRelayProfileFromFiles(profile: RelayProfile): RelayProfile {
   const configContents = profile.configContents || "";
   const authContents = profile.relayMode === "official" ? buildOfficialRelayAuthJson(profile.authContents || "") : profile.authContents || "";
-  const configBaseUrl = codexBaseUrlFromConfig(configContents);
+  const configBaseUrl = desktopClientBaseUrlFromConfig(configContents);
   const chatUpstreamBaseUrl = rootTomlStringValue(configContents, CHAT_UPSTREAM_BASE_URL_KEY);
   const isProxyConfig = configBaseUrl === PROTOCOL_PROXY_BASE_URL;
   const upstreamBaseUrl = profile.upstreamBaseUrl || chatUpstreamBaseUrl || (configBaseUrl && !isProxyConfig ? configBaseUrl : profile.baseUrl || "");
-  const configApiKey = codexExperimentalBearerTokenFromConfig(configContents);
+  const configApiKey = desktopClientExperimentalBearerTokenFromConfig(configContents);
   return {
     ...profile,
-    model: codexModelFromConfig(configContents),
+    model: desktopClientModelFromConfig(configContents),
     baseUrl: upstreamBaseUrl,
     upstreamBaseUrl,
     apiKey: profile.relayMode === "official"
       ? configApiKey || profile.apiKey || ""
-      : codexApiKeyFromAuth(authContents) || configApiKey || "",
-    contextWindow: codexTopLevelIntFromConfig(configContents, "model_context_window"),
-    autoCompactLimit: codexTopLevelIntFromConfig(configContents, "model_auto_compact_token_limit"),
+      : desktopClientApiKeyFromAuth(authContents) || configApiKey || "",
+    contextWindow: desktopClientTopLevelIntFromConfig(configContents, "model_context_window"),
+    autoCompactLimit: desktopClientTopLevelIntFromConfig(configContents, "model_auto_compact_token_limit"),
     configContents,
     authContents,
   };
@@ -4852,7 +4852,7 @@ function applyRelayProfilePatchToFiles(
   return deriveRelayProfileFromFiles(next);
 }
 
-function codexModelFromConfig(contents: string): string {
+function desktopClientModelFromConfig(contents: string): string {
   for (const line of contents.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
@@ -4863,15 +4863,15 @@ function codexModelFromConfig(contents: string): string {
   return "";
 }
 
-function codexBaseUrlFromConfig(contents: string): string {
-  return codexProviderStringFromConfig(contents, "base_url");
+function desktopClientBaseUrlFromConfig(contents: string): string {
+  return desktopClientProviderStringFromConfig(contents, "base_url");
 }
 
-function codexExperimentalBearerTokenFromConfig(contents: string): string {
-  return codexProviderStringFromConfig(contents, "experimental_bearer_token");
+function desktopClientExperimentalBearerTokenFromConfig(contents: string): string {
+  return desktopClientProviderStringFromConfig(contents, "experimental_bearer_token");
 }
 
-function codexProviderStringFromConfig(contents: string, key: string): string {
+function desktopClientProviderStringFromConfig(contents: string, key: string): string {
   const provider = rootTomlStringValue(contents, "model_provider");
   const targetSection = provider ? `model_providers.${provider}` : "";
   const lines = contents.split(/\r?\n/);
@@ -4893,7 +4893,7 @@ function codexProviderStringFromConfig(contents: string, key: string): string {
   return matches.length === 1 ? matches[0] : "";
 }
 
-function codexApiKeyFromAuth(contents: string): string {
+function desktopClientApiKeyFromAuth(contents: string): string {
   try {
     const parsed = JSON.parse(contents || "{}") as { OPENAI_API_KEY?: unknown };
     return typeof parsed.OPENAI_API_KEY === "string" ? parsed.OPENAI_API_KEY : "";
@@ -4902,7 +4902,7 @@ function codexApiKeyFromAuth(contents: string): string {
   }
 }
 
-function codexTopLevelIntFromConfig(contents: string, key: string): string {
+function desktopClientTopLevelIntFromConfig(contents: string, key: string): string {
   const topLevel = splitTomlRootAndTables(contents).root;
   const pattern = new RegExp(`^\\s*${key}\\s*=\\s*(\\d+)\\s*(?:#.*)?$`);
   for (const line of topLevel.split(/\r?\n/)) {

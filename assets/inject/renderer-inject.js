@@ -3710,9 +3710,9 @@
     return Array.from(new Set(values.filter((value) => typeof value === "string" && value.trim().length > 0)));
   }
 
-  let codexModelCatalog = { status: "loading", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
-  let codexModelCatalogLoadedAt = 0;
-  let codexModelCatalogPromise = null;
+  let desktopClientModelCatalog = { status: "loading", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
+  let desktopClientModelCatalogLoadedAt = 0;
+  let desktopClientModelCatalogPromise = null;
   const agentKeyModelListRequestIds = new Set();
 
   function agentKeyModelUnlockEnabled() {
@@ -3721,32 +3721,32 @@
 
   function agentKeyModelNames() {
     return uniqueValues([
-      codexModelCatalog.default_model,
-      codexModelCatalog.model,
-      ...(Array.isArray(codexModelCatalog.models) ? codexModelCatalog.models : []),
+      desktopClientModelCatalog.default_model,
+      desktopClientModelCatalog.model,
+      ...(Array.isArray(desktopClientModelCatalog.models) ? desktopClientModelCatalog.models : []),
     ]);
   }
 
-  async function loadCodexModelCatalog(force = false) {
-    if (!force && codexModelCatalogPromise) return codexModelCatalogPromise;
-    if (!force && codexModelCatalogLoadedAt && Date.now() - codexModelCatalogLoadedAt < 10000) return codexModelCatalog;
-    codexModelCatalogPromise = postJson("/desktop-client-model-catalog", {})
+  async function loadDesktopClientModelCatalog(force = false) {
+    if (!force && desktopClientModelCatalogPromise) return desktopClientModelCatalogPromise;
+    if (!force && desktopClientModelCatalogLoadedAt && Date.now() - desktopClientModelCatalogLoadedAt < 10000) return desktopClientModelCatalog;
+    desktopClientModelCatalogPromise = postJson("/desktop-client-model-catalog", {})
       .then((result) => {
-        codexModelCatalog = result && typeof result === "object" ? result : { status: "failed", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
-        codexModelCatalogLoadedAt = Date.now();
+        desktopClientModelCatalog = result && typeof result === "object" ? result : { status: "failed", model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
+        desktopClientModelCatalogLoadedAt = Date.now();
         renderAgentKeyMenu();
         patchCodexModelWhitelist();
-        return codexModelCatalog;
+        return desktopClientModelCatalog;
       })
       .catch((error) => {
-        codexModelCatalog = { status: "failed", message: String(error?.message || error), model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
-        codexModelCatalogLoadedAt = Date.now();
-        return codexModelCatalog;
+        desktopClientModelCatalog = { status: "failed", message: String(error?.message || error), model: "", default_model: "", model_provider: "", provider_name: "", models: [], sources: [], responses_api: { status: "unknown", message: "" } };
+        desktopClientModelCatalogLoadedAt = Date.now();
+        return desktopClientModelCatalog;
       })
       .finally(() => {
-        codexModelCatalogPromise = null;
+        desktopClientModelCatalogPromise = null;
       });
-    return codexModelCatalogPromise;
+    return desktopClientModelCatalogPromise;
   }
 
   function modelReasoningEfforts() {
@@ -3760,9 +3760,9 @@
       slug: modelName,
       name: modelName,
       displayName: modelName,
-      description: codexModelCatalog.provider_name || codexModelCatalog.model_provider || "Custom model",
+      description: desktopClientModelCatalog.provider_name || desktopClientModelCatalog.model_provider || "Custom model",
       hidden: false,
-      isDefault: (codexModelCatalog.default_model || codexModelCatalog.model) === modelName,
+      isDefault: (desktopClientModelCatalog.default_model || desktopClientModelCatalog.model) === modelName,
       defaultReasoningEffort: "medium",
       supportedReasoningEfforts: modelReasoningEfforts(),
     };
@@ -3880,7 +3880,7 @@
 
   async function patchModelJsonResponse(payload) {
     if (!agentKeyModelUnlockEnabled()) return payload;
-    if (!agentKeyModelNames().length) await loadCodexModelCatalog();
+    if (!agentKeyModelNames().length) await loadDesktopClientModelCatalog();
     if (!payload || typeof payload !== "object") return payload;
     try {
       patchModelContainer(payload);
@@ -4062,7 +4062,7 @@
     client.sendRequest = async function agentKeyModelPatchedSendRequest(method, params, options) {
       const result = await originalSendRequest(method, params, options);
       if (!agentKeyModelUnlockEnabled()) return result;
-      if (!agentKeyModelNames().length) await loadCodexModelCatalog();
+      if (!agentKeyModelNames().length) await loadDesktopClientModelCatalog();
       return patchAppServerModelResult(appServerModelRequestMethod(String(method || ""), params), result);
     };
     client.__agentKeyModelRequestPatch = agentKeyAppServerModelRequestPatchVersion;
@@ -4113,7 +4113,7 @@
     patchAppServerModelMessages();
     installAppServerModelRequestPatch();
     if (!agentKeyModelNames().length) {
-      loadCodexModelCatalog();
+      loadDesktopClientModelCatalog();
       return;
     }
     patchStatsigModelWhitelist();
@@ -6759,8 +6759,8 @@
 
   function agentKeyServiceTierKnownProviderNames() {
     return uniqueValues([
-      codexModelCatalog.provider_name,
-      codexModelCatalog.model_provider,
+      desktopClientModelCatalog.provider_name,
+      desktopClientModelCatalog.model_provider,
     ]).map((value) => value.toLowerCase());
   }
 
