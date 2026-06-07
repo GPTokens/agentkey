@@ -1,15 +1,15 @@
 (() => {
   const helperBase = window.__AGENTKEY_HELPER_BASE__ || "http://127.0.0.1:57321";
   const helperToken = window.__AGENTKEY_HELPER_TOKEN__ || "";
-  const buttonClass = "codex-delete-button";
-  const exportButtonClass = "codex-export-button";
+  const buttonClass = "agentkey-delete-button";
+  const exportButtonClass = "agentkey-export-button";
   const projectMoveButtonClass = "codex-project-move-button";
   const projectMoveOverlayClass = "codex-project-move-overlay";
-  const actionButtonClass = "codex-session-action-button";
-  const actionGroupClass = "codex-session-actions";
-  const moreButtonClass = "codex-session-more-button";
-  const moreMenuClass = "codex-session-more-menu";
-  const actionTooltipClass = "codex-session-action-tooltip";
+  const actionButtonClass = "agentkey-session-action-button";
+  const actionGroupClass = "agentkey-session-actions";
+  const moreButtonClass = "agentkey-session-more-button";
+  const moreMenuClass = "agentkey-session-more-menu";
+  const actionTooltipClass = "agentkey-session-action-tooltip";
   const timelineClass = "codex-conversation-timeline";
   const timelineTrackClass = "codex-conversation-timeline-track";
   const timelineMarkerClass = "codex-conversation-timeline-marker";
@@ -40,16 +40,16 @@
   const projectMoveRefreshDelaysMs = [50, 250, 750, 1500];
   const chatsSortRefreshIntervalMs = 1500;
   const chatsSortDbRefreshIntervalMs = 5000;
-  const styleId = "codex-delete-style";
-  const codexDeleteStyleVersion = "12";
+  const styleId = "agentkey-delete-style";
+  const agentKeyDeleteStyleVersion = "12";
   const agentKeyMenuId = "agentkey-menu";
   const agentKeyMenuFloatingClass = "agentkey-menu-floating";
-  const codexDeleteVersion = "7";
-  const codexExportVersion = "1";
+  const agentKeyDeleteVersion = "7";
+  const agentKeyExportVersion = "1";
   const codexProjectMoveVersion = "1";
   const codexActionGroupVersion = "5";
-  const codexArchiveRowActionsVersion = "1";
-  const codexArchiveDeleteAllVersion = "2";
+  const agentKeyArchiveRowActionsVersion = "1";
+  const agentKeyArchiveDeleteAllVersion = "2";
   const codexConversationTimelineVersion = "2";
   const codexConversationViewVersion = "1";
   const codexThreadScrollVersion = "1";
@@ -126,15 +126,15 @@
 
   function installStyle() {
     const existingStyle = document.getElementById(styleId);
-    if (existingStyle?.dataset.codexDeleteStyleVersion === codexDeleteStyleVersion) return;
+    if (existingStyle?.dataset.agentKeyDeleteStyleVersion === agentKeyDeleteStyleVersion) return;
     existingStyle?.remove();
     const style = document.createElement("style");
     style.id = styleId;
-    style.dataset.codexDeleteStyleVersion = codexDeleteStyleVersion;
+    style.dataset.agentKeyDeleteStyleVersion = agentKeyDeleteStyleVersion;
     style.textContent = `
       .${actionGroupClass} {
         position: absolute;
-        right: var(--codex-session-actions-right, 28px);
+        right: var(--agentkey-session-actions-right, 28px);
         top: 50%;
         transform: translateY(-50%);
         z-index: 20;
@@ -183,10 +183,10 @@
         padding: 5px;
       }
       .${moreMenuClass}[hidden] { display: none !important; }
-      .${moreMenuClass}.codex-session-more-menu-open-up {
+      .${moreMenuClass}.agentkey-session-more-menu-open-up {
         transform: translateY(calc(-100% - 34px));
       }
-      .codex-session-more-menu-item {
+      .agentkey-session-more-menu-item {
         width: 100%;
         border: 0;
         border-radius: 7px;
@@ -200,16 +200,16 @@
         padding: 6px 8px;
         text-align: left;
       }
-      .codex-session-more-menu-item:hover,
-      .codex-session-more-menu-item:focus-visible {
+      .agentkey-session-more-menu-item:hover,
+      .agentkey-session-more-menu-item:focus-visible {
         background: #363839;
         outline: none;
       }
-      .codex-session-more-menu-icon {
+      .agentkey-session-more-menu-icon {
         width: 16px;
         text-align: center;
       }
-      .codex-archive-row-button {
+      .agentkey-archive-row-button {
         border: 1px solid #ef4444;
         border-radius: 7px;
         background: #f3f4f6;
@@ -219,12 +219,12 @@
         padding: 3px 8px;
         cursor: pointer;
       }
-      .codex-archive-row-button.${buttonClass} {
+      .agentkey-archive-row-button.${buttonClass} {
         border-color: #ef4444;
         background: #fee2e2;
         color: #991b1b;
       }
-      .codex-archive-row-button.${exportButtonClass} {
+      .agentkey-archive-row-button.${exportButtonClass} {
         border-color: #93c5fd;
         background: #dbeafe;
         color: #1d4ed8;
@@ -277,25 +277,25 @@
         box-shadow: 0 8px 30px rgba(0,0,0,.25);
         pointer-events: none;
       }
-      [data-codex-delete-row="true"]:hover .${actionGroupClass} {
+      [data-agentkey-delete-row="true"]:hover .${actionGroupClass} {
         opacity: 1;
         pointer-events: auto;
       }
-      [data-codex-delete-row="true"].codex-session-more-open .${actionGroupClass} {
+      [data-agentkey-delete-row="true"].agentkey-session-more-open .${actionGroupClass} {
         opacity: 1;
         pointer-events: auto;
         z-index: 2147483201;
       }
-      [data-codex-delete-row="true"]:hover [data-thread-title] {
+      [data-agentkey-delete-row="true"]:hover [data-thread-title] {
         display: block;
-        max-width: var(--codex-session-title-max-width, 100%);
+        max-width: var(--agentkey-session-title-max-width, 100%);
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      [data-codex-delete-row="true"].codex-archive-confirm-visible .${actionGroupClass} {
-        right: max(66px, var(--codex-session-actions-right, 28px));
+      [data-agentkey-delete-row="true"].agentkey-archive-confirm-visible .${actionGroupClass} {
+        right: max(66px, var(--agentkey-session-actions-right, 28px));
       }
       .${actionTooltipClass} {
         position: fixed;
@@ -350,7 +350,7 @@
       .codex-project-move-empty { padding: 18px 12px; color: #6b7280; text-align: center; }
       .codex-project-move-hidden { display: none !important; }
       [data-codex-project-move-injected-list="true"] { display: flex; flex-direction: column; }
-      .codex-archive-delete-all {
+      .agentkey-archive-delete-all {
         border: 1px solid #ef4444;
         border-radius: 7px;
         background: #fee2e2;
@@ -360,14 +360,14 @@
         padding: 3px 8px;
         cursor: pointer;
       }
-      .codex-archive-action-bar {
+      .agentkey-archive-action-bar {
         position: fixed;
         right: 28px;
         top: 86px;
         z-index: 2147482999;
         box-shadow: 0 8px 24px rgba(0,0,0,.18);
       }
-      .codex-delete-toast {
+      .agentkey-delete-toast {
         position: fixed;
         right: 18px;
         bottom: 18px;
@@ -380,8 +380,8 @@
         box-shadow: 0 8px 30px rgba(0,0,0,.25);
         pointer-events: none;
       }
-      .codex-delete-toast button { margin-left: 10px; pointer-events: auto; }
-      .codex-delete-confirm-overlay {
+      .agentkey-delete-toast button { margin-left: 10px; pointer-events: auto; }
+      .agentkey-delete-confirm-overlay {
         position: fixed;
         inset: 0;
         z-index: 2147483200;
@@ -390,7 +390,7 @@
         justify-content: center;
         background: rgba(15,23,42,.28);
       }
-      .codex-delete-confirm-content {
+      .agentkey-delete-confirm-content {
         width: min(420px, calc(100vw - 48px));
         border: 1px solid rgba(15,23,42,.12);
         border-radius: 12px;
@@ -400,15 +400,15 @@
         box-shadow: 0 24px 80px rgba(15,23,42,.22);
         padding: 18px;
       }
-      .codex-delete-confirm-title { font-size: 16px; font-weight: 650; }
-      .codex-delete-confirm-message { margin-top: 8px; color: #4b5563; line-height: 1.45; }
-      .codex-delete-confirm-actions {
+      .agentkey-delete-confirm-title { font-size: 16px; font-weight: 650; }
+      .agentkey-delete-confirm-message { margin-top: 8px; color: #4b5563; line-height: 1.45; }
+      .agentkey-delete-confirm-actions {
         display: flex;
         justify-content: flex-end;
         gap: 10px;
         margin-top: 18px;
       }
-      .codex-delete-confirm-actions button {
+      .agentkey-delete-confirm-actions button {
         border: 1px solid #d1d5db;
         border-radius: 7px;
         padding: 6px 12px;
@@ -417,7 +417,7 @@
         font: 13px system-ui, sans-serif;
         cursor: pointer;
       }
-      .codex-delete-confirm-actions [data-codex-delete-confirm="true"] {
+      .agentkey-delete-confirm-actions [data-agentkey-delete-confirm="true"] {
         border-color: #ef4444;
         background: #dc2626;
         color: #ffffff;
@@ -426,34 +426,34 @@
          Triggered either by Codex applying a "dark" class / data-theme="dark"
          on its document root, or by the OS-level prefers-color-scheme hint.
          Palette matches the existing AgentKey dark modal (.agentkey-modal-content). */
-      html.dark .codex-delete-confirm-overlay,
-      html[data-theme="dark"] .codex-delete-confirm-overlay,
-      :root[data-theme="dark"] .codex-delete-confirm-overlay {
+      html.dark .agentkey-delete-confirm-overlay,
+      html[data-theme="dark"] .agentkey-delete-confirm-overlay,
+      :root[data-theme="dark"] .agentkey-delete-confirm-overlay {
         background: rgba(0,0,0,.55);
       }
-      html.dark .codex-delete-confirm-content,
-      html[data-theme="dark"] .codex-delete-confirm-content,
-      :root[data-theme="dark"] .codex-delete-confirm-content {
+      html.dark .agentkey-delete-confirm-content,
+      html[data-theme="dark"] .agentkey-delete-confirm-content,
+      :root[data-theme="dark"] .agentkey-delete-confirm-content {
         border-color: rgba(255,255,255,.12);
         background: #2b2b2b;
         color: #f3f4f6;
         box-shadow: 0 24px 80px rgba(0,0,0,.55);
       }
-      html.dark .codex-delete-confirm-message,
-      html[data-theme="dark"] .codex-delete-confirm-message,
-      :root[data-theme="dark"] .codex-delete-confirm-message {
+      html.dark .agentkey-delete-confirm-message,
+      html[data-theme="dark"] .agentkey-delete-confirm-message,
+      :root[data-theme="dark"] .agentkey-delete-confirm-message {
         color: #d1d5db;
       }
-      html.dark .codex-delete-confirm-actions button,
-      html[data-theme="dark"] .codex-delete-confirm-actions button,
-      :root[data-theme="dark"] .codex-delete-confirm-actions button {
+      html.dark .agentkey-delete-confirm-actions button,
+      html[data-theme="dark"] .agentkey-delete-confirm-actions button,
+      :root[data-theme="dark"] .agentkey-delete-confirm-actions button {
         border-color: rgba(255,255,255,.18);
         background: #3f3f46;
         color: #f3f4f6;
       }
-      html.dark .codex-delete-confirm-actions [data-codex-delete-confirm="true"],
-      html[data-theme="dark"] .codex-delete-confirm-actions [data-codex-delete-confirm="true"],
-      :root[data-theme="dark"] .codex-delete-confirm-actions [data-codex-delete-confirm="true"] {
+      html.dark .agentkey-delete-confirm-actions [data-agentkey-delete-confirm="true"],
+      html[data-theme="dark"] .agentkey-delete-confirm-actions [data-agentkey-delete-confirm="true"],
+      :root[data-theme="dark"] .agentkey-delete-confirm-actions [data-agentkey-delete-confirm="true"] {
         border-color: #ef4444;
         background: #dc2626;
         color: #ffffff;
@@ -498,24 +498,24 @@
         color: #9ca3af;
       }
       @media (prefers-color-scheme: dark) {
-        html:not(.light):not([data-theme="light"]) .codex-delete-confirm-overlay {
+        html:not(.light):not([data-theme="light"]) .agentkey-delete-confirm-overlay {
           background: rgba(0,0,0,.55);
         }
-        html:not(.light):not([data-theme="light"]) .codex-delete-confirm-content {
+        html:not(.light):not([data-theme="light"]) .agentkey-delete-confirm-content {
           border-color: rgba(255,255,255,.12);
           background: #2b2b2b;
           color: #f3f4f6;
           box-shadow: 0 24px 80px rgba(0,0,0,.55);
         }
-        html:not(.light):not([data-theme="light"]) .codex-delete-confirm-message {
+        html:not(.light):not([data-theme="light"]) .agentkey-delete-confirm-message {
           color: #d1d5db;
         }
-        html:not(.light):not([data-theme="light"]) .codex-delete-confirm-actions button {
+        html:not(.light):not([data-theme="light"]) .agentkey-delete-confirm-actions button {
           border-color: rgba(255,255,255,.18);
           background: #3f3f46;
           color: #f3f4f6;
         }
-        html:not(.light):not([data-theme="light"]) .codex-delete-confirm-actions [data-codex-delete-confirm="true"] {
+        html:not(.light):not([data-theme="light"]) .agentkey-delete-confirm-actions [data-agentkey-delete-confirm="true"] {
           border-color: #ef4444;
           background: #dc2626;
           color: #ffffff;
@@ -2864,14 +2864,14 @@
 
   function archivePageHintVisible() {
     if (window.location.href.includes("archive")) return true;
-    if (document.querySelector('[data-codex-archive-page-row="true"], [data-codex-archive-delete-all]')) return true;
+    if (document.querySelector('[data-agentkey-archive-page-row="true"], [data-agentkey-archive-delete-all]')) return true;
     const archiveNav = document.querySelector(selectors.archiveNav);
     if (archiveNav?.className?.includes?.("bg-token-list-hover-background")) return true;
     return !!Array.from(document.querySelectorAll("h1, h2, h3")).find((element) => (element.textContent || "").trim() === "已归档对话");
   }
 
   function archiveRowFromUnarchiveButton(button) {
-    return button.closest('[data-codex-archive-page-row="true"]')
+    return button.closest('[data-agentkey-archive-page-row="true"]')
       || button.closest('[role="listitem"], [role="row"]')
       || button.closest(".flex.w-full.items-center.justify-between")
       || button.parentElement;
@@ -2881,8 +2881,8 @@
     if (!archivePageHintVisible()) return [];
     const rows = Array.from(document.querySelectorAll("button")).filter((button) => (button.textContent || "").trim() === "取消归档").map(archiveRowFromUnarchiveButton).filter(Boolean);
     rows.forEach((row) => {
-      row.dataset.codexArchivePageRow = "true";
-      row.setAttribute("data-codex-archive-page-row", "true");
+      row.dataset.agentKeyArchivePageRow = "true";
+      row.setAttribute("data-agentkey-archive-page-row", "true");
     });
     return rows;
   }
@@ -4893,9 +4893,9 @@
   }
 
   function showToast(message, undoToken) {
-    document.querySelectorAll(".codex-delete-toast").forEach((node) => node.remove());
+    document.querySelectorAll(".agentkey-delete-toast").forEach((node) => node.remove());
     const toast = document.createElement("div");
-    toast.className = "codex-delete-toast";
+    toast.className = "agentkey-delete-toast";
     toast.textContent = message;
     if (undoToken) {
       const undo = document.createElement("button");
@@ -5755,18 +5755,18 @@
   function openUpstreamWorktreeDialog() {
     document.querySelectorAll(`.${upstreamWorktreeDialogClass}`).forEach((node) => node.remove());
     const overlay = document.createElement("div");
-    overlay.className = `codex-delete-confirm-overlay ${upstreamWorktreeDialogClass}`;
+    overlay.className = `agentkey-delete-confirm-overlay ${upstreamWorktreeDialogClass}`;
     overlay.innerHTML = `
-      <div class="codex-delete-confirm-content" role="dialog" aria-modal="true" aria-label="Create upstream worktree">
-        <div class="codex-delete-confirm-title">Create from upstream</div>
-        <div class="codex-delete-confirm-message">等价于 git worktree add -b branch path upstream/base。创建前会先 fetch 远端分支。</div>
+      <div class="agentkey-delete-confirm-content" role="dialog" aria-modal="true" aria-label="Create upstream worktree">
+        <div class="agentkey-delete-confirm-title">Create from upstream</div>
+        <div class="agentkey-delete-confirm-message">等价于 git worktree add -b branch path upstream/base。创建前会先 fetch 远端分支。</div>
         <label class="agentkey-form-field">仓库路径<input data-codex-upstream-worktree-field="repoPath" type="text" placeholder="/path/to/repo"></label>
         <label class="agentkey-form-field">新分支名<input data-codex-upstream-worktree-field="branchName" type="text" placeholder="feature/my-task"></label>
         <label class="agentkey-form-field">Worktree 路径<input data-codex-upstream-worktree-field="worktreePath" type="text" placeholder="/path/to/worktrees/my-task"></label>
         <label class="agentkey-form-field">Remote<input data-codex-upstream-worktree-field="remote" type="text" value="upstream"></label>
         <label class="agentkey-form-field">Base branch<input data-codex-upstream-worktree-field="baseBranch" type="text" value="main"></label>
         <div class="agentkey-form-message" data-codex-upstream-worktree-message>填写仓库路径后会自动读取 remote 和当前分支。</div>
-        <div class="codex-delete-confirm-actions">
+        <div class="agentkey-delete-confirm-actions">
           <button type="button" data-codex-upstream-worktree-cancel="true">取消</button>
           <button type="button" data-codex-upstream-worktree-defaults="true">读取默认值</button>
           <button type="button" data-codex-upstream-worktree-submit="true">Create from upstream</button>
@@ -5802,17 +5802,17 @@
   }
 
   function confirmDelete(title) {
-    document.querySelectorAll(".codex-delete-confirm-overlay").forEach((node) => node.remove());
+    document.querySelectorAll(".agentkey-delete-confirm-overlay").forEach((node) => node.remove());
     return new Promise((resolve) => {
       const overlay = document.createElement("div");
-      overlay.className = "codex-delete-confirm-overlay";
+      overlay.className = "agentkey-delete-confirm-overlay";
       overlay.innerHTML = `
-        <div class="codex-delete-confirm-content" role="dialog" aria-modal="true" aria-label="删除会话">
-          <div class="codex-delete-confirm-title">删除会话</div>
-          <div class="codex-delete-confirm-message">删除“${escapeHtml(title)}”？</div>
-          <div class="codex-delete-confirm-actions">
-            <button type="button" data-codex-delete-cancel="true">取消</button>
-            <button type="button" data-codex-delete-confirm="true">删除</button>
+        <div class="agentkey-delete-confirm-content" role="dialog" aria-modal="true" aria-label="删除会话">
+          <div class="agentkey-delete-confirm-title">删除会话</div>
+          <div class="agentkey-delete-confirm-message">删除“${escapeHtml(title)}”？</div>
+          <div class="agentkey-delete-confirm-actions">
+            <button type="button" data-agentkey-delete-cancel="true">取消</button>
+            <button type="button" data-agentkey-delete-confirm="true">删除</button>
           </div>
         </div>
       `;
@@ -5824,11 +5824,11 @@
         resolve(value);
       };
       overlay.addEventListener("click", (event) => {
-        if (event.target === overlay || event.target.closest("[data-codex-delete-cancel]")) {
+        if (event.target === overlay || event.target.closest("[data-agentkey-delete-cancel]")) {
           finish(false, event);
           return;
         }
-        if (event.target.closest("[data-codex-delete-confirm]")) {
+        if (event.target.closest("[data-agentkey-delete-confirm]")) {
           finish(true, event);
         }
       }, true);
@@ -5836,7 +5836,7 @@
         if (event.key === "Escape") finish(false, event);
       }, true);
       document.body.appendChild(overlay);
-      overlay.querySelector("[data-codex-delete-cancel]")?.focus();
+      overlay.querySelector("[data-agentkey-delete-cancel]")?.focus();
     });
   }
 
@@ -5883,7 +5883,7 @@
         if (button.classList.contains(buttonClass) || button.classList.contains(exportButtonClass) || label === "归档对话" || label === "置顶对话") return false;
         return text === "确认" || (text.length > 0 && rect.width > 0 && rect.width <= 36 && rect.x > row.getBoundingClientRect().right - 50);
       });
-      row.classList.toggle("codex-archive-confirm-visible", hasArchiveConfirm);
+      row.classList.toggle("agentkey-archive-confirm-visible", hasArchiveConfirm);
     });
   }
 
@@ -6071,9 +6071,9 @@
     const titleRect = titleNode?.getBoundingClientRect();
     const titleLeft = titleRect?.left || rowRect.left + 40;
     const maxTitleWidth = Math.max(24, Math.round(rowRect.width - (titleLeft - rowRect.left) - right - groupWidth - 14));
-    group.style.setProperty("--codex-session-actions-right", `${right}px`);
-    row.style.setProperty("--codex-session-title-mask", `${right + groupWidth + 12}px`);
-    row.style.setProperty("--codex-session-title-max-width", `${maxTitleWidth}px`);
+    group.style.setProperty("--agentkey-session-actions-right", `${right}px`);
+    row.style.setProperty("--agentkey-session-title-mask", `${right + groupWidth + 12}px`);
+    row.style.setProperty("--agentkey-session-title-max-width", `${maxTitleWidth}px`);
   }
 
   function syncActionGroupsLayout() {
@@ -6132,8 +6132,8 @@
     document.querySelectorAll(`.${moreMenuClass}`).forEach((menu) => {
       if (menu !== exceptMenu) {
         menu.hidden = true;
-        menu.closest?.("[data-codex-delete-row]")?.classList.remove("codex-session-more-open");
-        menu.__codexSessionMoreRow?.classList?.remove("codex-session-more-open");
+        menu.closest?.("[data-agentkey-delete-row]")?.classList.remove("agentkey-session-more-open");
+        menu.__agentKeySessionMoreRow?.classList?.remove("agentkey-session-more-open");
       }
     });
   }
@@ -6142,7 +6142,7 @@
     const nextHidden = !menu.hidden;
     closeSessionMoreMenus(menu);
     menu.hidden = nextHidden;
-    row.classList.toggle("codex-session-more-open", !menu.hidden);
+    row.classList.toggle("agentkey-session-more-open", !menu.hidden);
     button.setAttribute("aria-expanded", String(!menu.hidden));
   }
 
@@ -6154,7 +6154,7 @@
         const active = document.activeElement;
         if (group?.matches?.(":hover") || menu.matches?.(":hover") || menu.contains(active)) return;
         menu.hidden = true;
-        row.classList.remove("codex-session-more-open");
+        row.classList.remove("agentkey-session-more-open");
         group?.querySelector?.(`.${moreButtonClass}`)?.setAttribute("aria-expanded", "false");
       }, 80);
     };
@@ -6164,11 +6164,11 @@
   }
 
   function updateSessionMoreMenuDirection(button, menu) {
-    menu.classList.remove("codex-session-more-menu-open-up");
+    menu.classList.remove("agentkey-session-more-menu-open-up");
     const buttonRect = button.getBoundingClientRect();
     const estimatedMenuHeight = Math.max(80, menu.getBoundingClientRect().height || 76);
     if (buttonRect.bottom + 30 + estimatedMenuHeight > window.innerHeight - 8) {
-      menu.classList.add("codex-session-more-menu-open-up");
+      menu.classList.add("agentkey-session-more-menu-open-up");
     }
   }
 
@@ -6183,8 +6183,8 @@
   function createSessionMoreMenuItem(label, icon, onActivate) {
     const item = document.createElement("button");
     item.type = "button";
-    item.className = "codex-session-more-menu-item";
-    item.innerHTML = `<span class="codex-session-more-menu-icon">${icon}</span><span>${label}</span>`;
+    item.className = "agentkey-session-more-menu-item";
+    item.innerHTML = `<span class="agentkey-session-more-menu-icon">${icon}</span><span>${label}</span>`;
     item.addEventListener("click", onActivate, true);
     return item;
   }
@@ -6250,7 +6250,7 @@
     const settings = agentKeySettings();
     if (!settings.sessionDelete && !settings.markdownExport && !settings.projectMove) {
       removeActionGroups(row);
-      row.dataset.codexDeleteRow = "false";
+      row.dataset.agentKeyDeleteRow = "false";
       row.dataset.codexProjectMoveRow = "false";
       return;
     }
@@ -6266,18 +6266,18 @@
     const hasUnexpectedMove = !!existingMoveButton;
     const missingDelete = settings.sessionDelete && !existingDeleteButton;
     const missingMore = needsMoreMenu && !existingMoreButton;
-    const deleteReady = !settings.sessionDelete || existingDeleteButton?.dataset.codexDeleteVersion === codexDeleteVersion;
+    const deleteReady = !settings.sessionDelete || existingDeleteButton?.dataset.agentKeyDeleteVersion === agentKeyDeleteVersion;
     const groupReady = existingGroup?.dataset.codexActionGroupVersion === codexActionGroupVersion;
     if (groupReady && deleteReady && !hasUnexpectedDelete && !hasUnexpectedMore && !hasUnexpectedExport && !hasUnexpectedMove && !missingDelete && !missingMore) {
       syncActionGroupLayout(row, existingGroup);
       return;
     }
     removeActionGroups(row);
-    row.dataset.codexDeleteRow = "false";
+    row.dataset.agentKeyDeleteRow = "false";
     row.dataset.codexProjectMoveRow = "false";
     const ref = sessionRefFromRow(row);
     if (!ref.session_id) return;
-    row.dataset.codexDeleteRow = "true";
+    row.dataset.agentKeyDeleteRow = "true";
     row.dataset.codexProjectMoveRow = String(!!settings.projectMove);
     const group = document.createElement("div");
     group.className = actionGroupClass;
@@ -6318,7 +6318,7 @@
       };
       installMoreButtonEvents(row, moreButton, openMoreMenu);
       group.appendChild(moreButton);
-      moreMenu.__codexSessionMoreRow = row;
+      moreMenu.__agentKeySessionMoreRow = row;
       moreMenu.__codexSessionMoreGroup = group;
       document.body.appendChild(moreMenu);
       installSessionMoreMenuAutoClose(row, moreMenu);
@@ -6327,7 +6327,7 @@
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
       deleteButton.className = `${actionButtonClass} ${buttonClass}`;
-      deleteButton.dataset.codexDeleteVersion = codexDeleteVersion;
+      deleteButton.dataset.agentKeyDeleteVersion = agentKeyDeleteVersion;
       configureSvgActionButton(deleteButton, "删除", trashIconSvg());
       const openDeleteConfirm = (event) => openDeleteConfirmForRow(row, deleteButton, ref, event);
       installActionButtonEvents(row, deleteButton, openDeleteConfirm);
@@ -6412,19 +6412,19 @@
 
   function attachArchivedPageDeleteButton(row) {
     const settings = agentKeySettings();
-    row.querySelectorAll("[data-codex-archive-row-action]").forEach((button) => button.remove());
-    row.dataset.codexArchiveDeleteRow = "false";
+    row.querySelectorAll("[data-agentkey-archive-row-action]").forEach((button) => button.remove());
+    row.dataset.agentKeyArchiveDeleteRow = "false";
     if (!settings.sessionDelete && !settings.markdownExport) return;
     const unarchiveButton = Array.from(row.querySelectorAll("button")).find((button) => (button.textContent || "").trim() === "取消归档");
     if (!unarchiveButton) return;
-    row.dataset.codexArchiveDeleteRow = "true";
-    row.dataset.codexArchiveRowActionsVersion = codexArchiveRowActionsVersion;
+    row.dataset.agentKeyArchiveDeleteRow = "true";
+    row.dataset.agentKeyArchiveRowActionsVersion = agentKeyArchiveRowActionsVersion;
     let insertionPoint = unarchiveButton;
     if (settings.markdownExport) {
       const exportButton = document.createElement("button");
       exportButton.type = "button";
-      exportButton.className = `codex-archive-delete-all codex-archive-row-button ${exportButtonClass}`;
-      exportButton.dataset.codexArchiveRowAction = "export";
+      exportButton.className = `agentkey-archive-delete-all agentkey-archive-row-button ${exportButtonClass}`;
+      exportButton.dataset.agentKeyArchiveRowAction = "export";
       exportButton.textContent = "导出";
       ["pointerdown", "mousedown", "mouseup", "touchstart"].forEach((eventName) => {
         exportButton.addEventListener(eventName, stopArchivedButtonEvent, true);
@@ -7748,7 +7748,7 @@
   }
 
   function isExtensionUiNode(node) {
-    return !!node?.closest?.(`.codex-delete-toast, .codex-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${codexServiceTierBadgeClass}, .codex-zed-remote-button, .codex-zed-remote-toast, #agentkey-menu`);
+    return !!node?.closest?.(`.agentkey-delete-toast, .agentkey-delete-confirm-overlay, .agentkey-modal-overlay, .${projectMoveOverlayClass}, .${timelineClass}, .codex-conversation-timeline, .${codexServiceTierBadgeClass}, .codex-zed-remote-button, .codex-zed-remote-toast, #agentkey-menu`);
   }
 
   function scanRelevantSelector() {
@@ -7757,8 +7757,8 @@
       '[data-app-action-sidebar-section-heading="Chats"]',
       '[data-app-action-sidebar-section-heading="Projects"]',
       '[data-codex-project-move-row="true"]',
-      '[data-codex-archive-page-row="true"]',
-      "[data-codex-archive-delete-all]",
+      '[data-agentkey-archive-page-row="true"]',
+      "[data-agentkey-archive-delete-all]",
       '[data-message-author-role]',
       '[data-testid="conversation-turn"]',
       '[class*="user-message"]',
