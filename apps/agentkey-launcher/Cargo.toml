@@ -1,0 +1,22 @@
+[package]
+name = "agentkey-launcher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "agentkey"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+async-trait = "0.1"
+agentkey-core = { path = "../../crates/agentkey-core" }
+agentkey-data = { path = "../../crates/agentkey-data" }
+directories.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[build-dependencies]
+winresource.workspace = true
