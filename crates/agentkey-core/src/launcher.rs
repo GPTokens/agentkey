@@ -1391,6 +1391,68 @@ mod helper_security_tests {
         assert!(headers.contains("X-AgentKey-Token"));
         assert!(!headers.contains(concat!("X-Codex", "-Plus-Token")));
     }
+
+    #[test]
+    fn helper_auth_accepts_only_matching_session_token_for_local_routes() {
+        let request_with_header =
+            "POST /backend/status HTTP/1.1\r\nX-AgentKey-Token: session-token\r\n\r\n{}";
+        let request_with_bearer =
+            "POST /backend/status HTTP/1.1\r\nAuthorization: Bearer session-token\r\n\r\n{}";
+        let request_with_wrong_header =
+            "POST /backend/status HTTP/1.1\r\nX-AgentKey-Token: wrong-token\r\n\r\n{}";
+        let request_with_wrong_bearer =
+            "POST /backend/status HTTP/1.1\r\nAuthorization: Bearer wrong-token\r\n\r\n{}";
+        let request_without_token = "POST /backend/status HTTP/1.1\r\n\r\n{}";
+
+        assert!(helper_request_authorized(
+            request_with_header,
+            "session-token",
+            false
+        ));
+        assert!(helper_request_authorized(
+            request_with_bearer,
+            "session-token",
+            false
+        ));
+        assert!(!helper_request_authorized(
+            request_with_wrong_header,
+            "session-token",
+            false
+        ));
+        assert!(!helper_request_authorized(
+            request_with_wrong_bearer,
+            "session-token",
+            false
+        ));
+        assert!(!helper_request_authorized(
+            request_without_token,
+            "session-token",
+            false
+        ));
+    }
+
+    #[test]
+    fn helper_auth_does_not_allow_relay_bearer_on_local_routes() {
+        let request = "POST /backend/status HTTP/1.1\r\nAuthorization: Bearer relay-token\r\n\r\n{}";
+
+        assert!(!helper_request_authorized(
+            request,
+            "session-token",
+            false
+        ));
+    }
+
+    #[test]
+    fn helper_session_token_is_random_unformatted_secret() {
+        let first = new_helper_session_token();
+        let second = new_helper_session_token();
+
+        assert_ne!(first, second);
+        assert_eq!(first.len(), 32);
+        assert_eq!(second.len(), 32);
+        assert!(first.chars().all(|ch| ch.is_ascii_hexdigit()));
+        assert!(second.chars().all(|ch| ch.is_ascii_hexdigit()));
+    }
 }
 
 fn sanitize_diagnostic_event(event: &str) -> String {
