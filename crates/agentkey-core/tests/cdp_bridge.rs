@@ -388,6 +388,8 @@ fn injection_script_exposes_fast_service_tier_control() {
 
     assert!(script.contains("default-service-tier"));
     assert!(script.contains("setting-storage-"));
+    assert!(script.contains("desktopClientStateCall"));
+    assert!(!script.contains("codexStateCall"));
     assert!(script.contains("desktopClientAssetUrl"));
     assert!(script.contains("agentKeyThreadServiceTierOverrides"));
     assert!(script.contains("codexThreadServiceTierOverrides"));

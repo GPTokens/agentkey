@@ -1143,8 +1143,8 @@
       const settingStorage = await desktopSettingStorageModule();
       return await settingStorage.n(agentKeyDefaultServiceTierSetting);
     } catch (error) {
-      if (typeof codexStateCall === "function") {
-        const result = await codexStateCall("get-setting", { params: { key: agentKeyDefaultServiceTierSetting.key } });
+      if (typeof desktopClientStateCall === "function") {
+        const result = await desktopClientStateCall("get-setting", { params: { key: agentKeyDefaultServiceTierSetting.key } });
         return result && Object.prototype.hasOwnProperty.call(result, "value") ? result.value : agentKeyDefaultServiceTierSetting.default;
       }
       throw error;
@@ -3676,30 +3676,30 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  let codexStateApiPromise = null;
+  let desktopClientStateApiPromise = null;
   let chatsSortInFlight = false;
   let chatsSortSignature = "";
   let chatsSortLastFetchAt = 0;
 
-  async function codexStateApi() {
-    codexStateApiPromise = codexStateApiPromise || import("./assets/vscode-api-Dc9pX2Bc.js");
-    const api = await codexStateApiPromise;
-    if (typeof api.n !== "function") throw new Error("Codex 状态 API 不可用");
+  async function desktopClientStateApi() {
+    desktopClientStateApiPromise = desktopClientStateApiPromise || import("./assets/vscode-api-Dc9pX2Bc.js");
+    const api = await desktopClientStateApiPromise;
+    if (typeof api.n !== "function") throw new Error("桌面客户端状态 API 不可用");
     return api.n;
   }
 
-  async function codexStateCall(method, params) {
-    const call = await codexStateApi();
+  async function desktopClientStateCall(method, params) {
+    const call = await desktopClientStateApi();
     return await call(method, params);
   }
 
   async function getCodexGlobalState(key) {
-    const result = await codexStateCall("get-global-state", { params: { key } });
+    const result = await desktopClientStateCall("get-global-state", { params: { key } });
     return result && Object.prototype.hasOwnProperty.call(result, "value") ? result.value : result;
   }
 
   async function setCodexGlobalState(key, value) {
-    return await codexStateCall("set-global-state", { params: { key, value } });
+    return await desktopClientStateCall("set-global-state", { params: { key, value } });
   }
 
   function objectGlobalState(value) {
@@ -6517,10 +6517,10 @@
       '[class*="user-message"]',
       '[class*="UserMessage"]',
     ].join(", ")));
-    const codexUserBubbles = Array.from(root.querySelectorAll(".group.flex.w-full.flex-col.items-end.justify-end.gap-1")).flatMap((group) => {
+    const desktopClientUserBubbles = Array.from(root.querySelectorAll(".group.flex.w-full.flex-col.items-end.justify-end.gap-1")).flatMap((group) => {
       return Array.from(group.children).filter((child) => String(child.className || "").includes("bg-token-foreground/5"));
     });
-    return [...explicitCandidates, ...codexUserBubbles];
+    return [...explicitCandidates, ...desktopClientUserBubbles];
   }
 
   function extractTimelineQuestionText(node) {
