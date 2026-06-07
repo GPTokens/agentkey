@@ -274,7 +274,11 @@ fn import_from_provider_link_value(
     name: &str,
     config: &Value,
 ) -> Option<ProviderLinkImport> {
-    let base_url = extract_base_url(config).unwrap_or_default();
+    let base_url = match extract_base_url(config) {
+        Some(base_url) if crate::url_policy::api_base_url_allowed(&base_url) => base_url,
+        Some(_) => return None,
+        None => String::new(),
+    };
     let api_key = extract_api_key(config).unwrap_or_default();
     let protocol = extract_protocol(config);
     let config_from_provider_link =
@@ -636,6 +640,70 @@ base_url = "https://toml.example/v1"
         assert_eq!(providers[0].config_contents, toml);
         assert_eq!(profile.id, "provider-toml-provider-2");
         assert_eq!(profile.relay_mode, RelayMode::PureApi);
+    }
+
+    #[test]
+    fn skips_provider_link_with_remote_http_base_url() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
+        create_provider_link_db(&db);
+        insert_provider(
+            &db,
+            "remote-http",
+            "Remote HTTP",
+            json!({
+                "base_url": "http://gateway.example.test/v1",
+                "api_key": "sk-http"
+            }),
+            0,
+        );
+
+        let providers = list_codex_providers_from_db(&db).unwrap();
+
+        assert!(providers.is_empty());
+    }
+
+    #[test]
+    fn skips_provider_link_toml_with_remote_http_base_url() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
+        create_provider_link_db(&db);
+        insert_provider(
+            &db,
+            "remote-http-toml",
+            "Remote HTTP TOML",
+            json!({
+                "auth": { "OPENAI_API_KEY": "sk-http" },
+                "config": "model_provider = \"bad\"\n\n[model_providers.bad]\nbase_url = \"http://gateway.example.test/v1\"\n"
+            }),
+            0,
+        );
+
+        let providers = list_codex_providers_from_db(&db).unwrap();
+
+        assert!(providers.is_empty());
+    }
+
+    #[test]
+    fn imports_provider_link_with_loopback_http_base_url() {
+        let dir = tempfile::tempdir().unwrap();
+        let db = dir.path().join(format!("{}-{}.db", "cc", "switch"));
+        create_provider_link_db(&db);
+        insert_provider(
+            &db,
+            "loopback-http",
+            "Loopback HTTP",
+            json!({
+                "base_url": "http://127.0.0.1:4000/v1",
+                "api_key": "sk-local"
+            }),
+            0,
+        );
+
+        let providers = list_codex_providers_from_db(&db).unwrap();
+
+        assert_eq!(providers.len(), 1);
+        assert_eq!(providers[0].base_url, "http://127.0.0.1:4000/v1");
     }
 
     #[test]
