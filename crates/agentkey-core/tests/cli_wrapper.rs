@@ -71,6 +71,22 @@ fn wrapper_source_omits_remote_http_base_url() {
 }
 
 #[test]
+fn wrapper_source_validates_sidecar_config_at_runtime() {
+    let source = build_wrapper_source(
+        &PathBuf::from(r"C:\AgentKey\Runtime\codex.exe"),
+        &PathBuf::from(r"C:\Users\me\.agentkey-cli"),
+        &BackendSettings::default(),
+    );
+
+    assert!(source.contains("NormalizeApiBaseUrl(config.BaseUrl)"));
+    assert!(source.contains("IsValidEnvKey(apiKeyEnv)"));
+    assert!(source.contains("IsProcessControlEnvKey(apiKeyEnv)"));
+    assert!(source.contains(r#"apiKeyEnv = "CUSTOM_OPENAI_API_KEY""#));
+    assert!(source.contains(r#"EnvironmentVariables["OPENAI_BASE_URL"] = baseUrl"#));
+    assert!(!source.contains(r#"EnvironmentVariables["OPENAI_BASE_URL"] = config.BaseUrl.Trim()"#));
+}
+
+#[test]
 fn wrapper_config_contains_api_settings_outside_generated_source() {
     let settings = BackendSettings {
         cli_wrapper_enabled: true,

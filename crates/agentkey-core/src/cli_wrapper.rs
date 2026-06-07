@@ -315,19 +315,21 @@ class AgentKeyCliBridge
         string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "agentkey-cli-wrapper.env");
         WrapperConfig config = ReadConfig(configPath);
         string apiKeyEnv = String.IsNullOrWhiteSpace(config.ApiKeyEnv) ? "CUSTOM_OPENAI_API_KEY" : config.ApiKeyEnv.Trim();
+        if (!IsValidEnvKey(apiKeyEnv) || IsProcessControlEnvKey(apiKeyEnv)) apiKeyEnv = "CUSTOM_OPENAI_API_KEY";
+        string baseUrl = NormalizeApiBaseUrl(config.BaseUrl);
         Directory.CreateDirectory(desktopClientHome);
         string logPath = Path.Combine(desktopClientHome, "agentkey-cli-wrapper.log");
         AppendLog(logPath, "agentkey-cli-wrapper start args=" + RedactArguments(args));
         AppendLog(logPath, "target_cli=" + desktopClientCli);
         AppendLog(logPath, "CODEX_HOME=" + desktopClientHome);
-        AppendLog(logPath, "api_key_env=" + apiKeyEnv + " api_key_present=" + (!String.IsNullOrWhiteSpace(config.ApiKey)).ToString().ToLowerInvariant());
+        AppendLog(logPath, "api_key_env=" + apiKeyEnv + " api_key_present=" + (!String.IsNullOrWhiteSpace(config.ApiKey)).ToString().ToLowerInvariant() + " base_url_present=" + (!String.IsNullOrWhiteSpace(baseUrl)).ToString().ToLowerInvariant());
         var startInfo = new ProcessStartInfo(desktopClientCli);
         startInfo.UseShellExecute = false;
         startInfo.RedirectStandardInput = false;
         startInfo.RedirectStandardOutput = false;
         startInfo.RedirectStandardError = false;
         startInfo.EnvironmentVariables["CODEX_HOME"] = desktopClientHome;
-        if (!String.IsNullOrWhiteSpace(config.BaseUrl)) startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = config.BaseUrl.Trim();
+        if (!String.IsNullOrWhiteSpace(baseUrl)) startInfo.EnvironmentVariables["OPENAI_BASE_URL"] = baseUrl;
         if (!String.IsNullOrWhiteSpace(config.ApiKey)) startInfo.EnvironmentVariables[apiKeyEnv] = config.ApiKey.Trim();
         foreach (string arg in args) startInfo.Arguments += QuoteArgument(arg) + " ";
         using (var process = Process.Start(startInfo))
@@ -393,6 +395,37 @@ class AgentKeyCliBridge
             }}
         }}
         return string.Join(" ", redacted);
+    }}
+
+    static string NormalizeApiBaseUrl(string value)
+    {{
+        string trimmed = (value ?? "").Trim().TrimEnd('/');
+        if (trimmed.Length == 0) return "";
+        Uri uri;
+        if (!Uri.TryCreate(trimmed, UriKind.Absolute, out uri)) return "";
+        if (!String.IsNullOrEmpty(uri.UserInfo)) return "";
+        if (uri.Scheme == Uri.UriSchemeHttps && !String.IsNullOrEmpty(uri.Host)) return trimmed;
+        if (uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback) return trimmed;
+        return "";
+    }}
+
+    static bool IsValidEnvKey(string value)
+    {{
+        if (String.IsNullOrEmpty(value)) return false;
+        char first = value[0];
+        if (!(first == '_' || Char.IsLetter(first))) return false;
+        for (int i = 1; i < value.Length; i++)
+        {{
+            char ch = value[i];
+            if (!(ch == '_' || Char.IsLetterOrDigit(ch))) return false;
+        }}
+        return true;
+    }}
+
+    static bool IsProcessControlEnvKey(string value)
+    {{
+        string key = (value ?? "").ToUpperInvariant();
+        return key == "PATH" || key == "PATHEXT" || key == "COMSPEC" || key == "SHELL" || key == "IFS" || key == "LD_PRELOAD" || key == "LD_LIBRARY_PATH" || key == "DYLD_INSERT_LIBRARIES" || key == "DYLD_LIBRARY_PATH" || key == "DYLD_FRAMEWORK_PATH";
     }}
 
     static bool IsSecretName(string value)
