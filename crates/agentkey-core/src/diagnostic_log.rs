@@ -110,6 +110,8 @@ fn is_sensitive_key(key: &str) -> bool {
         || normalized.contains("accesstoken")
         || normalized.contains("refreshtoken")
         || normalized.contains("authorization")
+        || normalized.contains("authcontents")
+        || normalized.contains("configcontents")
         || normalized.contains("token")
         || normalized == "password"
         || normalized == "secret"
@@ -203,5 +205,18 @@ mod tests {
         assert!(!text.contains("abc123"));
         assert!(!text.contains("live-token"));
         assert!(!text.contains("gho_secret"));
+    }
+
+    #[test]
+    fn redacts_relay_file_contents_fields() {
+        let redacted = redact_diagnostic_value(json!({
+            "configContents": "experimental_bearer_token = \"plain-secret\"",
+            "authContents": "{\"OPENAI_API_KEY\":\"plain-secret\"}",
+            "safe": "visible"
+        }));
+
+        assert_eq!(redacted["configContents"], "[REDACTED]");
+        assert_eq!(redacted["authContents"], "[REDACTED]");
+        assert_eq!(redacted["safe"], "visible");
     }
 }
