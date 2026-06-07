@@ -3,8 +3,8 @@
   const helperToken = window.__AGENTKEY_HELPER_TOKEN__ || "";
   const buttonClass = "agentkey-delete-button";
   const exportButtonClass = "agentkey-export-button";
-  const projectMoveButtonClass = "codex-project-move-button";
-  const projectMoveOverlayClass = "codex-project-move-overlay";
+  const projectMoveButtonClass = "agentkey-project-move-button";
+  const projectMoveOverlayClass = "agentkey-project-move-overlay";
   const actionButtonClass = "agentkey-session-action-button";
   const actionGroupClass = "agentkey-session-actions";
   const moreButtonClass = "agentkey-session-more-button";
@@ -33,8 +33,8 @@
   const timelineMinTopPercent = 2;
   const timelineMaxTopPercent = 98;
   const timelineMaxMarkerGapPercent = 3.5;
-  const projectMoveProjectionKey = "codexProjectMoveProjection";
-  const legacyProjectMoveOverridesKey = "codexProjectMoveOverrides";
+  const projectMoveProjectionKey = "agentKeyProjectMoveProjection";
+  const legacyAgentKeyProjectMoveOverridesKey = "codexProjectMoveOverrides";
   const projectMoveProjectionTtlMs = 24 * 60 * 60 * 1000;
   const projectMoveProjectionSettleMs = 5 * 60 * 1000;
   const projectMoveRefreshDelaysMs = [50, 250, 750, 1500];
@@ -46,7 +46,7 @@
   const agentKeyMenuFloatingClass = "agentkey-menu-floating";
   const agentKeyDeleteVersion = "7";
   const agentKeyExportVersion = "1";
-  const codexProjectMoveVersion = "1";
+  const agentKeyProjectMoveVersion = "1";
   const codexActionGroupVersion = "5";
   const agentKeyArchiveRowActionsVersion = "1";
   const agentKeyArchiveDeleteAllVersion = "2";
@@ -76,12 +76,12 @@
   const codexThreadScrollListenerVersion = "4";
   const codexThreadScrollUserIntentVersion = "dispatcher:2";
   const codexForcePluginInstallRefreshIntervalMs = 1000;
-  window.__codexProjectMoveRuntimeId = (window.__codexProjectMoveRuntimeId || 0) + 1;
-  const codexProjectMoveRuntimeId = window.__codexProjectMoveRuntimeId;
-  clearTimeout(window.__codexProjectMoveProjectionTimer);
-  clearTimeout(window.__codexProjectMoveChatsSortTimer);
-  window.__codexProjectMoveProjectionTimer = null;
-  window.__codexProjectMoveChatsSortTimer = null;
+  window.__agentKeyProjectMoveRuntimeId = (window.__agentKeyProjectMoveRuntimeId || 0) + 1;
+  const agentKeyProjectMoveRuntimeId = window.__agentKeyProjectMoveRuntimeId;
+  clearTimeout(window.__agentKeyProjectMoveProjectionTimer);
+  clearTimeout(window.__agentKeyProjectMoveChatsSortTimer);
+  window.__agentKeyProjectMoveProjectionTimer = null;
+  window.__agentKeyProjectMoveChatsSortTimer = null;
   clearTimeout(window.__codexThreadScrollSaveTimer);
   window.__codexThreadScrollSaveTimer = null;
   (window.__codexThreadScrollRestoreTimers || []).forEach((timer) => clearTimeout(timer));
@@ -317,7 +317,7 @@
         z-index: 2147483200;
         background: rgba(15,23,42,.28);
       }
-      .codex-project-move-panel {
+      .agentkey-project-move-panel {
         position: fixed;
         width: min(360px, calc(100vw - 32px));
         max-height: min(520px, calc(100vh - 32px));
@@ -329,10 +329,10 @@
         font: 13px system-ui, sans-serif;
         box-shadow: 0 18px 60px rgba(15,23,42,.25);
       }
-      .codex-project-move-header { border-bottom: 1px solid #e5e7eb; padding: 10px 12px; }
-      .codex-project-move-title { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .codex-project-move-list { max-height: min(440px, calc(100vh - 110px)); overflow-y: auto; padding: 6px; }
-      .codex-project-move-item {
+      .agentkey-project-move-header { border-bottom: 1px solid #e5e7eb; padding: 10px 12px; }
+      .agentkey-project-move-title { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .agentkey-project-move-list { max-height: min(440px, calc(100vh - 110px)); overflow-y: auto; padding: 6px; }
+      .agentkey-project-move-item {
         display: block;
         width: 100%;
         border: 0;
@@ -343,13 +343,13 @@
         text-align: left;
         cursor: pointer;
       }
-      .codex-project-move-item:hover,
-      .codex-project-move-item:focus-visible { background: #f3f4f6; outline: none; }
-      .codex-project-move-item-title { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .codex-project-move-item-path { margin-top: 2px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .codex-project-move-empty { padding: 18px 12px; color: #6b7280; text-align: center; }
-      .codex-project-move-hidden { display: none !important; }
-      [data-codex-project-move-injected-list="true"] { display: flex; flex-direction: column; }
+      .agentkey-project-move-item:hover,
+      .agentkey-project-move-item:focus-visible { background: #f3f4f6; outline: none; }
+      .agentkey-project-move-item-title { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .agentkey-project-move-item-path { margin-top: 2px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .agentkey-project-move-empty { padding: 18px 12px; color: #6b7280; text-align: center; }
+      .agentkey-project-move-hidden { display: none !important; }
+      [data-agentkey-project-move-injected-list="true"] { display: flex; flex-direction: column; }
       .agentkey-archive-delete-all {
         border: 1px solid #ef4444;
         border-radius: 7px;
@@ -463,38 +463,38 @@
       :root[data-theme="dark"] .${projectMoveOverlayClass} {
         background: rgba(0,0,0,.55);
       }
-      html.dark .codex-project-move-panel,
-      html[data-theme="dark"] .codex-project-move-panel,
-      :root[data-theme="dark"] .codex-project-move-panel {
+      html.dark .agentkey-project-move-panel,
+      html[data-theme="dark"] .agentkey-project-move-panel,
+      :root[data-theme="dark"] .agentkey-project-move-panel {
         border-color: rgba(255,255,255,.12);
         background: #2b2b2b;
         color: #f3f4f6;
         box-shadow: 0 18px 60px rgba(0,0,0,.55);
       }
-      html.dark .codex-project-move-header,
-      html[data-theme="dark"] .codex-project-move-header,
-      :root[data-theme="dark"] .codex-project-move-header {
+      html.dark .agentkey-project-move-header,
+      html[data-theme="dark"] .agentkey-project-move-header,
+      :root[data-theme="dark"] .agentkey-project-move-header {
         border-bottom-color: rgba(255,255,255,.1);
       }
-      html.dark .codex-project-move-item,
-      html[data-theme="dark"] .codex-project-move-item,
-      :root[data-theme="dark"] .codex-project-move-item {
+      html.dark .agentkey-project-move-item,
+      html[data-theme="dark"] .agentkey-project-move-item,
+      :root[data-theme="dark"] .agentkey-project-move-item {
         color: #f3f4f6;
       }
-      html.dark .codex-project-move-item:hover,
-      html.dark .codex-project-move-item:focus-visible,
-      html[data-theme="dark"] .codex-project-move-item:hover,
-      html[data-theme="dark"] .codex-project-move-item:focus-visible,
-      :root[data-theme="dark"] .codex-project-move-item:hover,
-      :root[data-theme="dark"] .codex-project-move-item:focus-visible {
+      html.dark .agentkey-project-move-item:hover,
+      html.dark .agentkey-project-move-item:focus-visible,
+      html[data-theme="dark"] .agentkey-project-move-item:hover,
+      html[data-theme="dark"] .agentkey-project-move-item:focus-visible,
+      :root[data-theme="dark"] .agentkey-project-move-item:hover,
+      :root[data-theme="dark"] .agentkey-project-move-item:focus-visible {
         background: rgba(255,255,255,.08);
       }
-      html.dark .codex-project-move-item-path,
-      html[data-theme="dark"] .codex-project-move-item-path,
-      :root[data-theme="dark"] .codex-project-move-item-path,
-      html.dark .codex-project-move-empty,
-      html[data-theme="dark"] .codex-project-move-empty,
-      :root[data-theme="dark"] .codex-project-move-empty {
+      html.dark .agentkey-project-move-item-path,
+      html[data-theme="dark"] .agentkey-project-move-item-path,
+      :root[data-theme="dark"] .agentkey-project-move-item-path,
+      html.dark .agentkey-project-move-empty,
+      html[data-theme="dark"] .agentkey-project-move-empty,
+      :root[data-theme="dark"] .agentkey-project-move-empty {
         color: #9ca3af;
       }
       @media (prefers-color-scheme: dark) {
@@ -523,24 +523,24 @@
         html:not(.light):not([data-theme="light"]) .${projectMoveOverlayClass} {
           background: rgba(0,0,0,.55);
         }
-        html:not(.light):not([data-theme="light"]) .codex-project-move-panel {
+        html:not(.light):not([data-theme="light"]) .agentkey-project-move-panel {
           border-color: rgba(255,255,255,.12);
           background: #2b2b2b;
           color: #f3f4f6;
           box-shadow: 0 18px 60px rgba(0,0,0,.55);
         }
-        html:not(.light):not([data-theme="light"]) .codex-project-move-header {
+        html:not(.light):not([data-theme="light"]) .agentkey-project-move-header {
           border-bottom-color: rgba(255,255,255,.1);
         }
-        html:not(.light):not([data-theme="light"]) .codex-project-move-item {
+        html:not(.light):not([data-theme="light"]) .agentkey-project-move-item {
           color: #f3f4f6;
         }
-        html:not(.light):not([data-theme="light"]) .codex-project-move-item:hover,
-        html:not(.light):not([data-theme="light"]) .codex-project-move-item:focus-visible {
+        html:not(.light):not([data-theme="light"]) .agentkey-project-move-item:hover,
+        html:not(.light):not([data-theme="light"]) .agentkey-project-move-item:focus-visible {
           background: rgba(255,255,255,.08);
         }
-        html:not(.light):not([data-theme="light"]) .codex-project-move-item-path,
-        html:not(.light):not([data-theme="light"]) .codex-project-move-empty {
+        html:not(.light):not([data-theme="light"]) .agentkey-project-move-item-path,
+        html:not(.light):not([data-theme="light"]) .agentkey-project-move-empty {
           color: #9ca3af;
         }
       }
@@ -4224,7 +4224,7 @@
 
   function readLegacyProjectMoveProjection() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(legacyProjectMoveOverridesKey) || "{}");
+      const parsed = JSON.parse(localStorage.getItem(legacyAgentKeyProjectMoveOverridesKey) || "{}");
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
       const now = Date.now();
       const next = {};
@@ -4284,10 +4284,10 @@
   function writeProjectMoveProjection(projection) {
     try {
       localStorage.setItem(projectMoveProjectionKey, JSON.stringify(projection || {}));
-      localStorage.removeItem(legacyProjectMoveOverridesKey);
+      localStorage.removeItem(legacyAgentKeyProjectMoveOverridesKey);
     } catch (error) {
-      window.__codexProjectMoveProjectionFailures = window.__codexProjectMoveProjectionFailures || [];
-      window.__codexProjectMoveProjectionFailures.push(String(error?.stack || error));
+      window.__agentKeyProjectMoveProjectionFailures = window.__agentKeyProjectMoveProjectionFailures || [];
+      window.__agentKeyProjectMoveProjectionFailures.push(String(error?.stack || error));
     }
   }
 
@@ -4410,7 +4410,7 @@
     let current = node?.parentElement || null;
     while (current && current !== root && current !== row) {
       const className = classNameText(current);
-      if (current.dataset?.codexProjectMoveTimeWrapper === "true" || (className.includes("ml-[3px]") && className.includes("min-w-[26px]"))) return current;
+      if (current.dataset?.agentKeyProjectMoveTimeWrapper === "true" || (className.includes("ml-[3px]") && className.includes("min-w-[26px]"))) return current;
       current = current.parentElement;
     }
     return null;
@@ -4430,18 +4430,18 @@
   }
 
   function cleanupManagedStatusIconTimeNodes(row) {
-    Array.from(row?.querySelectorAll?.('[data-codex-project-move-time="true"]') || []).forEach((node) => {
+    Array.from(row?.querySelectorAll?.('[data-agentkey-project-move-time="true"]') || []).forEach((node) => {
       if (!nodeInsideStatusIcon(row, node)) return;
       const text = normalizedText(node);
-      delete node.dataset.codexProjectMoveTime;
-      delete node.dataset.codexProjectMoveTimeMs;
+      delete node.dataset.agentKeyProjectMoveTime;
+      delete node.dataset.agentKeyProjectMoveTimeMs;
       if (node.children.length === 0 && isRelativeTimeText(text)) node.textContent = "";
     });
   }
 
   function nodeLooksLikeTimeLabel(row, node) {
     if (nodeInsideStatusIcon(row, node)) return false;
-    if (node?.dataset?.codexProjectMoveTime === "true") return true;
+    if (node?.dataset?.agentKeyProjectMoveTime === "true") return true;
     if (node.children.length > 0) return false;
     const text = normalizedText(node);
     const className = classNameText(node);
@@ -4465,12 +4465,12 @@
 
   function rowTimeLabelNode(row) {
     const candidates = rowTimeLabelCandidates(row);
-    return candidates.find((node) => node.dataset?.codexProjectMoveTime !== "true" && !node.closest?.('[data-codex-project-move-time-wrapper="true"]')) || candidates[0] || null;
+    return candidates.find((node) => node.dataset?.agentKeyProjectMoveTime !== "true" && !node.closest?.('[data-agentkey-project-move-time-wrapper="true"]')) || candidates[0] || null;
   }
 
   function removeTimeLabelNode(row, node) {
     if (!node || !row?.contains?.(node)) return;
-    const wrapper = node.closest?.('[data-codex-project-move-time-wrapper="true"]') || closestTimeWrapper(row, node);
+    const wrapper = node.closest?.('[data-agentkey-project-move-time-wrapper="true"]') || closestTimeWrapper(row, node);
     if (wrapper && wrapper !== row && row.contains(wrapper)) {
       wrapper.remove();
       return;
@@ -4482,7 +4482,7 @@
     if (!keepNode) return;
     rowTimeLabelCandidates(row).forEach((node) => {
       if (node === keepNode) return;
-      if (node.dataset?.codexProjectMoveTime === "true" || node.closest?.('[data-codex-project-move-time-wrapper="true"]')) removeTimeLabelNode(row, node);
+      if (node.dataset?.agentKeyProjectMoveTime === "true" || node.closest?.('[data-agentkey-project-move-time-wrapper="true"]')) removeTimeLabelNode(row, node);
     });
   }
 
@@ -4496,11 +4496,11 @@
     if (!root) return null;
     const wrapper = document.createElement("div");
     wrapper.className = "ml-[3px] flex items-center justify-end gap-1 min-w-[26px]";
-    wrapper.dataset.codexProjectMoveTimeWrapper = "true";
+    wrapper.dataset.agentKeyProjectMoveTimeWrapper = "true";
     const inner = document.createElement("div");
     const label = document.createElement("div");
     label.className = "text-token-description-foreground text-sm leading-4 empty:hidden tabular-nums overflow-visible truncate text-right group-focus-within:opacity-0 group-hover:opacity-0";
-    label.dataset.codexProjectMoveTime = "true";
+    label.dataset.agentKeyProjectMoveTime = "true";
     inner.appendChild(label);
     wrapper.appendChild(inner);
     root.appendChild(wrapper);
@@ -4512,18 +4512,18 @@
     if (!label) return;
     const timestamp = numericTimestamp(sortMs);
     const text = relativeTimeLabel(timestamp);
-    label.dataset.codexProjectMoveTime = "true";
-    label.dataset.codexProjectMoveTimeMs = String(timestamp || 0);
+    label.dataset.agentKeyProjectMoveTime = "true";
+    label.dataset.agentKeyProjectMoveTimeMs = String(timestamp || 0);
     if (text && label.textContent !== text) label.textContent = text;
     cleanupRowTimeLabels(row, label);
   }
 
   function rowProjectionKind(row) {
-    return row?.dataset?.codexProjectMoveTargetKind || rowListItem(row)?.dataset?.codexProjectMoveTargetKind || "";
+    return row?.dataset?.agentKeyProjectMoveTargetKind || rowListItem(row)?.dataset?.agentKeyProjectMoveTargetKind || "";
   }
 
   function rowSortMs(row, ref = sessionRefFromRow(row), target = null) {
-    return sortMsForSession(ref.session_id, target?.sortMs || row?.dataset?.codexProjectMoveSortMs || rowListItem(row)?.dataset?.codexProjectMoveSortMs);
+    return sortMsForSession(ref.session_id, target?.sortMs || row?.dataset?.agentKeyProjectMoveSortMs || rowListItem(row)?.dataset?.agentKeyProjectMoveSortMs);
   }
 
   function threadRowFromListItem(item) {
@@ -4539,8 +4539,8 @@
   function insertRowItemByTime(list, item, row, target) {
     const ref = sessionRefFromRow(row);
     const sortMs = rowSortMs(row, ref, target);
-    item.dataset.codexProjectMoveSortMs = String(sortMs || 0);
-    row.dataset.codexProjectMoveSortMs = String(sortMs || 0);
+    item.dataset.agentKeyProjectMoveSortMs = String(sortMs || 0);
+    row.dataset.agentKeyProjectMoveSortMs = String(sortMs || 0);
     if (target?.sortMsTrusted) updateRowTimeLabel(row, sortMs);
     const pinned = rowPinned(row);
     const sessionKey = projectMoveSessionKey(ref.session_id);
@@ -4574,12 +4574,12 @@
   }
 
   function projectMoveInjectedList(projectItem) {
-    let list = projectItem.querySelector('[data-codex-project-move-injected-list="true"]');
+    let list = projectItem.querySelector('[data-agentkey-project-move-injected-list="true"]');
     if (!list) {
       const body = Array.from(projectItem.children).find((child) => child.classList?.contains("overflow-hidden")) || projectItem;
       list = document.createElement("div");
       list.setAttribute("role", "list");
-      list.setAttribute("data-codex-project-move-injected-list", "true");
+      list.setAttribute("data-agentkey-project-move-injected-list", "true");
       list.className = "flex flex-col";
       body.appendChild(list);
     }
@@ -4598,7 +4598,7 @@
     const emptyLabels = new Set(["暂无对话", "No conversations"]);
     return Array.from(projectItem.querySelectorAll("div, span")).filter((node) => {
       if (node.classList?.contains("overflow-hidden")) return false;
-      if (node.closest('[data-app-action-sidebar-thread-id], [data-codex-project-move-injected-list="true"]')) return false;
+      if (node.closest('[data-app-action-sidebar-thread-id], [data-agentkey-project-move-injected-list="true"]')) return false;
       return emptyLabels.has(normalizeProjectLabel(node.textContent));
     });
   }
@@ -4606,28 +4606,28 @@
   function setProjectEmptyStateHidden(projectItem, hidden) {
     projectEmptyStateNodes(projectItem).forEach((node) => {
       if (hidden) {
-        node.dataset.codexProjectMoveEmptyHidden = "true";
-        node.classList.add("codex-project-move-hidden");
-      } else if (node.dataset.codexProjectMoveEmptyHidden === "true") {
-        delete node.dataset.codexProjectMoveEmptyHidden;
-        node.classList.remove("codex-project-move-hidden");
+        node.dataset.agentKeyProjectMoveEmptyHidden = "true";
+        node.classList.add("agentkey-project-move-hidden");
+      } else if (node.dataset.agentKeyProjectMoveEmptyHidden === "true") {
+        delete node.dataset.agentKeyProjectMoveEmptyHidden;
+        node.classList.remove("agentkey-project-move-hidden");
       }
     });
   }
 
   function updateProjectMoveEmptyStates() {
-    document.querySelectorAll('[data-codex-project-move-injected-list="true"]').forEach((list) => {
+    document.querySelectorAll('[data-agentkey-project-move-injected-list="true"]').forEach((list) => {
       const projectItem = list.closest('[role="listitem"][aria-label]');
       const hasRows = Array.from(list.children).some((child) => child.querySelector?.("[data-app-action-sidebar-thread-id]") || child.matches?.("[data-app-action-sidebar-thread-id]"));
       if (!hasRows) list.remove();
       if (projectItem) setProjectEmptyStateHidden(projectItem, hasRows);
     });
-    document.querySelectorAll('[data-codex-project-move-empty-hidden="true"]').forEach((node) => {
+    document.querySelectorAll('[data-agentkey-project-move-empty-hidden="true"]').forEach((node) => {
       const projectItem = node.closest('[role="listitem"][aria-label]');
-      const list = projectItem?.querySelector?.('[data-codex-project-move-injected-list="true"]');
+      const list = projectItem?.querySelector?.('[data-agentkey-project-move-injected-list="true"]');
       if (!list || list.children.length === 0) {
-        delete node.dataset.codexProjectMoveEmptyHidden;
-        node.classList.remove("codex-project-move-hidden");
+        delete node.dataset.agentKeyProjectMoveEmptyHidden;
+        node.classList.remove("agentkey-project-move-hidden");
       }
     });
   }
@@ -4640,10 +4640,10 @@
     if (!list) return false;
     insertRowItemByTime(list, item, row, target);
     cachedSessionRowsAt = 0;
-    item.dataset.codexProjectMoveTargetKind = "project";
-    item.dataset.codexProjectMoveTargetCwd = targetPath(target);
-    row.dataset.codexProjectMoveTargetKind = "project";
-    row.dataset.codexProjectMoveTargetCwd = targetPath(target);
+    item.dataset.agentKeyProjectMoveTargetKind = "project";
+    item.dataset.agentKeyProjectMoveTargetCwd = targetPath(target);
+    row.dataset.agentKeyProjectMoveTargetKind = "project";
+    row.dataset.agentKeyProjectMoveTargetCwd = targetPath(target);
     setProjectEmptyStateHidden(projectItem, true);
     return true;
   }
@@ -4654,10 +4654,10 @@
     const item = rowListItem(row);
     insertRowItemByTime(list, item, row, target);
     cachedSessionRowsAt = 0;
-    item.dataset.codexProjectMoveTargetKind = "projectless";
-    row.dataset.codexProjectMoveTargetKind = "projectless";
-    delete item.dataset.codexProjectMoveTargetCwd;
-    delete row.dataset.codexProjectMoveTargetCwd;
+    item.dataset.agentKeyProjectMoveTargetKind = "projectless";
+    row.dataset.agentKeyProjectMoveTargetKind = "projectless";
+    delete item.dataset.agentKeyProjectMoveTargetCwd;
+    delete row.dataset.agentKeyProjectMoveTargetCwd;
     updateProjectMoveEmptyStates();
     return true;
   }
@@ -4699,10 +4699,10 @@
       const target = projectionForSessionId(ref.session_id, projection);
       if (!target) {
         const item = rowListItem(row);
-        delete row.dataset.codexProjectMoveTargetKind;
-        delete row.dataset.codexProjectMoveTargetCwd;
-        delete item.dataset.codexProjectMoveTargetKind;
-        delete item.dataset.codexProjectMoveTargetCwd;
+        delete row.dataset.agentKeyProjectMoveTargetKind;
+        delete row.dataset.agentKeyProjectMoveTargetCwd;
+        delete item.dataset.agentKeyProjectMoveTargetKind;
+        delete item.dataset.agentKeyProjectMoveTargetCwd;
         return;
       }
       if (rowIsUnderTarget(row, target)) return;
@@ -4718,10 +4718,10 @@
   }
 
   function scheduleProjectMoveProjection() {
-    if (!agentKeySettings().projectMove || window.__codexProjectMoveProjectionTimer) return;
-    window.__codexProjectMoveProjectionTimer = setTimeout(() => {
-      if (window.__codexProjectMoveRuntimeId !== codexProjectMoveRuntimeId) return;
-      window.__codexProjectMoveProjectionTimer = null;
+    if (!agentKeySettings().projectMove || window.__agentKeyProjectMoveProjectionTimer) return;
+    window.__agentKeyProjectMoveProjectionTimer = setTimeout(() => {
+      if (window.__agentKeyProjectMoveRuntimeId !== agentKeyProjectMoveRuntimeId) return;
+      window.__agentKeyProjectMoveProjectionTimer = null;
       applyProjectMoveProjection();
     }, 80);
   }
@@ -4731,8 +4731,8 @@
       const signals = await import("./assets/app-server-manager-signals-C1h8B-R-.js");
       if (typeof signals.rn === "function") await signals.rn("refresh-recent-conversations-for-host", { hostId: "local", sortKey: "updated_at" });
     } catch (error) {
-      window.__codexProjectMoveRefreshFailures = window.__codexProjectMoveRefreshFailures || [];
-      window.__codexProjectMoveRefreshFailures.push(String(error?.stack || error));
+      window.__agentKeyProjectMoveRefreshFailures = window.__agentKeyProjectMoveRefreshFailures || [];
+      window.__agentKeyProjectMoveRefreshFailures.push(String(error?.stack || error));
     }
   }
 
@@ -4802,7 +4802,7 @@
     if (rows.length < 2) return;
     const refs = rows.map(sessionRefFromRow).filter((ref) => ref.session_id);
     const signature = refs.map((ref) => projectMoveSessionKey(ref.session_id)).join("|");
-    const allRowsHaveSortMs = rows.every((row) => numericTimestamp(row.dataset.codexProjectMoveSortMs || rowListItem(row).dataset.codexProjectMoveSortMs));
+    const allRowsHaveSortMs = rows.every((row) => numericTimestamp(row.dataset.agentKeyProjectMoveSortMs || rowListItem(row).dataset.agentKeyProjectMoveSortMs));
     const shouldRefreshSortKeys = signature !== chatsSortSignature || !allRowsHaveSortMs || Date.now() - chatsSortLastFetchAt > chatsSortDbRefreshIntervalMs;
     if (!shouldRefreshSortKeys && !chatsSortNeedsCorrection(rows)) return;
     chatsSortInFlight = true;
@@ -4821,9 +4821,9 @@
           const ref = sessionRefFromRow(row);
           const payload = byId.get(projectMoveSessionKey(ref.session_id));
           const trustedSortMs = timestampMsFromPayload(payload);
-          const sortMs = trustedSortMs || sortMsForSession(ref.session_id, row.dataset.codexProjectMoveSortMs || rowListItem(row).dataset.codexProjectMoveSortMs);
-          row.dataset.codexProjectMoveSortMs = String(sortMs || 0);
-          rowListItem(row).dataset.codexProjectMoveSortMs = String(sortMs || 0);
+          const sortMs = trustedSortMs || sortMsForSession(ref.session_id, row.dataset.agentKeyProjectMoveSortMs || rowListItem(row).dataset.agentKeyProjectMoveSortMs);
+          row.dataset.agentKeyProjectMoveSortMs = String(sortMs || 0);
+          rowListItem(row).dataset.agentKeyProjectMoveSortMs = String(sortMs || 0);
           if (trustedSortMs) updateRowTimeLabel(row, trustedSortMs);
         });
       }
@@ -4835,13 +4835,13 @@
   }
 
   function scheduleChatsSortCorrection(delay = chatsSortRefreshIntervalMs) {
-    if (!agentKeySettings().projectMove || window.__codexProjectMoveChatsSortTimer) return;
-    window.__codexProjectMoveChatsSortTimer = setTimeout(() => {
-      if (window.__codexProjectMoveRuntimeId !== codexProjectMoveRuntimeId) return;
-      window.__codexProjectMoveChatsSortTimer = null;
+    if (!agentKeySettings().projectMove || window.__agentKeyProjectMoveChatsSortTimer) return;
+    window.__agentKeyProjectMoveChatsSortTimer = setTimeout(() => {
+      if (window.__agentKeyProjectMoveRuntimeId !== agentKeyProjectMoveRuntimeId) return;
+      window.__agentKeyProjectMoveChatsSortTimer = null;
       applyChatsSortCorrection().catch((error) => {
-        window.__codexProjectMoveSortFailures = window.__codexProjectMoveSortFailures || [];
-        window.__codexProjectMoveSortFailures.push(String(error?.stack || error));
+        window.__agentKeyProjectMoveSortFailures = window.__agentKeyProjectMoveSortFailures || [];
+        window.__agentKeyProjectMoveSortFailures.push(String(error?.stack || error));
       }).finally(() => {
         if (agentKeySettings().projectMove) scheduleChatsSortCorrection();
       });
@@ -5957,14 +5957,14 @@
     const overlay = document.createElement("div");
     overlay.className = projectMoveOverlayClass;
     overlay.innerHTML = `
-      <div class="codex-project-move-panel" role="dialog" aria-modal="true" aria-label="移动对话">
-        <div class="codex-project-move-header">
-          <div class="codex-project-move-title">移动“${escapeHtml(ref.title || ref.session_id)}”</div>
+      <div class="agentkey-project-move-panel" role="dialog" aria-modal="true" aria-label="移动对话">
+        <div class="agentkey-project-move-header">
+          <div class="agentkey-project-move-title">移动“${escapeHtml(ref.title || ref.session_id)}”</div>
         </div>
-        <div class="codex-project-move-list"><div class="codex-project-move-empty">加载项目中...</div></div>
+        <div class="agentkey-project-move-list"><div class="agentkey-project-move-empty">加载项目中...</div></div>
       </div>
     `;
-    const panel = overlay.querySelector(".codex-project-move-panel");
+    const panel = overlay.querySelector(".agentkey-project-move-panel");
     const rect = button.getBoundingClientRect();
     const panelWidth = Math.min(360, Math.max(240, window.innerWidth - 32));
     panel.style.left = `${Math.max(16, Math.min(window.innerWidth - panelWidth - 16, rect.right - panelWidth))}px`;
@@ -5982,20 +5982,20 @@
     document.body.appendChild(overlay);
     try {
       const targets = projectMoveTargets();
-      const list = overlay.querySelector(".codex-project-move-list");
+      const list = overlay.querySelector(".agentkey-project-move-list");
       if (!list) return;
       list.innerHTML = "";
       if (targets.length === 0) {
-        list.innerHTML = `<div class="codex-project-move-empty">没有可用目标</div>`;
+        list.innerHTML = `<div class="agentkey-project-move-empty">没有可用目标</div>`;
         return;
       }
       for (const target of targets) {
         const item = document.createElement("button");
         item.type = "button";
-        item.className = "codex-project-move-item";
+        item.className = "agentkey-project-move-item";
         item.innerHTML = `
-          <div class="codex-project-move-item-title">${escapeHtml(target.label)}</div>
-          <div class="codex-project-move-item-path">${escapeHtml(target.description)}</div>
+          <div class="agentkey-project-move-item-title">${escapeHtml(target.label)}</div>
+          <div class="agentkey-project-move-item-path">${escapeHtml(target.description)}</div>
         `;
         item.addEventListener("click", async (selectEvent) => {
           selectEvent.preventDefault();
@@ -6251,7 +6251,7 @@
     if (!settings.sessionDelete && !settings.markdownExport && !settings.projectMove) {
       removeActionGroups(row);
       row.dataset.agentKeyDeleteRow = "false";
-      row.dataset.codexProjectMoveRow = "false";
+      row.dataset.agentKeyProjectMoveRow = "false";
       return;
     }
     const existingGroup = actionGroupFromRow(row);
@@ -6274,11 +6274,11 @@
     }
     removeActionGroups(row);
     row.dataset.agentKeyDeleteRow = "false";
-    row.dataset.codexProjectMoveRow = "false";
+    row.dataset.agentKeyProjectMoveRow = "false";
     const ref = sessionRefFromRow(row);
     if (!ref.session_id) return;
     row.dataset.agentKeyDeleteRow = "true";
-    row.dataset.codexProjectMoveRow = String(!!settings.projectMove);
+    row.dataset.agentKeyProjectMoveRow = String(!!settings.projectMove);
     const group = document.createElement("div");
     group.className = actionGroupClass;
     group.dataset.codexActionGroupVersion = codexActionGroupVersion;
@@ -7756,7 +7756,7 @@
       selectors.sidebarThread,
       '[data-app-action-sidebar-section-heading="Chats"]',
       '[data-app-action-sidebar-section-heading="Projects"]',
-      '[data-codex-project-move-row="true"]',
+      '[data-agentkey-project-move-row="true"]',
       '[data-agentkey-archive-page-row="true"]',
       "[data-agentkey-archive-delete-all]",
       '[data-message-author-role]',
@@ -7827,10 +7827,10 @@
   installUpstreamBranchDropdownAdapter();
   installUpstreamWorktreeNativeAdapter();
   scan();
-  window.__codexProjectMoveApplyProjection = applyProjectMoveProjection;
-  window.__codexProjectMoveReadProjection = readProjectMoveProjection;
-  window.__codexProjectMoveTargets = projectMoveTargets;
-  window.__codexProjectMoveSortChats = applyChatsSortCorrection;
+  window.__agentKeyProjectMoveApplyProjection = applyProjectMoveProjection;
+  window.__agentKeyProjectMoveReadProjection = readProjectMoveProjection;
+  window.__agentKeyProjectMoveTargets = projectMoveTargets;
+  window.__agentKeyProjectMoveSortChats = applyChatsSortCorrection;
   window.removeEventListener("resize", window.__agentKeyResizeHandler);
   let agentKeyResizeRafId = 0;
   window.__agentKeyResizeHandler = () => {
