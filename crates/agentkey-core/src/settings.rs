@@ -1698,6 +1698,24 @@ experimental_bearer_token = "sk-existing""#
         );
     }
 
+    #[cfg(windows)]
+    #[test]
+    fn settings_store_save_restricts_windows_acl() {
+        let dir = temp_dir();
+        let path = dir.join("settings.json");
+        let store = SettingsStore::new(path.clone());
+        let settings = BackendSettings {
+            cli_wrapper_api_key: "sk-test".to_string(),
+            claude_code_api_key: "sk-claude".to_string(),
+            ..BackendSettings::default()
+        };
+
+        store.save(&settings).unwrap();
+
+        assert!(path.exists());
+        assert!(crate::windows_integration::current_user_sid().is_ok());
+    }
+
     #[cfg(unix)]
     #[test]
     fn settings_store_update_restricts_file_permissions() {

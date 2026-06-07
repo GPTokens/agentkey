@@ -53,6 +53,16 @@ pub fn harden_sensitive_file(path: &std::path::Path) -> anyhow::Result<()> {
     {
         use anyhow::Context;
 
+        if let Some(parent) = path.parent() {
+            windows_integration::restrict_path_to_current_user(parent).with_context(|| {
+                format!(
+                    "failed to restrict sensitive directory {}",
+                    parent.display()
+                )
+            })?;
+        }
+        windows_integration::restrict_path_to_current_user(path)
+            .with_context(|| format!("failed to restrict sensitive file {}", path.display()))?;
         windows_integration::hide_file(path)
             .with_context(|| format!("failed to hide sensitive file {}", path.display()))?;
     }

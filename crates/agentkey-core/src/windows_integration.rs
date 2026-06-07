@@ -6,13 +6,15 @@ use std::iter::once;
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 #[cfg(windows)]
 use std::path::PathBuf;
+#[cfg(windows)]
+use std::process::Command;
 
 #[cfg(windows)]
 use anyhow::Context;
 #[cfg(windows)]
 use windows::Win32::Foundation::{BOOL, CloseHandle, HANDLE, HWND, LPARAM, MAX_PATH};
 #[cfg(windows)]
-use windows::Win32::Storage::FileSystem::{SetFileAttributesW, FILE_ATTRIBUTE_HIDDEN};
+use windows::Win32::Storage::FileSystem::{FILE_ATTRIBUTE_HIDDEN, SetFileAttributesW};
 #[cfg(windows)]
 use windows::Win32::System::Com::{
     CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, CoCreateInstance, CoInitializeEx,
@@ -144,6 +146,54 @@ pub fn hide_file(path: &std::path::Path) -> anyhow::Result<()> {
         .context("设置隐藏文件属性失败")?;
     }
     Ok(())
+}
+
+#[cfg(windows)]
+pub fn restrict_path_to_current_user(path: &std::path::Path) -> anyhow::Result<()> {
+    let sid = current_user_sid()?;
+    let output = Command::new("icacls")
+        .arg(path)
+        .arg("/inheritance:r")
+        .arg("/grant:r")
+        .arg(format!("*{sid}:F"))
+        .output()
+        .with_context(|| format!("收紧 {} 的访问权限失败", path.display()))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        anyhow::bail!("icacls failed for {}: {}", path.display(), stderr.trim());
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+pub fn current_user_sid() -> anyhow::Result<String> {
+    let output = Command::new("whoami")
+        .args(["/user", "/fo", "csv", "/nh"])
+        .output()
+        .context("读取当前 Windows 用户 SID 失败")?;
+    if !output.status.success() {
+        anyhow::bail!("whoami /user failed");
+    }
+    let text = String::from_utf8_lossy(&output.stdout);
+    let sid = text
+        .lines()
+        .find_map(parse_whoami_user_csv_sid)
+        .ok_or_else(|| anyhow::anyhow!("无法解析当前 Windows 用户 SID"))?;
+    Ok(sid.to_string())
+}
+
+#[cfg(windows)]
+fn parse_whoami_user_csv_sid(line: &str) -> Option<&str> {
+    let mut fields = line.split('"');
+    let _ = fields.next()?;
+    let _user = fields.next()?;
+    let _ = fields.next()?;
+    let sid = fields.next()?.trim();
+    if sid.starts_with("S-1-") {
+        Some(sid)
+    } else {
+        None
+    }
 }
 
 #[cfg(windows)]
@@ -399,5 +449,19 @@ struct RegistryKeyGuard(HKEY);
 impl Drop for RegistryKeyGuard {
     fn drop(&mut self) {
         let _ = unsafe { RegCloseKey(self.0) };
+    }
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_current_user_sid_from_whoami_csv() {
+        assert_eq!(
+            parse_whoami_user_csv_sid(r#""DESKTOP\alice","S-1-5-21-1-2-3-1001""#),
+            Some("S-1-5-21-1-2-3-1001")
+        );
+        assert_eq!(parse_whoami_user_csv_sid(r#""DESKTOP\alice","bad""#), None);
     }
 }
