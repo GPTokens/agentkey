@@ -186,7 +186,7 @@ fn command_contains_secret_marker(value: &str) -> bool {
         .filter(|ch| *ch != '-' && *ch != '_')
         .collect::<String>()
         .to_ascii_lowercase();
-    [
+    let contains_marker = [
         "apikey",
         "authtoken",
         "authorization",
@@ -195,7 +195,22 @@ fn command_contains_secret_marker(value: &str) -> bool {
         "secret",
     ]
     .iter()
-    .any(|marker| normalized.contains(marker))
+    .any(|marker| normalized.contains(marker));
+    let contains_token_prefix = [
+        "sk-",
+        "sk_",
+        "gsk_",
+        "xai-",
+        "hf_",
+        "AIza",
+        "ya29.",
+        "gho_",
+        "ghp_",
+        "github_pat_",
+    ]
+    .iter()
+    .any(|prefix| value.contains(prefix));
+    contains_marker || contains_token_prefix
 }
 
 fn parse_extra_env(contents: &str) -> anyhow::Result<Vec<(String, String)>> {
@@ -213,9 +228,7 @@ fn parse_extra_env(contents: &str) -> anyhow::Result<Vec<(String, String)>> {
             anyhow::bail!("Claude Code 额外环境变量名无效：{key}");
         }
         if is_managed_env_key(key) {
-            anyhow::bail!(
-                "Claude Code 额外环境变量不能覆盖 AgentKey 托管变量：{key}"
-            );
+            anyhow::bail!("Claude Code 额外环境变量不能覆盖 AgentKey 托管变量：{key}");
         }
         validate_process_value(key, value)?;
         vars.push((key.to_string(), value.trim().to_string()));
@@ -268,6 +281,24 @@ mod tests {
             claude_code_command_for_display("claude --api-key sk-test"),
             "[REDACTED_COMMAND]"
         );
+    }
+
+    #[test]
+    fn command_rejects_bare_secret_like_values() {
+        for command in [
+            "claude sk-live-secret",
+            "claude gsk_live_secret",
+            "claude xai-test-secret",
+            "claude hf_test_secret",
+            "claude github_pat_secret",
+        ] {
+            let error = validated_command(command).unwrap_err();
+            assert!(error.to_string().contains("API Key"));
+            assert_eq!(
+                claude_code_command_for_display(command),
+                "[REDACTED_COMMAND]"
+            );
+        }
     }
 
     #[test]
