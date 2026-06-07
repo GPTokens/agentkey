@@ -112,6 +112,7 @@ fn is_sensitive_key(key: &str) -> bool {
         || normalized.contains("authorization")
         || normalized.contains("authcontents")
         || normalized.contains("configcontents")
+        || normalized.contains("extraenv")
         || normalized.contains("token")
         || normalized == "password"
         || normalized == "secret"
@@ -353,6 +354,21 @@ mod tests {
 
         assert_eq!(redacted["configContents"], "[REDACTED]");
         assert_eq!(redacted["authContents"], "[REDACTED]");
+        assert_eq!(redacted["safe"], "visible");
+    }
+
+    #[test]
+    fn redacts_extra_env_fields() {
+        let redacted = redact_diagnostic_value(json!({
+            "claudeCodeExtraEnv": "CUSTOM_SECRET=plain-secret",
+            "nested": {
+                "extraEnv": "VENDOR_KEY=plain-secret"
+            },
+            "safe": "visible"
+        }));
+
+        assert_eq!(redacted["claudeCodeExtraEnv"], "[REDACTED]");
+        assert_eq!(redacted["nested"]["extraEnv"], "[REDACTED]");
         assert_eq!(redacted["safe"], "visible");
     }
 
