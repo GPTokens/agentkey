@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use rusqlite::Connection;
 use serde_json::{Value, json};
 
-use super::{ZedRemoteError, codex_global_state_path, resolve_ssh_target_from_global_state};
+use super::{ZedRemoteError, agentkey_global_state_path, resolve_ssh_target_from_global_state};
 
 fn string_value(value: Option<&Value>) -> String {
     match value {
@@ -15,7 +15,7 @@ fn string_value(value: Option<&Value>) -> String {
     }
 }
 
-fn codex_sqlite_state_path() -> PathBuf {
+fn agentkey_sqlite_state_path() -> PathBuf {
     env::var_os("CODEX_HOME")
         .map(PathBuf::from)
         .or_else(|| {
@@ -105,7 +105,7 @@ pub fn workspace_root_from_sqlite(thread_id: &str, state_path: Option<&Path>) ->
     }
     let path = state_path
         .map(Path::to_path_buf)
-        .unwrap_or_else(codex_sqlite_state_path);
+        .unwrap_or_else(agentkey_sqlite_state_path);
     if !path.is_file() {
         return String::new();
     }
@@ -271,7 +271,7 @@ pub fn fallback_open_request_response(payload: &Value) -> Value {
         .or_else_nonempty(|| string_value(payload.get("path")));
     let remote_project_id = string_value(payload.get("remoteProjectId"))
         .or_else_nonempty(|| string_value(payload.get("projectId")));
-    let path = codex_global_state_path();
+    let path = agentkey_global_state_path();
     let result = fs::read_to_string(path)
         .map_err(ZedRemoteError::StateRead)
         .and_then(|data| serde_json::from_str::<Value>(&data).map_err(ZedRemoteError::StateParse))

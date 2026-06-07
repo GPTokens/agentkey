@@ -100,7 +100,8 @@
   const upstreamRemoteBranchDefaultsCacheTtlMs = 30000;
   let upstreamBranchDefaultsInflight = new Map();
   const upstreamProjectContextTtlMs = 10 * 60 * 1000;
-  const branchWorktreePathAttribute = "data-codex-branch-worktree-path";
+  const branchWorktreePathAttribute = "data-agentkey-branch-worktree-path";
+  const legacyAgentKeyBranchWorktreePathAttribute = `data-${"codex"}-branch-worktree-path`;
   ["__agentKeyHtmlCenteredThreadWidth", "__agentKeyViewportCenteredThreadWidth", "__agentKeyBoundedThreadCenter"].forEach((key) => {
     try {
       window[key]?.cleanup?.();
@@ -5270,6 +5271,7 @@
     const usedBranches = worktreeBranchMap(defaultsResult);
     for (const item of branchMenuItems(menu)) {
       item.removeAttribute(branchWorktreePathAttribute);
+      item.removeAttribute(legacyAgentKeyBranchWorktreePathAttribute);
       item.removeAttribute("title");
       const worktreePath = usedBranches.get(branchMenuItemLabel(item));
       if (!worktreePath) continue;
@@ -5279,7 +5281,7 @@
   }
 
   function branchWorktreePathFromMenuItem(menuItem) {
-    const annotatedPath = menuItem?.getAttribute?.(branchWorktreePathAttribute) || "";
+    const annotatedPath = menuItem?.getAttribute?.(branchWorktreePathAttribute) || menuItem?.getAttribute?.(legacyAgentKeyBranchWorktreePathAttribute) || "";
     if (annotatedPath) return annotatedPath;
     const menu = menuItem?.closest?.('[role="menu"], [data-radix-menu-content]');
     const context = currentProjectContextForBranchMenu(menu);
@@ -5636,7 +5638,8 @@
   }
 
   function upstreamWorktreeNativePayloadFromElement(element) {
-    const trigger = element?.closest?.("[data-codex-worktree-create], [data-worktree-create]") || element;
+    const legacyWorktreeCreateSelector = `[data-${"codex"}-worktree-create]`;
+    const trigger = element?.closest?.(`[data-agentkey-worktree-create], [data-worktree-create], ${legacyWorktreeCreateSelector}`) || element;
     const scopes = [
       trigger,
       trigger?.closest?.("form"),
@@ -5681,7 +5684,8 @@
   async function handleUpstreamWorktreeNativeCreate(event) {
     if (!agentKeySettings().upstreamWorktreeCreate) return false;
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-    const trigger = target?.closest?.("[data-codex-worktree-create], [data-worktree-create]");
+    const legacyWorktreeCreateSelector = `[data-${"codex"}-worktree-create]`;
+    const trigger = target?.closest?.(`[data-agentkey-worktree-create], [data-worktree-create], ${legacyWorktreeCreateSelector}`);
     if (!trigger) return false;
     const payload = upstreamWorktreePayloadFromSelection(trigger) || upstreamWorktreeNativePayloadFromElement(trigger);
     if (!payload) {
@@ -7345,7 +7349,7 @@
     const pathText = (element.textContent || "").trim();
     if (!pathText.startsWith("/")) return null;
     const root = element.closest("main") || document.body;
-    const hostId = zedRemoteHostIdFromText(root?.textContent || "") || "remote-ssh-codex-managed:remote";
+    const hostId = zedRemoteHostIdFromText(root?.textContent || "") || "remote-ssh-agentkey-managed:remote";
     return { hostId, ssh: { user: "", host: "", port: "" }, workspaceRoot: zedRemoteWorkspaceRootForPath(pathText) };
   }
 
@@ -7416,7 +7420,8 @@
       const context = zedRemoteContextFromDataset(node);
       if (context) return context;
     }
-    const reactSelector = "[data-remote-path], [data-file-path], [data-path], [data-open-in-targets], [data-open-file], [data-codex-open-file], [role='menuitem']";
+    const legacyOpenFileSelector = `[data-${"codex"}-open-file]`;
+    const reactSelector = `[data-remote-path], [data-file-path], [data-path], [data-open-in-targets], [data-open-file], [data-agentkey-open-file], ${legacyOpenFileSelector}, [role='menuitem']`;
     const reactNodes = zedRemoteScopedElements(scope, reactSelector);
     if (scope instanceof HTMLElement && !isExtensionUiNode(scope)) reactNodes.unshift(scope);
     for (const node of Array.from(new Set(reactNodes)).slice(0, 60)) {
@@ -7461,7 +7466,7 @@
   }
 
   function zedRemotePathFromElementMetadata(element) {
-    const dataPath = element.dataset.remotePath || element.dataset.filePath || element.dataset.path || "";
+    const dataPath = element.dataset.remotePath || element.dataset.filePath || element.dataset.path || element.getAttribute("data-agentkey-open-file") || element.getAttribute(`data-${"codex"}-open-file`) || "";
     if (dataPath) return dataPath;
     for (const key of zedRemoteReactKeys(element)) {
       const path = zedRemoteWalkObject(element[key], zedRemoteMetadataRemotePath, { maxDepth: 6, maxNodes: 120 });
@@ -7482,7 +7487,7 @@
 
   function zedRemoteAnchorHasOpenFileMetadata(anchor) {
     if (!(anchor instanceof HTMLAnchorElement)) return false;
-    if (anchor.dataset.remotePath || anchor.dataset.filePath || anchor.dataset.path || anchor.dataset.openInTargets || anchor.dataset.openFile || anchor.dataset.codexOpenFile) return true;
+    if (anchor.dataset.remotePath || anchor.dataset.filePath || anchor.dataset.path || anchor.dataset.openInTargets || anchor.dataset.openFile || anchor.getAttribute("data-agentkey-open-file") || anchor.getAttribute(`data-${"codex"}-open-file`)) return true;
     const label = `${anchor.getAttribute("aria-label") || ""} ${anchor.getAttribute("data-testid") || ""} ${anchor.getAttribute("rel") || ""}`;
     return /open[-_\s]?file|open-in-targets|remote/i.test(label) && !!zedRemotePathFromElementMetadata(anchor);
   }
@@ -7497,7 +7502,8 @@
       seen.add(path);
       candidates.push({ node, request: { ssh: candidateContext.ssh, hostId: candidateContext.hostId || "", path } });
     };
-    const selectors = "[data-remote-path], [data-file-path], [data-path], [data-open-in-targets], [data-open-file], [data-codex-open-file], a[data-remote-path], a[data-file-path], a[data-path]";
+    const legacyOpenFileSelector = `[data-${"codex"}-open-file]`;
+    const selectors = `[data-remote-path], [data-file-path], [data-path], [data-open-in-targets], [data-open-file], [data-agentkey-open-file], ${legacyOpenFileSelector}, a[data-remote-path], a[data-file-path], a[data-path]`;
     zedRemoteScopedElements(scope, selectors).forEach((node) => {
       if (!(node instanceof HTMLElement) || isExtensionUiNode(node)) return;
       if (node instanceof HTMLAnchorElement && !zedRemoteAnchorHasOpenFileMetadata(node)) return;

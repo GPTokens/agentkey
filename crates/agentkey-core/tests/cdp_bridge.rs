@@ -505,7 +505,8 @@ fn injection_script_installs_upstream_branch_dropdown_adapter() {
 fn injection_script_prevents_switching_to_branches_used_by_other_worktrees() {
     let script = assets::injection_script(57321, "test-token");
 
-    assert!(script.contains("data-codex-branch-worktree-path"));
+    assert!(script.contains("data-agentkey-branch-worktree-path"));
+    assert!(script.contains("legacyAgentKeyBranchWorktreePathAttribute"));
     assert!(script.contains("annotateBranchMenuWorktreeUsage"));
     assert!(script.contains("branchWorktreePathFromMenuItem"));
     assert!(script.contains("该分支已在另一个 worktree 使用"));

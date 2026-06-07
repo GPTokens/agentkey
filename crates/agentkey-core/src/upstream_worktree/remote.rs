@@ -13,7 +13,7 @@ use super::types::{
 };
 use crate::zed_remote::{SshTarget, resolve_ssh_target_for_host_id};
 
-pub fn codex_global_state_path() -> PathBuf {
+pub fn agentkey_global_state_path() -> PathBuf {
     env::var_os("CODEX_HOME")
         .map(PathBuf::from)
         .or_else(|| {
@@ -65,7 +65,7 @@ pub fn remote_project_from_state_path(
 }
 
 pub fn remote_project_for_id(project_id: &str) -> Option<UpstreamRemoteProject> {
-    remote_project_from_state_path(project_id, &codex_global_state_path())
+    remote_project_from_state_path(project_id, &agentkey_global_state_path())
 }
 
 fn shell_quote(value: &str) -> String {

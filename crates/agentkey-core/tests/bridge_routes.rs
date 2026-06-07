@@ -40,11 +40,11 @@ async fn bridge_routes_cover_all_current_paths() {
         ("/zed-remote/status", json!({})),
         (
             "/zed-remote/resolve-host",
-            json!({"hostId": "remote-ssh-codex-managed:remote"}),
+            json!({"hostId": "remote-ssh-agentkey-managed:remote"}),
         ),
         (
             "/zed-remote/fallback-request",
-            json!({"hostId": "remote-ssh-codex-managed:remote"}),
+            json!({"hostId": "remote-ssh-agentkey-managed:remote"}),
         ),
         (
             "/zed-remote/open",
@@ -306,7 +306,7 @@ async fn runtime_status_devtools_repair_and_ads_routes_are_dispatched() {
         handle_bridge_request(
             ctx.clone(),
             "/zed-remote/resolve-host",
-            json!({"hostId": "remote-ssh-codex-managed:remote"}),
+            json!({"hostId": "remote-ssh-agentkey-managed:remote"}),
         )
         .await,
         json!({"status": "ok", "ssh": {"user": "longnv", "host": "192.168.100.31", "port": null}})
@@ -315,13 +315,13 @@ async fn runtime_status_devtools_repair_and_ads_routes_are_dispatched() {
         handle_bridge_request(
             ctx.clone(),
             "/zed-remote/fallback-request",
-            json!({"hostId": "remote-ssh-codex-managed:remote"}),
+            json!({"hostId": "remote-ssh-agentkey-managed:remote"}),
         )
         .await,
         json!({
             "status": "ok",
             "request": {
-                "hostId": "remote-ssh-codex-managed:remote",
+                "hostId": "remote-ssh-agentkey-managed:remote",
                 "ssh": {"user": "longnv", "host": "192.168.100.31", "port": null},
                 "path": "/Users/longnv/bin/repo/sealos-skills",
             }
@@ -1080,7 +1080,7 @@ impl BridgeRuntimeService for FakeRuntime {
     }
 
     async fn resolve_zed_remote_host(&self, payload: Value) -> anyhow::Result<Value> {
-        assert_eq!(payload["hostId"], json!("remote-ssh-codex-managed:remote"));
+        assert_eq!(payload["hostId"], json!("remote-ssh-agentkey-managed:remote"));
         Ok(json!({
             "status": "ok",
             "ssh": {"user": "longnv", "host": "192.168.100.31", "port": null}
@@ -1088,11 +1088,11 @@ impl BridgeRuntimeService for FakeRuntime {
     }
 
     async fn fallback_zed_remote_request(&self, payload: Value) -> anyhow::Result<Value> {
-        assert_eq!(payload["hostId"], json!("remote-ssh-codex-managed:remote"));
+        assert_eq!(payload["hostId"], json!("remote-ssh-agentkey-managed:remote"));
         Ok(json!({
             "status": "ok",
             "request": {
-                "hostId": "remote-ssh-codex-managed:remote",
+                "hostId": "remote-ssh-agentkey-managed:remote",
                 "ssh": {"user": "longnv", "host": "192.168.100.31", "port": null},
                 "path": "/Users/longnv/bin/repo/sealos-skills",
             }

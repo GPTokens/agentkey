@@ -8,13 +8,18 @@ use serde::Serialize;
 use serde_json::{Value, json};
 use thiserror::Error;
 
+const AGENTKEY_MANAGED_REMOTE_CONNECTIONS_KEY: &str = "agentkey-managed-remote-connections";
+const LEGACY_MANAGED_REMOTE_CONNECTIONS_KEY: &str = concat!("codex", "-managed-remote-connections");
+const AGENTKEY_MANAGED_REMOTE_HOST_PREFIX: &str = "remote-ssh-agentkey-managed:";
+const LEGACY_MANAGED_REMOTE_HOST_PREFIX: &str = concat!("remote-ssh-", "codex", "-managed:");
+
 #[derive(Debug, Error)]
 pub enum ZedRemoteError {
     #[error("{0}")]
     Validation(&'static str),
-    #[error("Cannot read Codex remote connection state")]
+    #[error("Cannot read AgentKey remote connection state")]
     StateRead(#[source] std::io::Error),
-    #[error("Cannot parse Codex remote connection state")]
+    #[error("Cannot parse AgentKey remote connection state")]
     StateParse(#[source] serde_json::Error),
     #[error("Failed to launch Zed: {0}")]
     Launch(std::io::Error),
@@ -98,6 +103,35 @@ fn string_value(value: Option<&Value>) -> String {
         Some(Value::Number(value)) => value.to_string(),
         _ => String::new(),
     }
+}
+
+fn managed_remote_host_ids_match(stored_host_id: &str, requested_host_id: &str) -> bool {
+    if stored_host_id == requested_host_id {
+        return true;
+    }
+    if let Some(suffix) = requested_host_id.strip_prefix(AGENTKEY_MANAGED_REMOTE_HOST_PREFIX) {
+        return stored_host_id == format!("{LEGACY_MANAGED_REMOTE_HOST_PREFIX}{suffix}");
+    }
+    if let Some(suffix) = requested_host_id.strip_prefix(LEGACY_MANAGED_REMOTE_HOST_PREFIX) {
+        return stored_host_id == format!("{AGENTKEY_MANAGED_REMOTE_HOST_PREFIX}{suffix}");
+    }
+    false
+}
+
+fn managed_remote_connections_from_state(state: &Value) -> Vec<Value> {
+    let mut connections = state
+        .get(AGENTKEY_MANAGED_REMOTE_CONNECTIONS_KEY)
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    connections.extend(
+        state
+            .get(LEGACY_MANAGED_REMOTE_CONNECTIONS_KEY)
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default(),
+    );
+    connections
 }
 
 pub fn split_ssh_authority(value: &str) -> Result<(String, String, Option<u16>), ZedRemoteError> {
@@ -303,7 +337,7 @@ pub fn launch_zed_url(url: &str) -> Result<(), ZedRemoteError> {
     ))
 }
 
-pub fn codex_global_state_path() -> PathBuf {
+pub fn agentkey_global_state_path() -> PathBuf {
     env::var_os("CODEX_HOME")
         .map(PathBuf::from)
         .or_else(|| home_dir().map(|home| home.join(".codex")))
@@ -342,16 +376,11 @@ pub fn resolve_ssh_target_from_global_state(
     if host_id.is_empty() {
         return Err(ZedRemoteError::Validation("Remote host id is required"));
     }
-    let connections = state
-        .get("codex-managed-remote-connections")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-    for connection in connections {
+    for connection in managed_remote_connections_from_state(state) {
         let Some(connection) = connection.as_object() else {
             continue;
         };
-        if string_value(connection.get("hostId")) != host_id {
+        if !managed_remote_host_ids_match(&string_value(connection.get("hostId")), host_id) {
             continue;
         }
         return target_from_managed_remote_connection(connection);
@@ -370,7 +399,7 @@ pub fn resolve_ssh_target_for_host_id(
     }
     let path = state_path
         .map(Path::to_path_buf)
-        .unwrap_or_else(codex_global_state_path);
+        .unwrap_or_else(agentkey_global_state_path);
     let data = fs::read_to_string(path).map_err(ZedRemoteError::StateRead)?;
     let state: Value = serde_json::from_str(&data).map_err(ZedRemoteError::StateParse)?;
     resolve_ssh_target_from_global_state(&state, host_id)

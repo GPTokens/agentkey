@@ -220,7 +220,7 @@ fn remote_project_from_state_resolves_uuid_to_remote_workspace() {
     let state = json!({
         "remote-projects": [{
             "id": "032e652b-7956-4e6e-83bd-b29f456c6c3d",
-            "hostId": "remote-ssh-codex-managed:remote",
+            "hostId": "remote-ssh-agentkey-managed:remote",
             "remotePath": "/Users/longnv/bin/repo/sealos-skills",
             "label": "sealos-skills"
         }]
@@ -229,7 +229,7 @@ fn remote_project_from_state_resolves_uuid_to_remote_workspace() {
     let project =
         remote_project_from_state(&state, "032e652b-7956-4e6e-83bd-b29f456c6c3d").unwrap();
 
-    assert_eq!(project.host_id, "remote-ssh-codex-managed:remote");
+    assert_eq!(project.host_id, "remote-ssh-agentkey-managed:remote");
     assert_eq!(project.remote_path, "/Users/longnv/bin/repo/sealos-skills");
     assert_eq!(project.label, "sealos-skills");
 }

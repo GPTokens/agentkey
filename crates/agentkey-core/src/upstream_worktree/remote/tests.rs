@@ -9,7 +9,7 @@ use crate::upstream_worktree::UpstreamRemoteProject;
 fn remote_project_fixture() -> UpstreamRemoteProject {
     UpstreamRemoteProject {
         project_id: "project-id".to_string(),
-        host_id: "remote-ssh-codex-managed:remote".to_string(),
+        host_id: "remote-ssh-agentkey-managed:remote".to_string(),
         remote_path: "/Users/longnv/bin/repo/project".to_string(),
         label: "project".to_string(),
     }
