@@ -5,16 +5,16 @@ use crate::settings::{RelayProfile, SettingsStore};
 use serde_json::{Value, json};
 
 const BASE_URL_ENV_KEYS: &[&str] = &[
-    "CODEX_PLUS_OPENAI_BASE_URL",
-    "CODEX_PLUS_BASE_URL",
+    "AGENTKEY_OPENAI_BASE_URL",
+    "AGENTKEY_BASE_URL",
     "OPENAI_BASE_URL",
     "OPENAI_API_BASE_URL",
     "OPENAI_API_BASE",
     "OPENAI_API_URL",
 ];
 const API_KEY_ENV_KEYS: &[&str] = &[
-    "CODEX_PLUS_OPENAI_API_KEY",
-    "CODEX_PLUS_API_KEY",
+    "AGENTKEY_OPENAI_API_KEY",
+    "AGENTKEY_API_KEY",
     "OPENAI_API_KEY",
 ];
 

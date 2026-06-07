@@ -10,7 +10,7 @@ use crate::settings::{RelayContextSelection, RelayProfile, RelayProtocol};
 
 const RELAY_PROVIDER: &str = "custom";
 const LEGACY_RELAY_PROVIDERS: &[&str] = &["AgentKeyLegacy", "AgentKeyPP"];
-const CHAT_UPSTREAM_BASE_URL_KEY: &str = "codex_plus_chat_base_url";
+const CHAT_UPSTREAM_BASE_URL_KEY: &str = "agentkey_chat_base_url";
 const RESERVED_MODEL_PROVIDER_IDS: &[&str] = &[
     "amazon-bedrock",
     "openai",
@@ -1791,7 +1791,7 @@ fn create_live_backup(
 
     let backup_dir = home
         .join("backups")
-        .join(format!("codex-plus-live-{}", timestamp_millis()));
+        .join(format!("agentkey-live-{}", timestamp_millis()));
     std::fs::create_dir_all(&backup_dir)?;
     if let Some(config) = config {
         std::fs::write(backup_dir.join("config.toml"), config)?;

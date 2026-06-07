@@ -205,7 +205,7 @@ fn apply_chat_protocol_relay_points_codex_to_local_responses_proxy() {
     assert!(updated.contains(r#"wire_api = "responses""#));
     assert!(updated.contains(r#"base_url = "http://127.0.0.1:57321/v1""#));
     assert!(updated.contains(r#"experimental_bearer_token = "sk-test-redacted""#));
-    assert!(!updated.contains("codex_plus_chat_base_url"));
+    assert!(!updated.contains("agentkey_chat_base_url"));
 }
 
 #[test]
@@ -236,7 +236,7 @@ base_url = "http://127.0.0.1:57321/v1"
 
     assert_eq!(profile.upstream_base_url, "https://api.deepseek.com");
     assert_eq!(profile.base_url, "https://api.deepseek.com");
-    assert!(!profile.config_contents.contains("codex_plus_chat_base_url"));
+    assert!(!profile.config_contents.contains("agentkey_chat_base_url"));
     assert!(
         profile
             .config_contents
@@ -245,7 +245,7 @@ base_url = "http://127.0.0.1:57321/v1"
 
     apply_relay_profile_to_home_with_switch_rules(temp.path(), &profile, "").unwrap();
     let live = std::fs::read_to_string(temp.path().join("config.toml")).unwrap();
-    assert!(!live.contains("codex_plus_chat_base_url"));
+    assert!(!live.contains("agentkey_chat_base_url"));
     assert!(live.contains(r#"base_url = "http://127.0.0.1:57321/v1""#));
 }
 
@@ -386,7 +386,7 @@ experimental_bearer_token = "sk-a"
 
     assert!(result.configured);
     let backup_path = result.backup_path.as_ref().expect("backup path");
-    assert!(backup_path.contains("codex-plus-live-"));
+    assert!(backup_path.contains("agentkey-live-"));
     assert_eq!(
         std::fs::read_to_string(std::path::Path::new(backup_path).join("config.toml")).unwrap(),
         r#"model = "old""#
@@ -1305,7 +1305,7 @@ model = "gpt-5-mini"
         result
             .backup_path
             .as_ref()
-            .is_some_and(|path| path.contains("codex-plus-live-"))
+            .is_some_and(|path| path.contains("agentkey-live-"))
     );
     assert!(updated.contains(r#"model = "gpt-5""#));
     assert!(!updated.contains("model_provider ="));

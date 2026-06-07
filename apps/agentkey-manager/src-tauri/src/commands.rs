@@ -274,7 +274,7 @@ pub fn startup_options() -> CommandResult<StartupPayload> {
 pub fn startup_should_show_update() -> bool {
     should_show_update(
         std::env::args(),
-        std::env::var("CODEX_PLUS_SHOW_UPDATE").ok().as_deref(),
+        std::env::var("AGENTKEY_SHOW_UPDATE").ok().as_deref(),
     )
 }
 
@@ -2472,13 +2472,13 @@ mod tests {
     #[test]
     fn startup_options_honors_show_update_environment() {
         unsafe {
-            std::env::set_var("CODEX_PLUS_SHOW_UPDATE", "1");
+            std::env::set_var("AGENTKEY_SHOW_UPDATE", "1");
         }
 
         let result = startup_options();
 
         unsafe {
-            std::env::remove_var("CODEX_PLUS_SHOW_UPDATE");
+            std::env::remove_var("AGENTKEY_SHOW_UPDATE");
         }
 
         assert_eq!(result.status, "ok");

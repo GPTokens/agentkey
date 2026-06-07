@@ -1126,7 +1126,7 @@ mod tests {
                 protocol: RelayProtocol::ChatCompletions,
                 relay_mode: RelayMode::PureApi,
                 config_contents: r#"model = "deepseek-chat"
-codex_plus_chat_base_url = "https://api.deepseek.com"
+agentkey_chat_base_url = "https://api.deepseek.com"
 model_provider = "custom"
 
 [model_providers.custom]
@@ -1151,7 +1151,7 @@ base_url = "http://127.0.0.1:57321/v1"
         assert_eq!(active.base_url, "https://api.deepseek.com");
         assert_eq!(active.upstream_base_url, "https://api.deepseek.com");
         assert_eq!(active.api_key, "sk-test");
-        assert!(!active.config_contents.contains("codex_plus_chat_base_url"));
+        assert!(!active.config_contents.contains("agentkey_chat_base_url"));
 
         let saved: Value =
             serde_json::from_str(&std::fs::read_to_string(dir.join("settings.json")).unwrap())
@@ -1164,7 +1164,7 @@ base_url = "http://127.0.0.1:57321/v1"
             !profile["configContents"]
                 .as_str()
                 .unwrap()
-                .contains("codex_plus_chat_base_url")
+                .contains("agentkey_chat_base_url")
         );
     }
 

@@ -192,7 +192,7 @@ type CodexContextEntries = {
 type RelayProtocol = "responses" | "chatCompletions";
 type RelayMode = "official" | "mixedApi" | "pureApi";
 const PROTOCOL_PROXY_BASE_URL = "http://127.0.0.1:57321/v1";
-const CHAT_UPSTREAM_BASE_URL_KEY = "codex_plus_chat_base_url";
+const CHAT_UPSTREAM_BASE_URL_KEY = "agentkey_chat_base_url";
 const SCRIPT_MARKET_REPOSITORY_URL = "https://github.com/GPTokens/agentkey-script-market";
 
 const emptyContextSelection = (): RelayContextSelection => ({
