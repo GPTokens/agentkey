@@ -1692,8 +1692,8 @@
   }
 
   function refreshAgentKeyBackendToggles() {
-    document.querySelectorAll(".agentkey-toggle[data-codex-backend-setting]").forEach((button) => {
-      const key = button.getAttribute("data-codex-backend-setting");
+    document.querySelectorAll(".agentkey-toggle[data-agentkey-backend-setting]").forEach((button) => {
+      const key = button.getAttribute("data-agentkey-backend-setting");
       button.dataset.enabled = String(!!agentKeyBackendSettings[key]);
     });
     renderAgentKeyMenu();
@@ -1717,7 +1717,7 @@
 
   function ensureAgentKeyTriggerIndicator(trigger) {
     if (!trigger) return null;
-    let indicator = trigger.querySelector("[data-codex-backend-indicator]");
+    let indicator = trigger.querySelector("[data-agentkey-backend-indicator]");
     if (!indicator) {
       indicator = document.createElement("span");
       indicator.className = "agentkey-backend-indicator";
@@ -1729,16 +1729,16 @@
 
   function renderBackendStatus() {
     const status = agentKeyBackendStatus.status || "failed";
-    const label = document.querySelector("[data-codex-backend-status]");
+    const label = document.querySelector("[data-agentkey-backend-status]");
     if (label) {
       label.dataset.status = status;
       label.textContent = agentKeyBackendStatus.message || (status === "ok" ? "后端已连接" : "未连接");
     }
-    document.querySelectorAll("[data-codex-backend-indicator]").forEach((indicator) => {
+    document.querySelectorAll("[data-agentkey-backend-indicator]").forEach((indicator) => {
       indicator.dataset.status = status;
       indicator.title = status === "ok" ? "后端已连接" : status === "checking" ? "正在检查后端" : "未连接";
     });
-    const repair = document.querySelector("[data-codex-backend-repair]");
+    const repair = document.querySelector("[data-agentkey-backend-repair]");
     if (repair) repair.hidden = status === "ok" || status === "checking";
     refreshAgentKeyServiceTierControls();
   }
@@ -1796,11 +1796,11 @@
   }
 
   function renderUserScripts() {
-    const enabledToggle = document.querySelector("[data-codex-user-scripts-enabled]");
+    const enabledToggle = document.querySelector("[data-agentkey-user-scripts-enabled]");
     if (enabledToggle) enabledToggle.dataset.enabled = String(!!agentKeyUserScripts.enabled);
-    const dirs = document.querySelector("[data-codex-user-script-dirs]");
+    const dirs = document.querySelector("[data-agentkey-user-script-dirs]");
     if (dirs) dirs.textContent = `内置：${agentKeyUserScripts.builtin_dir || "未找到"}  用户：${agentKeyUserScripts.user_dir || "未找到"}`;
-    const list = document.querySelector("[data-codex-user-script-list]");
+    const list = document.querySelector("[data-agentkey-user-script-list]");
     if (!list) return;
     if (!agentKeyUserScripts.scripts?.length) {
       list.textContent = "未发现用户脚本。";
@@ -1813,7 +1813,7 @@
           <div class="agentkey-user-script-meta">${script.source === "builtin" ? "内置" : "用户"} · ${userScriptStatusLabel(script.status)}</div>
           ${script.error ? `<div class="agentkey-user-script-error">${escapeHtml(script.error)}</div>` : ""}
         </div>
-        <button type="button" class="agentkey-toggle" data-codex-user-script-key="${escapeHtml(script.key)}" data-enabled="${String(!!script.enabled)}"><span></span></button>
+        <button type="button" class="agentkey-toggle" data-agentkey-user-script-key="${escapeHtml(script.key)}" data-enabled="${String(!!script.enabled)}"><span></span></button>
       </div>
     `).join("");
   }
@@ -1946,7 +1946,7 @@
     overlay.innerHTML = `
       <div class="agentkey-modal-content" role="dialog" aria-modal="true" aria-label="AgentKey">
         <div class="agentkey-modal-header">
-          <div class="agentkey-modal-title"><span class="agentkey-backend-indicator" data-codex-backend-indicator="true" data-status="checking"></span><span data-agentkey-version="true">AgentKey ${agentKeyVersion}</span></div>
+          <div class="agentkey-modal-title"><span class="agentkey-backend-indicator" data-agentkey-backend-indicator="true" data-status="checking"></span><span data-agentkey-version="true">AgentKey ${agentKeyVersion}</span></div>
           <button type="button" class="agentkey-modal-close" aria-label="关闭">×</button>
         </div>
         <div class="agentkey-tabs" role="tablist" aria-label="AgentKey">
@@ -1960,13 +1960,13 @@
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">后端连接</div><div class="agentkey-row-description">每 5 秒检查一次 launcher 后端状态；断开时可尝试修复后端运行。</div></div>
               <div class="agentkey-backend-status">
-                <div class="agentkey-backend-label" data-codex-backend-status="true" data-status="checking">正在检查后端…</div>
-                <button type="button" class="agentkey-backend-repair" data-codex-backend-repair="true" hidden>修复后端运行</button>
+                <div class="agentkey-backend-label" data-agentkey-backend-status="true" data-status="checking">正在检查后端…</div>
+                <button type="button" class="agentkey-backend-repair" data-agentkey-backend-repair="true" hidden>修复后端运行</button>
               </div>
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">页面功能增强</div><div class="agentkey-row-description">关闭后停用删除、导出、移动、Timeline、插件相关和菜单位置增强。</div></div>
-              <button type="button" class="agentkey-toggle" data-codex-backend-setting="enhancementsEnabled"><span></span></button>
+              <button type="button" class="agentkey-toggle" data-agentkey-backend-setting="enhancementsEnabled"><span></span></button>
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">插件市场解锁</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；ChatGPT 登录态会保留官方插件市场。" : "API Key 模式下扩展插件市场请求，尽量显示完整插件列表。"}</div></div>
@@ -2046,11 +2046,11 @@
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">历史会话修复</div><div class="agentkey-row-description">切换官方登录、混合 API 或纯 API 后，让旧对话重新显示在当前模式下。</div></div>
-              <button type="button" class="agentkey-toggle" data-codex-backend-setting="providerSyncEnabled"><span></span></button>
+              <button type="button" class="agentkey-toggle" data-agentkey-backend-setting="providerSyncEnabled"><span></span></button>
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">页面增强模式</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强：保留会话删除、导出、项目移动、Timeline 和用户脚本，仅关闭插件入口相关增强。" : "完整增强：加载插件入口、强制安装、项目路径移动等全部页面能力。"}</div></div>
-              <button type="button" class="agentkey-action-button" data-codex-open-manager="true">打开管理工具</button>
+              <button type="button" class="agentkey-action-button" data-agentkey-open-manager="true">打开管理工具</button>
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">原生菜单栏位置</div><div class="agentkey-row-description">把 AgentKey 菜单插入顶部原生菜单栏；默认关闭以避免页面重渲染冲突。</div></div>
@@ -2058,7 +2058,7 @@
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">打开 DevTools</div><div class="agentkey-row-description">打开当前 Codex 页面开发者工具，方便查看用户脚本报错。</div></div>
-              <button type="button" class="agentkey-action-button" data-codex-open-devtools="true">打开 DevTools</button>
+              <button type="button" class="agentkey-action-button" data-agentkey-open-devtools="true">打开 DevTools</button>
             </div>
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">关于 AgentKey</div><div class="agentkey-about">AgentKey 是通过本地 launcher 注入的桌面桥接菜单，用 API Key 支持 Codex 与 Claude Code 工作流。<br>Build: <span data-agentkey-build="true">${agentKeyBuild}</span><br>GitHub: <a href="https://github.com/GPTokens/agentkey" target="_blank" rel="noreferrer">https://github.com/GPTokens/agentkey</a></div></div>
@@ -2069,17 +2069,17 @@
             </div>
           </div>
           <div class="agentkey-panel" data-agentkey-panel="userScripts" hidden>
-            <div class="agentkey-row" data-codex-user-scripts-section="true">
+            <div class="agentkey-row" data-agentkey-user-scripts-section="true">
               <div>
                 <div class="agentkey-row-title">用户脚本</div>
                 <div class="agentkey-row-description">启用用户脚本：自动加载内置目录和用户配置目录中的 .js 文件。</div>
                 <div class="agentkey-user-script-warning">禁用后需重载页面或重启 AgentKey 才能完全移除已执行效果。</div>
-                <div class="agentkey-user-script-dirs" data-codex-user-script-dirs="true">正在读取脚本目录…</div>
-                <div class="agentkey-user-script-list" data-codex-user-script-list="true">正在读取用户脚本…</div>
+                <div class="agentkey-user-script-dirs" data-agentkey-user-script-dirs="true">正在读取脚本目录…</div>
+                <div class="agentkey-user-script-list" data-agentkey-user-script-list="true">正在读取用户脚本…</div>
               </div>
               <div class="agentkey-user-script-actions">
-                <button type="button" class="agentkey-toggle" data-codex-user-scripts-enabled="true"><span></span></button>
-                <button type="button" class="agentkey-user-script-reload" data-codex-user-scripts-reload="true">重新加载用户脚本</button>
+                <button type="button" class="agentkey-toggle" data-agentkey-user-scripts-enabled="true"><span></span></button>
+                <button type="button" class="agentkey-user-script-reload" data-agentkey-user-scripts-reload="true">重新加载用户脚本</button>
               </div>
             </div>
           </div>
@@ -2126,11 +2126,11 @@
         selectAgentKeyTab(tabButton.getAttribute("data-agentkey-tab"));
         return;
       }
-      if (target?.closest("[data-codex-open-devtools]")) {
+      if (target?.closest("[data-agentkey-open-devtools]")) {
         postJson("/devtools/open", {});
         return;
       }
-      if (target?.closest("[data-codex-open-manager]")) {
+      if (target?.closest("[data-agentkey-open-manager]")) {
         openManagerFromCodex();
         return;
       }
@@ -2142,7 +2142,7 @@
         window.open("https://github.com/GPTokens/agentkey", "_blank");
         return;
       }
-      if (target?.closest("[data-codex-backend-repair]")) {
+      if (target?.closest("[data-agentkey-backend-repair]")) {
         repairBackend();
         return;
       }
@@ -2152,7 +2152,7 @@
         window.open(issueUrl, "_blank");
         return;
       }
-      const userScriptsEnabled = target?.closest("[data-codex-user-scripts-enabled]");
+      const userScriptsEnabled = target?.closest("[data-agentkey-user-scripts-enabled]");
       if (userScriptsEnabled) {
         loadUserScripts("/user-scripts/set-enabled", { enabled: userScriptsEnabled.dataset.enabled !== "true" });
         return;
@@ -2185,12 +2185,12 @@
         setAgentKeyThreadServiceTierMode("fast");
         return;
       }
-      const userScriptToggle = target?.closest("[data-codex-user-script-key]");
+      const userScriptToggle = target?.closest("[data-agentkey-user-script-key]");
       if (userScriptToggle) {
-        loadUserScripts("/user-scripts/set-script-enabled", { key: userScriptToggle.getAttribute("data-codex-user-script-key"), enabled: userScriptToggle.dataset.enabled !== "true" });
+        loadUserScripts("/user-scripts/set-script-enabled", { key: userScriptToggle.getAttribute("data-agentkey-user-script-key"), enabled: userScriptToggle.dataset.enabled !== "true" });
         return;
       }
-      if (target?.closest("[data-codex-user-scripts-reload]")) {
+      if (target?.closest("[data-agentkey-user-scripts-reload]")) {
         loadUserScripts("/user-scripts/reload", {});
         return;
       }
@@ -2209,9 +2209,9 @@
         setAgentKeySetting(key, !agentKeySettings()[key]);
         return;
       }
-      const backendToggle = target?.closest("[data-codex-backend-setting]");
+      const backendToggle = target?.closest("[data-agentkey-backend-setting]");
       if (backendToggle) {
-        const key = backendToggle.getAttribute("data-codex-backend-setting");
+        const key = backendToggle.getAttribute("data-agentkey-backend-setting");
         setBackendSetting(key, !agentKeyBackendSettings[key]);
         return;
       }
