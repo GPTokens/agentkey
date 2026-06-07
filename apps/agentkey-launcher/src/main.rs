@@ -37,7 +37,7 @@ impl Default for LauncherHooks {
 async fn main() -> Result<()> {
     let options = parse_launch_options(std::env::args().skip(1));
     let Some(_guard) = acquire_single_instance_guard(options.debug_port)? else {
-        activate_existing_codex_app(&options).await?;
+        activate_existing_desktop_client(&options).await?;
         return Ok(());
     };
     tokio::spawn(async {
@@ -124,7 +124,7 @@ fn should_recover_stale_launcher(debug_port: u16) -> bool {
     recover
 }
 
-async fn activate_existing_codex_app(options: &LaunchOptions) -> anyhow::Result<()> {
+async fn activate_existing_desktop_client(options: &LaunchOptions) -> anyhow::Result<()> {
     let hooks = LauncherHooks::default();
     let helper_token = agentkey_core::launcher::new_helper_session_token();
     let settings = hooks.load_settings().await?;
@@ -791,7 +791,7 @@ mod tests {
         let source = include_str!("main.rs").replace("\r\n", "\n");
 
         assert!(source.contains(
-            "async fn activate_existing_codex_app(options: &LaunchOptions) -> anyhow::Result<()> {\n    let hooks = LauncherHooks::default();"
+            "async fn activate_existing_desktop_client(options: &LaunchOptions) -> anyhow::Result<()> {\n    let hooks = LauncherHooks::default();"
         ));
         assert!(source.contains(".start_helper(options.helper_port, helper_token.clone())"));
         assert!(

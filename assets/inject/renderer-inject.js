@@ -68,7 +68,7 @@
   const agentKeyThreadServiceTierMaxEntries = 120;
   const agentKeyThreadServiceTierDraftBindWindowMs = 60 * 1000;
   const agentKeyServiceTierRequestOverrideVersion = "2";
-  const codexAppServerModelRequestPatchVersion = "1";
+  const agentKeyAppServerModelRequestPatchVersion = "1";
   const agentKeyPluginMarketplaceUnlockVersion = "10";
   const agentKeyThreadScrollMaxEntries = 120;
   const agentKeyThreadScrollSaveThrottleMs = 120;
@@ -428,7 +428,7 @@
         color: #ffffff;
       }
       /* Dark theme overrides for delete-confirm and project-move dialogs.
-         Triggered either by Codex applying a "dark" class / data-theme="dark"
+         Triggered either by the desktop client applying a "dark" class / data-theme="dark"
          on its document root, or by the OS-level prefers-color-scheme hint.
          Palette matches the existing AgentKey dark modal (.agentkey-modal-content). */
       html.dark .agentkey-delete-confirm-overlay,
@@ -4056,7 +4056,7 @@
 
   function patchAppServerModelRequestClient(client) {
     if (!client || typeof client.sendRequest !== "function") return false;
-    if (client.__agentKeyModelRequestPatch === codexAppServerModelRequestPatchVersion) return true;
+    if (client.__agentKeyModelRequestPatch === agentKeyAppServerModelRequestPatchVersion) return true;
     const originalSendRequest = client.__agentKeyModelOriginalSendRequest || client.sendRequest.bind(client);
     client.__agentKeyModelOriginalSendRequest = originalSendRequest;
     client.sendRequest = async function agentKeyModelPatchedSendRequest(method, params, options) {
@@ -4065,12 +4065,12 @@
       if (!agentKeyModelNames().length) await loadCodexModelCatalog();
       return patchAppServerModelResult(appServerModelRequestMethod(String(method || ""), params), result);
     };
-    client.__agentKeyModelRequestPatch = codexAppServerModelRequestPatchVersion;
+    client.__agentKeyModelRequestPatch = agentKeyAppServerModelRequestPatchVersion;
     return true;
   }
 
   function installAppServerModelRequestPatch() {
-    if (window.__agentKeyAppServerModelRequestPatchInstalled === codexAppServerModelRequestPatchVersion) return;
+    if (window.__agentKeyAppServerModelRequestPatchInstalled === agentKeyAppServerModelRequestPatchVersion) return;
     const patch = async () => {
       try {
         const module = await loadDesktopClientModule("app-server-manager-signals-");
@@ -4086,7 +4086,7 @@
           }
         }
         if (patchedCount > 0) {
-          window.__agentKeyAppServerModelRequestPatchInstalled = codexAppServerModelRequestPatchVersion;
+          window.__agentKeyAppServerModelRequestPatchInstalled = agentKeyAppServerModelRequestPatchVersion;
           sendAgentKeyDiagnostic("model_app_server_request_patch_installed", {
             candidateCount: candidates.length,
             patchedCount,
