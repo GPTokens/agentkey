@@ -174,7 +174,7 @@ fn ensure_https_url(url: &str, label: &str) -> anyhow::Result<()> {
 }
 
 fn https_url_allowed(url: &str) -> bool {
-    url.trim().starts_with("https://")
+    crate::url_policy::https_url_allowed(url)
 }
 
 fn required_string(raw: &Value, key: &str) -> Option<String> {

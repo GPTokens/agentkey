@@ -12,6 +12,20 @@ pub fn api_base_url_allowed(url: &str) -> bool {
     }
 }
 
+pub fn https_url_allowed(url: &str) -> bool {
+    let trimmed = url.trim();
+    let Some(rest) = trimmed.strip_prefix("https://") else {
+        return false;
+    };
+    if rest.is_empty() || rest.starts_with('/') {
+        return false;
+    }
+    let Ok(parsed) = reqwest::Url::parse(trimmed) else {
+        return false;
+    };
+    parsed.scheme() == "https" && parsed.host_str().is_some()
+}
+
 pub fn validate_api_base_url(label: &str, url: &str) -> anyhow::Result<String> {
     let trimmed = url.trim();
     if trimmed.is_empty() {
@@ -49,5 +63,16 @@ mod tests {
         assert!(!api_base_url_allowed("http://gateway.example.test/v1"));
         assert!(!api_base_url_allowed("ftp://gateway.example.test/v1"));
         assert!(!api_base_url_allowed("not a url"));
+    }
+
+    #[test]
+    fn https_url_requires_parseable_https_with_host() {
+        assert!(https_url_allowed("https://github.com/GPTokens/agentkey"));
+        assert!(https_url_allowed("  https://example.test/path?q=1  "));
+        assert!(!https_url_allowed("http://example.test"));
+        assert!(!https_url_allowed("javascript:alert(1)"));
+        assert!(!https_url_allowed("https://"));
+        assert!(!https_url_allowed("https:///missing-host"));
+        assert!(!https_url_allowed("not a url"));
     }
 }

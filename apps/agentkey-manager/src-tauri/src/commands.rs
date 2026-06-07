@@ -2423,7 +2423,7 @@ fn diagnostics_report() -> String {
 }
 
 fn external_url_allowed(url: &str) -> bool {
-    url.starts_with("https://")
+    agentkey_core::url_policy::https_url_allowed(url)
 }
 
 fn load_overview_payload() -> (
@@ -3039,7 +3039,10 @@ model_reasoning_effort = "high"
     #[test]
     fn external_url_validation_requires_https() {
         assert!(external_url_allowed("https://github.com/GPTokens/agentkey"));
+        assert!(external_url_allowed("  https://github.com/GPTokens/agentkey  "));
         assert!(!external_url_allowed("http://example.com"));
+        assert!(!external_url_allowed("https://"));
+        assert!(!external_url_allowed("https:///missing-host"));
         assert!(!external_url_allowed("file:///C:/Windows/win.ini"));
         assert!(!external_url_allowed("javascript:alert(1)"));
     }

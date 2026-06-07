@@ -811,6 +811,7 @@ fn script_market_manifest_filters_invalid_entries() {
             { "id": "missing-checksum", "name": "Bad", "version": "1", "script_url": "https://example.com/no-checksum.js" },
             { "id": "bad-checksum", "name": "Bad", "version": "1", "script_url": "https://example.com/bad-checksum.js", "sha256": "bad" },
             { "id": "http-url", "name": "Bad", "version": "1", "script_url": format!("{}{}", concat!("http", "://"), "example.com/bad.js") },
+            { "id": "bad-https-url", "name": "Bad", "version": "1", "script_url": "https:///missing-host.js", "sha256": demo_hash },
             { "id": "http-homepage", "name": "No Homepage", "version": "1", "homepage": format!("{}{}", concat!("http", "://"), "example.com/demo"), "script_url": "https://example.com/no-homepage.js", "sha256": homepage_hash }
         ]
     });
