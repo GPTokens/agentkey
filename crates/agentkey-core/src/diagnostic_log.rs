@@ -119,6 +119,7 @@ fn is_sensitive_key(key: &str) -> bool {
 
 fn redact_diagnostic_string(value: &str) -> String {
     let mut redacted = redact_after_markers(value);
+    redacted = redact_key_value_markers(&redacted);
     for prefix in [
         "sk-", "sk_", "gho_", "ghp_", "github_pat_", "xoxb-", "xoxp-", "AKIA",
     ] {
@@ -142,15 +143,66 @@ fn redact_marker_value(value: &str, marker: &str) -> String {
         let (before, after_before) = remaining.split_at(index);
         output.push_str(before);
         output.push_str(marker);
-        output.push_str("[REDACTED]");
         let token_start = marker.len();
         let after_marker = &after_before[token_start..];
+        if let Some(quote) = after_marker
+            .chars()
+            .next()
+            .filter(|ch| matches!(ch, '"' | '\''))
+        {
+            output.push(quote);
+            output.push_str("[REDACTED]");
+            let after_quote = &after_marker[quote.len_utf8()..];
+            let token_end = after_quote.find(quote).unwrap_or(after_quote.len());
+            remaining = &after_quote[token_end..];
+            continue;
+        }
+        output.push_str("[REDACTED]");
         let token_end = after_marker
             .find(|ch: char| ch.is_whitespace() || matches!(ch, '"' | '\'' | ',' | ';' | '}'))
             .unwrap_or(after_marker.len());
         remaining = &after_marker[token_end..];
     }
     output.push_str(remaining);
+    output
+}
+
+fn redact_key_value_markers(value: &str) -> String {
+    let mut output = value.to_string();
+    for marker in [
+        "api_key=",
+        "api_key = ",
+        "apiKey=",
+        "apiKey = ",
+        "apiKey:",
+        "apiKey\": \"",
+        "apiKey\":\"",
+        "OPENAI_API_KEY=",
+        "OPENAI_API_KEY = ",
+        "OPENAI_API_KEY\": \"",
+        "OPENAI_API_KEY\":\"",
+        "ANTHROPIC_API_KEY=",
+        "ANTHROPIC_API_KEY = ",
+        "ANTHROPIC_API_KEY\": \"",
+        "ANTHROPIC_API_KEY\":\"",
+        "ANTHROPIC_AUTH_TOKEN=",
+        "ANTHROPIC_AUTH_TOKEN = ",
+        "ANTHROPIC_AUTH_TOKEN\": \"",
+        "ANTHROPIC_AUTH_TOKEN\":\"",
+        "experimental_bearer_token=",
+        "experimental_bearer_token = ",
+        "experimental_bearer_token = \"",
+        "authorization=",
+        "authorization = ",
+        "Authorization=",
+        "Authorization = ",
+        "password=",
+        "password = ",
+        "secret=",
+        "secret = ",
+    ] {
+        output = redact_marker_value(&output, marker);
+    }
     output
 }
 
@@ -218,5 +270,19 @@ mod tests {
         assert_eq!(redacted["configContents"], "[REDACTED]");
         assert_eq!(redacted["authContents"], "[REDACTED]");
         assert_eq!(redacted["safe"], "visible");
+    }
+
+    #[test]
+    fn redacts_plain_key_value_secrets_in_strings() {
+        let redacted = redact_diagnostic_value(json!({
+            "message": "api_key=plain-secret experimental_bearer_token = \"toml-secret\" {\"OPENAI_API_KEY\":\"json-secret\"} ANTHROPIC_AUTH_TOKEN = claude-secret"
+        }));
+        let text = redacted["message"].as_str().unwrap();
+
+        assert!(text.matches("[REDACTED]").count() >= 4);
+        assert!(!text.contains("plain-secret"));
+        assert!(!text.contains("toml-secret"));
+        assert!(!text.contains("json-secret"));
+        assert!(!text.contains("claude-secret"));
     }
 }
