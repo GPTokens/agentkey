@@ -1885,6 +1885,13 @@ pub fn apply_pure_api_injection() -> CommandResult<RelayPayload> {
     }
     let relay = settings.active_relay_profile();
     log_relay_apply_request("manager.apply_pure_api_injection", &settings, &relay);
+    if !relay_has_api_key(&relay) {
+        let status = agentkey_core::relay_config::relay_status_from_home(&home);
+        return failed(
+            "纯 API 供应商缺少 API Key，已停止写入 config.toml / auth.json。",
+            relay_payload(status, None),
+        );
+    }
     if relay_has_complete_files(&relay) {
         return match agentkey_core::relay_config::apply_relay_profile_to_home_with_switch_rules(
             &home,
@@ -2022,6 +2029,22 @@ fn relay_has_complete_files(relay: &agentkey_core::settings::RelayProfile) -> bo
         return !relay.config_contents.trim().is_empty();
     }
     !relay.config_contents.trim().is_empty() && !relay.auth_contents.trim().is_empty()
+}
+
+fn relay_has_api_key(relay: &agentkey_core::settings::RelayProfile) -> bool {
+    if !relay.api_key.trim().is_empty() {
+        return true;
+    }
+    serde_json::from_str::<Value>(&relay.auth_contents)
+        .ok()
+        .and_then(|value| {
+            value
+                .get("OPENAI_API_KEY")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .map(str::to_string)
+        })
+        .is_some_and(|token| !token.is_empty())
 }
 
 fn log_relay_apply_request(
@@ -2615,6 +2638,23 @@ mod tests {
         assert!(message.contains("纯 API"));
         assert!(message.contains("直接使用"));
         assert!(!message.contains("请先"));
+    }
+
+    #[test]
+    fn pure_api_key_detection_rejects_empty_auth_key() {
+        let empty = RelayProfile {
+            relay_mode: agentkey_core::settings::RelayMode::PureApi,
+            auth_contents: r#"{"OPENAI_API_KEY":""}"#.to_string(),
+            ..RelayProfile::default()
+        };
+        let filled = RelayProfile {
+            relay_mode: agentkey_core::settings::RelayMode::PureApi,
+            auth_contents: r#"{"OPENAI_API_KEY":"sk-test"}"#.to_string(),
+            ..RelayProfile::default()
+        };
+
+        assert!(!relay_has_api_key(&empty));
+        assert!(relay_has_api_key(&filled));
     }
 
     #[test]

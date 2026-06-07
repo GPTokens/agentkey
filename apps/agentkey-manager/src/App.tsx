@@ -4703,6 +4703,7 @@ function relayProfileReadinessText(profile: RelayProfile, relay: RelayResult | n
   }
   const hasFiles = profile.configContents.trim() && profile.authContents.trim();
   if (!hasFiles) return "当前供应商还没有完整 config.toml / API Key 存档。";
+  if (!relayProfileApiKeyValue(profile)) return "当前供应商还没有填写 API Key。";
   if (relay && !relay.configured) return "纯 API 配置未完整写入：请检查此供应商是否有 OPENAI_API_KEY，且 config.toml 是否包含 model_provider / provider / base_url。";
   return "纯 API 就绪：会同时写入 config.toml 和 auth.json。";
 }
@@ -4899,7 +4900,7 @@ function desktopClientProviderStringFromConfig(contents: string, key: string): s
 function desktopClientApiKeyFromAuth(contents: string): string {
   try {
     const parsed = JSON.parse(contents || "{}") as { OPENAI_API_KEY?: unknown };
-    return typeof parsed.OPENAI_API_KEY === "string" ? parsed.OPENAI_API_KEY : "";
+    return typeof parsed.OPENAI_API_KEY === "string" ? parsed.OPENAI_API_KEY.trim() : "";
   } catch {
     return "";
   }
@@ -5065,6 +5066,9 @@ function removeTomlSectionKey(contents: string, sectionName: string, key: string
 
 function relayProfileSwitchValidation(profile: RelayProfile): string | null {
   if (profile.relayMode === "official" && !profile.officialMixApiKey) return null;
+  if (profile.relayMode === "pureApi" && !relayProfileApiKeyValue(profile)) {
+    return `供应商「${profile.name || profile.id}」还没有 API Key，已停止切换。`;
+  }
   if (!profile.configContents.trim()) {
     return `供应商「${profile.name || profile.id}」缺少独立 config.toml，已停止切换，避免继续显示上一套配置文件。请先在该供应商详情里保存 config.toml。`;
   }
@@ -5079,8 +5083,16 @@ function authJsonHasOpenAiApiKey(contents: string): boolean {
     const value = JSON.parse(trimmed);
     return !!value && typeof value === "object" && typeof value.OPENAI_API_KEY === "string" && value.OPENAI_API_KEY.trim().length > 0;
   } catch {
-    return /"OPENAI_API_KEY"\s*:/.test(trimmed);
+    return /"OPENAI_API_KEY"\s*:\s*"[^"\s][^"]*"/.test(trimmed);
   }
+}
+
+function relayProfileApiKeyValue(profile: RelayProfile): string {
+  return (
+    profile.apiKey.trim() ||
+    desktopClientApiKeyFromAuth(profile.authContents) ||
+    desktopClientExperimentalBearerTokenFromConfig(profile.configContents).trim()
+  );
 }
 
 function tomlString(value: string): string {
