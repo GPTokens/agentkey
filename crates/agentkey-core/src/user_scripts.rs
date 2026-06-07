@@ -296,13 +296,29 @@ impl UserScriptManager {
         config: &UserScriptConfig,
         scripts: &mut Vec<UserScriptFile>,
     ) -> anyhow::Result<()> {
+        let Ok(canonical_directory) = directory.canonicalize() else {
+            return Ok(());
+        };
         let Ok(entries) = fs::read_dir(directory) else {
             return Ok(());
         };
         let mut paths = entries
             .filter_map(Result::ok)
-            .map(|entry| entry.path())
-            .filter(|path| path.extension().and_then(|value| value.to_str()) == Some("js"))
+            .filter_map(|entry| {
+                let file_type = entry.file_type().ok()?;
+                if !file_type.is_file() {
+                    return None;
+                }
+                let path = entry.path();
+                if path.extension().and_then(|value| value.to_str()) != Some("js") {
+                    return None;
+                }
+                let canonical_path = path.canonicalize().ok()?;
+                if !canonical_path.starts_with(&canonical_directory) {
+                    return None;
+                }
+                Some(path)
+            })
             .collect::<Vec<_>>();
         paths.sort_by_key(|path| {
             path.file_name()

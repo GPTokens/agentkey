@@ -517,6 +517,39 @@ async fn user_script_manager_scans_and_persists_inventory_shape() {
 }
 
 #[tokio::test]
+async fn user_script_manager_ignores_non_regular_js_entries() {
+    let temp = tempfile::tempdir().unwrap();
+    let builtin_dir = temp.path().join("builtin");
+    let user_dir = temp.path().join("user");
+    std::fs::create_dir_all(&builtin_dir).unwrap();
+    std::fs::create_dir_all(&user_dir).unwrap();
+    std::fs::write(user_dir.join("a.js"), "window.a = true;").unwrap();
+    std::fs::create_dir_all(user_dir.join("folder.js")).unwrap();
+    let outside = temp.path().join("outside-secret.js");
+    std::fs::write(&outside, "window.secret = true;").unwrap();
+    let linked = user_dir.join("linked.js");
+    #[cfg(unix)]
+    let _ = std::os::unix::fs::symlink(&outside, &linked);
+    #[cfg(windows)]
+    let _ = std::os::windows::fs::symlink_file(&outside, &linked);
+    let manager = UserScriptManager::new(
+        builtin_dir,
+        user_dir.clone(),
+        temp.path().join("user_scripts.json"),
+    );
+
+    let listed = manager.inventory().unwrap();
+    let keys = listed["scripts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|script| script["key"].as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(keys, vec!["user:a.js"]);
+}
+
+#[tokio::test]
 async fn user_script_manager_deletes_market_script_metadata_and_rejects_builtin_delete() {
     let temp = tempfile::tempdir().unwrap();
     let builtin_dir = temp.path().join("builtin");
