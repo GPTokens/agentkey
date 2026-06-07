@@ -11,6 +11,7 @@ AgentKey exposes local desktop-client functionality through a loopback helper. T
 - Restrict CORS to trusted desktop-client origins.
 - Never allow wildcard CORS on privileged helper routes.
 - Redact API keys and bearer tokens from diagnostics.
+- Store local settings that contain API keys in an owner-only file on Unix-like systems and hide the settings file on Windows.
 - Require HTTPS for API provider base URLs unless the URL is loopback HTTP.
 - Verify downloaded update assets before execution.
 - Require HTTPS for update metadata and release asset downloads.
