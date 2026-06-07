@@ -6013,8 +6013,8 @@
   }
 
   function installDeleteButtonEventDelegation() {
-    document.removeEventListener("pointerup", window.__codexSessionDeleteDocumentDeleteHandler, true);
-    document.removeEventListener("click", window.__codexSessionDeleteDocumentDeleteHandler, true);
+    document.removeEventListener("pointerup", window.__agentKeyDocumentDeleteHandler, true);
+    document.removeEventListener("click", window.__agentKeyDocumentDeleteHandler, true);
     const handler = (event) => {
       const button = event.target?.closest?.(`.${buttonClass}`);
       const row = button?.closest?.("[data-app-action-sidebar-thread-id]");
@@ -6023,7 +6023,7 @@
       if (!ref.session_id) return;
       openDeleteConfirmForRow(row, button, ref, event);
     };
-    window.__codexSessionDeleteDocumentDeleteHandler = handler;
+    window.__agentKeyDocumentDeleteHandler = handler;
     document.addEventListener("pointerup", handler, true);
     document.addEventListener("click", handler, true);
   }
@@ -6342,8 +6342,8 @@
     try {
       attachButton(row);
     } catch (error) {
-      window.__codexSessionDeleteAttachButtonFailures = window.__codexSessionDeleteAttachButtonFailures || [];
-      window.__codexSessionDeleteAttachButtonFailures.push(String(error?.stack || error));
+      window.__agentKeyAttachButtonFailures = window.__agentKeyAttachButtonFailures || [];
+      window.__agentKeyAttachButtonFailures.push(String(error?.stack || error));
     }
   }
 
@@ -7737,8 +7737,8 @@
     try {
       step();
     } catch (error) {
-      window.__codexSessionDeleteScanFailures = window.__codexSessionDeleteScanFailures || [];
-      window.__codexSessionDeleteScanFailures.push(String(error?.stack || error));
+      window.__agentKeyScanFailures = window.__agentKeyScanFailures || [];
+      window.__agentKeyScanFailures.push(String(error?.stack || error));
     }
   }
 
@@ -7808,18 +7808,18 @@
   }
 
   function runScheduledScan() {
-    window.__codexSessionDeleteScanPending = false;
-    clearTimeout(window.__codexSessionDeleteScanTimer);
-    window.__codexSessionDeleteScanTimer = null;
+    window.__agentKeyScanPending = false;
+    clearTimeout(window.__agentKeyScanTimer);
+    window.__agentKeyScanTimer = null;
     scan();
   }
 
   function scheduleScan(mutations) {
     scheduleZedRemoteMenuRefresh(mutations);
     if (!shouldScheduleScan(mutations)) return;
-    if (window.__codexSessionDeleteScanPending) return;
-    window.__codexSessionDeleteScanPending = true;
-    window.__codexSessionDeleteScanTimer = setTimeout(runScheduledScan, 200);
+    if (window.__agentKeyScanPending) return;
+    window.__agentKeyScanPending = true;
+    window.__agentKeyScanTimer = setTimeout(runScheduledScan, 200);
   }
 
   void loadBackendSettingsForStartup();
@@ -7842,7 +7842,7 @@
     });
   };
   window.addEventListener("resize", window.__agentKeyResizeHandler);
-  window.__codexSessionDeleteObserver?.disconnect();
-  window.__codexSessionDeleteObserver = new MutationObserver(scheduleScan);
-  window.__codexSessionDeleteObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
+  window.__agentKeyObserver?.disconnect();
+  window.__agentKeyObserver = new MutationObserver(scheduleScan);
+  window.__agentKeyObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
 })();
