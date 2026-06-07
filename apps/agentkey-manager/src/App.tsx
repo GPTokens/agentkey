@@ -123,7 +123,8 @@ type BackendSettings = {
   desktopClientUpstreamWorktreeCreate: boolean;
   desktopClientNativeMenuPlacement: boolean;
   desktopClientServiceTierControls: boolean;
-  codexGoalsEnabled: boolean;
+  desktopClientGoalsEnabled: boolean;
+  codexGoalsEnabled?: boolean;
   launchMode: LaunchMode;
   relayBaseUrl: string;
   relayApiKey: string;
@@ -536,7 +537,7 @@ const defaultSettings: BackendSettings = {
   desktopClientUpstreamWorktreeCreate: true,
   desktopClientNativeMenuPlacement: true,
   desktopClientServiceTierControls: false,
-  codexGoalsEnabled: false,
+  desktopClientGoalsEnabled: false,
   launchMode: "patch",
   relayBaseUrl: "",
   relayApiKey: "",
@@ -4521,6 +4522,7 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
   const {
     codexAppPath: legacyDesktopClientPath,
     codexExtraArgs: legacyDesktopClientExtraArgs,
+    codexGoalsEnabled: legacyDesktopClientGoalsEnabled,
     ...canonicalSettings
   } = settings;
   const splitCommon = splitContextConfigText(settings.relayCommonConfigContents || "");
@@ -4569,6 +4571,7 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
     ...canonicalSettings,
     desktopClientPath: settings.desktopClientPath || legacyDesktopClientPath || "",
     desktopClientExtraArgs: settings.desktopClientExtraArgs || legacyDesktopClientExtraArgs || [],
+    desktopClientGoalsEnabled: settings.desktopClientGoalsEnabled ?? legacyDesktopClientGoalsEnabled ?? false,
     relayProfilesEnabled: settings.relayProfilesEnabled !== false,
     ccsLinkEnabled: settings.ccsLinkEnabled === true,
     relayCommonConfigContents,

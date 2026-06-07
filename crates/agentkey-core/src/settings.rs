@@ -250,7 +250,11 @@ pub struct BackendSettings {
         default
     )]
     pub codex_app_service_tier_controls: bool,
-    #[serde(rename = "codexGoalsEnabled", default)]
+    #[serde(
+        rename = "desktopClientGoalsEnabled",
+        alias = "codexGoalsEnabled",
+        default
+    )]
     pub codex_goals_enabled: bool,
     #[serde(rename = "launchMode", default)]
     pub launch_mode: LaunchMode,
@@ -675,9 +679,12 @@ fn merge_known_setting_fields(target: &mut Map<String, Value>, source: &Map<Stri
         "desktopClientServiceTierControls",
         "codexAppServiceTierControls",
     );
-    if let Some(value) = source.get("codexGoalsEnabled").and_then(Value::as_bool) {
-        target.insert("codexGoalsEnabled".to_string(), Value::Bool(value));
-    }
+    merge_bool_setting_alias(
+        target,
+        source,
+        "desktopClientGoalsEnabled",
+        "codexGoalsEnabled",
+    );
     if let Some(value) = source.get("launchMode").and_then(Value::as_str) {
         if matches!(value, "patch" | "relay") {
             target.insert("launchMode".to_string(), Value::String(value.to_string()));
@@ -1131,7 +1138,7 @@ mod tests {
     #[test]
     fn settings_deserialize_uses_existing_json_keys() {
         let settings: BackendSettings = serde_json::from_str(
-            r#"{"desktopClientPath":"C:\\Portable\\Client\\app","providerSyncEnabled":true,"codexGoalsEnabled":true,"cliWrapperEnabled":true,"cliWrapperBaseUrl":"https://example.test","cliWrapperApiKey":"sk-test","cliWrapperApiKeyEnv":"","claudeCodeEnabled":true,"claudeCodeCommand":"claude --permission-mode acceptEdits","claudeCodeBaseUrl":"https://litellm.example.test","claudeCodeApiKey":"sk-claude","claudeCodeAuthMode":"authToken","claudeCodeModel":"claude-sonnet-4-5"}"#,
+            r#"{"desktopClientPath":"C:\\Portable\\Client\\app","providerSyncEnabled":true,"desktopClientGoalsEnabled":true,"cliWrapperEnabled":true,"cliWrapperBaseUrl":"https://example.test","cliWrapperApiKey":"sk-test","cliWrapperApiKeyEnv":"","claudeCodeEnabled":true,"claudeCodeCommand":"claude --permission-mode acceptEdits","claudeCodeBaseUrl":"https://litellm.example.test","claudeCodeApiKey":"sk-claude","claudeCodeAuthMode":"authToken","claudeCodeModel":"claude-sonnet-4-5"}"#,
         )
         .unwrap();
         assert_eq!(settings.codex_app_path, r"C:\Portable\Client\app");
@@ -1631,7 +1638,7 @@ experimental_bearer_token = "sk-existing""#));
             "desktopClientSessionDelete": false,
             "desktopClientConversationView": true,
             "desktopClientServiceTierControls": true,
-            "codexGoalsEnabled": true,
+            "desktopClientGoalsEnabled": true,
             "relayBaseUrl": "https://relay.example.test/v1",
             "relayApiKey": "sk-relay",
             "desktopClientExtraArgs": ["--force_high_performance_gpu", "", "  ", " --enable-gpu "],
@@ -1682,9 +1689,11 @@ experimental_bearer_token = "sk-existing""#));
         assert_eq!(saved["desktopClientPluginEntryUnlock"], json!(false));
         assert_eq!(saved["desktopClientServiceTierControls"], json!(true));
         assert_eq!(saved["desktopClientPath"], json!(r"C:\Portable\Client\Client.exe"));
+        assert_eq!(saved["desktopClientGoalsEnabled"], json!(true));
         assert!(saved.get("codexAppPath").is_none());
         assert!(saved.get("codexAppPluginEntryUnlock").is_none());
         assert!(saved.get("codexAppServiceTierControls").is_none());
+        assert!(saved.get("codexGoalsEnabled").is_none());
     }
 
     #[test]
@@ -2001,6 +2010,24 @@ experimental_bearer_token = "sk-existing""#));
             json!(["--force_high_performance_gpu", "--enable-gpu"])
         );
         assert!(saved.get("codexExtraArgs").is_none());
+    }
+
+    #[test]
+    fn settings_store_update_canonicalizes_legacy_goals_key() {
+        let dir = temp_dir();
+        let path = dir.join("settings.json");
+        let store = SettingsStore::new(path.clone());
+
+        let updated = store
+            .update(json!({
+                "codexGoalsEnabled": true
+            }))
+            .unwrap();
+        let saved: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+
+        assert!(updated.codex_goals_enabled);
+        assert_eq!(saved["desktopClientGoalsEnabled"], json!(true));
+        assert!(saved.get("codexGoalsEnabled").is_none());
     }
 
     #[test]
