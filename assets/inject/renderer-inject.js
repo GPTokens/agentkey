@@ -22,10 +22,12 @@
   const zedRemoteButtonClass = "agentkey-zed-remote-button";
   const zedRemoteOpenInMenuItemClass = "agentkey-zed-open-in-menu-item";
   const zedRemoteToastClass = "agentkey-zed-remote-toast";
-  const upstreamWorktreeDialogClass = "codex-upstream-worktree-dialog";
-  const upstreamBranchOptionAttribute = "data-codex-upstream-branch-option";
-  const upstreamBranchSelectionKey = "codexUpstreamBranchSelection";
-  const upstreamProjectContextKey = "codexUpstreamProjectContext";
+  const upstreamWorktreeDialogClass = "agentkey-upstream-worktree-dialog";
+  const upstreamBranchOptionAttribute = "data-agentkey-upstream-branch-option";
+  const upstreamBranchSelectionKey = "agentKeyUpstreamBranchSelection";
+  const legacyAgentKeyUpstreamBranchSelectionKey = "codexUpstreamBranchSelection";
+  const upstreamProjectContextKey = "agentKeyUpstreamProjectContext";
+  const legacyAgentKeyUpstreamProjectContextKey = "codexUpstreamProjectContext";
   const zedRemoteOpenVersion = "1";
   const zedRemoteOpenInMenuVersion = "1";
   const zedRemoteOpenInMenuActivationWindowMs = 600;
@@ -2038,7 +2040,7 @@
             <div class="agentkey-row">
               <div><div class="agentkey-row-title">Upstream worktree</div><div class="agentkey-row-description">Create a Git worktree from a fresh upstream branch, equivalent to git worktree add -b branch path upstream/base.</div></div>
               <div class="agentkey-worktree-actions">
-                <button type="button" class="agentkey-action-button" data-codex-upstream-worktree-open="true">创建</button>
+                <button type="button" class="agentkey-action-button" data-agentkey-upstream-worktree-open="true">创建</button>
                 <button type="button" class="agentkey-toggle" data-agentkey-setting="upstreamWorktreeCreate"><span></span></button>
               </div>
             </div>
@@ -2192,7 +2194,7 @@
         loadUserScripts("/user-scripts/reload", {});
         return;
       }
-      if (target?.closest("[data-codex-upstream-worktree-open]")) {
+      if (target?.closest("[data-agentkey-upstream-worktree-open]")) {
         if (!agentKeySettings().upstreamWorktreeCreate) {
           showToast("Upstream worktree enhancement is disabled", null);
           return;
@@ -4918,7 +4920,7 @@
   }
 
   function upstreamWorktreeField(dialog, name) {
-    return dialog.querySelector(`[data-codex-upstream-worktree-field="${name}"]`);
+    return dialog.querySelector(`[data-agentkey-upstream-worktree-field="${name}"]`);
   }
 
   function upstreamWorktreePayload(dialog) {
@@ -4934,7 +4936,8 @@
 
   function readUpstreamBranchSelection() {
     try {
-      return JSON.parse(sessionStorage.getItem(upstreamBranchSelectionKey) || "null");
+      const stored = sessionStorage.getItem(upstreamBranchSelectionKey) || sessionStorage.getItem(legacyAgentKeyUpstreamBranchSelectionKey) || "null";
+      return JSON.parse(stored);
     } catch {
       return null;
     }
@@ -4943,9 +4946,11 @@
   function writeUpstreamBranchSelection(selection) {
     if (!selection) {
       sessionStorage.removeItem(upstreamBranchSelectionKey);
+      sessionStorage.removeItem(legacyAgentKeyUpstreamBranchSelectionKey);
       return;
     }
     sessionStorage.setItem(upstreamBranchSelectionKey, JSON.stringify(selection));
+    sessionStorage.removeItem(legacyAgentKeyUpstreamBranchSelectionKey);
   }
 
   function nativeBranchMenuCandidates() {
@@ -5007,7 +5012,8 @@
 
   function readUpstreamProjectContext() {
     try {
-      const context = JSON.parse(sessionStorage.getItem(upstreamProjectContextKey) || "null");
+      const stored = sessionStorage.getItem(upstreamProjectContextKey) || sessionStorage.getItem(legacyAgentKeyUpstreamProjectContextKey) || "null";
+      const context = JSON.parse(stored);
       if (!context || typeof context !== "object") return null;
       if (typeof context.at === "number" && Date.now() - context.at > upstreamProjectContextTtlMs) return null;
       if (!context.repoPath && !context.projectId) return null;
@@ -5026,6 +5032,7 @@
         label: context.label || "",
         at: Date.now(),
       }));
+      sessionStorage.removeItem(legacyAgentKeyUpstreamProjectContextKey);
     } catch {
     }
   }
@@ -5225,17 +5232,17 @@
     item.setAttribute("data-remote", ref.remote || "upstream");
     item.setAttribute("data-base-branch", ref.branch || "main");
     item.setAttribute("data-label", label);
-    item.className = "codex-upstream-branch-option cursor-interaction flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-token-foreground hover:bg-token-list-hover-background";
+    item.className = "agentkey-upstream-branch-option cursor-interaction flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-token-foreground hover:bg-token-list-hover-background";
     item.innerHTML = `${branchIconSvg()}<span class="min-w-0 flex-1 truncate">${escapeHtml(label)}</span>${checkmarkSvg()}`;
     menu.appendChild(item);
   }
 
   function branchIconSvg() {
-    return '<svg aria-hidden="true" data-codex-upstream-branch-icon="true" viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-token-text-tertiary" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>';
+    return '<svg aria-hidden="true" data-agentkey-upstream-branch-icon="true" viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-token-text-tertiary" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>';
   }
 
   function checkmarkSvg() {
-    return '<svg hidden aria-hidden="true" data-codex-upstream-branch-check="true" viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-token-text-secondary" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>';
+    return '<svg hidden aria-hidden="true" data-agentkey-upstream-branch-check="true" viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-token-text-secondary" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>';
   }
 
   function branchMenuItems(menu) {
@@ -5307,20 +5314,20 @@
         && option.getAttribute("data-base-branch") === (selection.baseBranch || "main");
       option.setAttribute("aria-checked", selected ? "true" : "false");
       option.toggleAttribute("data-selected", selected);
-      const check = option.querySelector('[data-codex-upstream-branch-check="true"]');
+      const check = option.querySelector('[data-agentkey-upstream-branch-check="true"]');
       if (check && selected) check.removeAttribute("hidden");
       if (check && !selected) check.setAttribute("hidden", "");
     }
   }
 
   function removeUpstreamBranchOptions(scope = document) {
-    scope.querySelectorAll(`[${upstreamBranchOptionAttribute}], .codex-upstream-branch-group`)
+    scope.querySelectorAll(`[${upstreamBranchOptionAttribute}], .agentkey-upstream-branch-group`)
       .forEach((node) => node.remove());
   }
 
   function cleanupInvalidUpstreamBranchOptions() {
     for (const menu of nativeBranchMenuCandidates()) {
-      if (!menu.querySelector(`[${upstreamBranchOptionAttribute}], .codex-upstream-branch-group`)) continue;
+      if (!menu.querySelector(`[${upstreamBranchOptionAttribute}], .agentkey-upstream-branch-group`)) continue;
       const trigger = branchMenuTriggerFromMenu(menu);
       if (!looksLikeBranchMenu(menu, trigger) || !branchMenuInNewWorktreeMode(trigger)) {
         removeUpstreamBranchOptions(menu);
@@ -5375,22 +5382,22 @@
   }
 
   function ensureNativeBranchTriggerLabel(trigger) {
-    if (!trigger || trigger.querySelector?.('[data-codex-upstream-branch-selection-label="true"]')) return;
+    if (!trigger || trigger.querySelector?.('[data-agentkey-upstream-branch-selection-label="true"]')) return;
     const labelNode = branchTriggerLabelNode(trigger);
     if (!labelNode) return;
-    trigger.setAttribute("data-codex-upstream-branch-trigger", "true");
-    labelNode.setAttribute("data-codex-native-branch-label", "true");
+    trigger.setAttribute("data-agentkey-upstream-branch-trigger", "true");
+    labelNode.setAttribute("data-agentkey-native-branch-label", "true");
     const selectionLabel = document.createElement("span");
-    selectionLabel.setAttribute("data-codex-upstream-branch-selection-label", "true");
+    selectionLabel.setAttribute("data-agentkey-upstream-branch-selection-label", "true");
     selectionLabel.className = labelNode.className || "composer-footer__label--sm composer-footer__secondary-label max-w-40 truncate";
     selectionLabel.hidden = true;
     labelNode.insertAdjacentElement("afterend", selectionLabel);
   }
 
   function clearUpstreamBranchTriggerLabel() {
-    document.querySelectorAll('[data-codex-upstream-branch-trigger="true"]').forEach((trigger) => {
-      const nativeLabel = trigger.querySelector('[data-codex-native-branch-label="true"]');
-      const selectionLabel = trigger.querySelector('[data-codex-upstream-branch-selection-label="true"]');
+    document.querySelectorAll('[data-agentkey-upstream-branch-trigger="true"]').forEach((trigger) => {
+      const nativeLabel = trigger.querySelector('[data-agentkey-native-branch-label="true"]');
+      const selectionLabel = trigger.querySelector('[data-agentkey-upstream-branch-selection-label="true"]');
       if (nativeLabel) nativeLabel.hidden = false;
       if (selectionLabel) selectionLabel.hidden = true;
       trigger.removeAttribute("aria-label");
@@ -5404,9 +5411,9 @@
       clearUpstreamBranchTriggerLabel();
       return;
     }
-    document.querySelectorAll('[data-codex-upstream-branch-trigger="true"]').forEach((trigger) => {
-      const nativeLabel = trigger.querySelector('[data-codex-native-branch-label="true"]');
-      const selectionLabel = trigger.querySelector('[data-codex-upstream-branch-selection-label="true"]');
+    document.querySelectorAll('[data-agentkey-upstream-branch-trigger="true"]').forEach((trigger) => {
+      const nativeLabel = trigger.querySelector('[data-agentkey-native-branch-label="true"]');
+      const selectionLabel = trigger.querySelector('[data-agentkey-upstream-branch-selection-label="true"]');
       if (!selectionLabel) return;
       if (nativeLabel) nativeLabel.hidden = true;
       selectionLabel.hidden = false;
@@ -5476,7 +5483,7 @@
       removeUpstreamBranchOptions(menu);
       ensureNativeBranchTriggerLabel(trigger);
       const group = document.createElement("div");
-      group.className = "codex-upstream-branch-group px-2 py-1 text-xs text-token-text-tertiary";
+      group.className = "agentkey-upstream-branch-group px-2 py-1 text-xs text-token-text-tertiary";
       group.textContent = "Upstream";
       menu.appendChild(group);
       refs.forEach((ref) => renderUpstreamBranchOption(menu, resolvedContext, ref));
@@ -5487,9 +5494,9 @@
 
   function installUpstreamBranchDropdownAdapter() {
     const adapterVersion = "actual-upstream-refs-v16";
-    window.__codexUpstreamBranchDropdownAdapterVersion = adapterVersion;
-    if (window.__codexUpstreamBranchDropdownAdapterInstalled === adapterVersion) return;
-    window.__codexUpstreamBranchDropdownAdapterInstalled = adapterVersion;
+    window.__agentKeyUpstreamBranchDropdownAdapterVersion = adapterVersion;
+    if (window.__agentKeyUpstreamBranchDropdownAdapterInstalled === adapterVersion) return;
+    window.__agentKeyUpstreamBranchDropdownAdapterInstalled = adapterVersion;
     document.addEventListener("click", (event) => {
       rememberStartNewChatProjectContext(event);
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
@@ -5601,23 +5608,23 @@
 
   function installUpstreamPendingWorktreeDispatcherPatch() {
     const patchVersion = "1";
-    if (window.__codexUpstreamPendingWorktreeDispatcherPatch === patchVersion) return;
+    if (window.__agentKeyUpstreamPendingWorktreeDispatcherPatch === patchVersion) return;
     const patch = async () => {
       try {
         const module = await loadCodexAppModule("setting-storage-");
         const dispatcherClass = typeof module.v === "function" && String(module.v).includes("dispatchMessage") ? module.v : null;
         const dispatcher = dispatcherClass?.getInstance?.();
         if (!dispatcher || typeof dispatcher.dispatchMessage !== "function") throw new Error("Codex dispatcher unavailable");
-        if (!dispatcher.__codexUpstreamWorktreeOriginalDispatchMessage) {
-          dispatcher.__codexUpstreamWorktreeOriginalDispatchMessage = dispatcher.dispatchMessage.bind(dispatcher);
+        if (!dispatcher.__agentKeyUpstreamWorktreeOriginalDispatchMessage) {
+          dispatcher.__agentKeyUpstreamWorktreeOriginalDispatchMessage = dispatcher.dispatchMessage.bind(dispatcher);
           dispatcher.dispatchMessage = (type, payload) => {
             const nextPayload = type === "pending-worktree-create"
               ? applyUpstreamPendingWorktreeOverride(payload)
               : payload;
-            return dispatcher.__codexUpstreamWorktreeOriginalDispatchMessage(type, nextPayload);
+            return dispatcher.__agentKeyUpstreamWorktreeOriginalDispatchMessage(type, nextPayload);
           };
         }
-        window.__codexUpstreamPendingWorktreeDispatcherPatch = patchVersion;
+        window.__agentKeyUpstreamPendingWorktreeDispatcherPatch = patchVersion;
       } catch (error) {
         sendAgentKeyDiagnostic("upstream_pending_worktree_patch_failed", {
           errorName: error?.name || "",
@@ -5701,15 +5708,15 @@
   function installUpstreamWorktreeNativeAdapter() {
     const adapterVersion = "2";
     installUpstreamPendingWorktreeDispatcherPatch();
-    if (window.__codexUpstreamWorktreeNativeAdapterInstalled === adapterVersion) return;
-    window.__codexUpstreamWorktreeNativeAdapterInstalled = adapterVersion;
+    if (window.__agentKeyUpstreamWorktreeNativeAdapterInstalled === adapterVersion) return;
+    window.__agentKeyUpstreamWorktreeNativeAdapterInstalled = adapterVersion;
     document.addEventListener("click", (event) => {
       handleUpstreamWorktreeNativeCreate(event);
     }, true);
   }
 
   function setUpstreamWorktreeMessage(dialog, message, status = "idle") {
-    const messageNode = dialog.querySelector("[data-codex-upstream-worktree-message]");
+    const messageNode = dialog.querySelector("[data-agentkey-upstream-worktree-message]");
     if (!messageNode) return;
     messageNode.dataset.status = status;
     messageNode.textContent = message || "";
@@ -5766,30 +5773,30 @@
       <div class="agentkey-delete-confirm-content" role="dialog" aria-modal="true" aria-label="Create upstream worktree">
         <div class="agentkey-delete-confirm-title">Create from upstream</div>
         <div class="agentkey-delete-confirm-message">等价于 git worktree add -b branch path upstream/base。创建前会先 fetch 远端分支。</div>
-        <label class="agentkey-form-field">仓库路径<input data-codex-upstream-worktree-field="repoPath" type="text" placeholder="/path/to/repo"></label>
-        <label class="agentkey-form-field">新分支名<input data-codex-upstream-worktree-field="branchName" type="text" placeholder="feature/my-task"></label>
-        <label class="agentkey-form-field">Worktree 路径<input data-codex-upstream-worktree-field="worktreePath" type="text" placeholder="/path/to/worktrees/my-task"></label>
-        <label class="agentkey-form-field">Remote<input data-codex-upstream-worktree-field="remote" type="text" value="upstream"></label>
-        <label class="agentkey-form-field">Base branch<input data-codex-upstream-worktree-field="baseBranch" type="text" value="main"></label>
-        <div class="agentkey-form-message" data-codex-upstream-worktree-message>填写仓库路径后会自动读取 remote 和当前分支。</div>
+        <label class="agentkey-form-field">仓库路径<input data-agentkey-upstream-worktree-field="repoPath" type="text" placeholder="/path/to/repo"></label>
+        <label class="agentkey-form-field">新分支名<input data-agentkey-upstream-worktree-field="branchName" type="text" placeholder="feature/my-task"></label>
+        <label class="agentkey-form-field">Worktree 路径<input data-agentkey-upstream-worktree-field="worktreePath" type="text" placeholder="/path/to/worktrees/my-task"></label>
+        <label class="agentkey-form-field">Remote<input data-agentkey-upstream-worktree-field="remote" type="text" value="upstream"></label>
+        <label class="agentkey-form-field">Base branch<input data-agentkey-upstream-worktree-field="baseBranch" type="text" value="main"></label>
+        <div class="agentkey-form-message" data-agentkey-upstream-worktree-message>填写仓库路径后会自动读取 remote 和当前分支。</div>
         <div class="agentkey-delete-confirm-actions">
-          <button type="button" data-codex-upstream-worktree-cancel="true">取消</button>
-          <button type="button" data-codex-upstream-worktree-defaults="true">读取默认值</button>
-          <button type="button" data-codex-upstream-worktree-submit="true">Create from upstream</button>
+          <button type="button" data-agentkey-upstream-worktree-cancel="true">取消</button>
+          <button type="button" data-agentkey-upstream-worktree-defaults="true">读取默认值</button>
+          <button type="button" data-agentkey-upstream-worktree-submit="true">Create from upstream</button>
         </div>
       </div>
     `;
     overlay.addEventListener("click", (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      if (event.target === overlay || target?.closest("[data-codex-upstream-worktree-cancel]")) {
+      if (event.target === overlay || target?.closest("[data-agentkey-upstream-worktree-cancel]")) {
         overlay.remove();
         return;
       }
-      if (target?.closest("[data-codex-upstream-worktree-defaults]")) {
+      if (target?.closest("[data-agentkey-upstream-worktree-defaults]")) {
         loadUpstreamWorktreeDefaults(overlay);
         return;
       }
-      if (target?.closest("[data-codex-upstream-worktree-submit]")) {
+      if (target?.closest("[data-agentkey-upstream-worktree-submit]")) {
         submitUpstreamWorktree(overlay);
       }
     }, true);

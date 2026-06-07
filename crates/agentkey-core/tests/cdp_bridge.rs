@@ -446,7 +446,8 @@ fn injection_script_installs_upstream_branch_dropdown_adapter() {
 
     assert!(script.contains("installUpstreamBranchDropdownAdapter"));
     assert!(script.contains("installUpstreamPendingWorktreeDispatcherPatch"));
-    assert!(script.contains("data-codex-upstream-branch-option"));
+    assert!(script.contains("data-agentkey-upstream-branch-option"));
+    assert!(script.contains("agentKeyUpstreamBranchSelection"));
     assert!(script.contains("codexUpstreamBranchSelection"));
     assert!(script.contains("/upstream-worktree/defaults"));
     assert!(script.contains("/upstream-worktree/prepare"));
@@ -461,6 +462,7 @@ fn injection_script_installs_upstream_branch_dropdown_adapter() {
     assert!(script.contains("currentProjectRepoPathFromSelectedProjectButton"));
     assert!(script.contains("currentProjectRepoPathFromStartButton"));
     assert!(script.contains("Start new chat in"));
+    assert!(script.contains("agentKeyUpstreamProjectContext"));
     assert!(script.contains("codexUpstreamProjectContext"));
     assert!(script.contains("rememberStartNewChatProjectContext"));
     assert!(script.contains("currentProjectContextForBranchMenu"));
@@ -469,7 +471,7 @@ fn injection_script_installs_upstream_branch_dropdown_adapter() {
     assert!(script.contains("upstreamRemoteBranchDefaultsCacheTtlMs"));
     assert!(script.contains("upstreamBranchDefaultsInflight.delete(cacheKey)"));
     assert!(script.contains("projectId:"));
-    assert!(script.contains("data-codex-upstream-branch-selection-label"));
+    assert!(script.contains("data-agentkey-upstream-branch-selection-label"));
     assert!(script.contains("syncUpstreamBranchTriggerLabel"));
     assert!(script.contains("syncUpstreamBranchMenuSelection"));
     assert!(script.contains("applyUpstreamPendingWorktreeOverride"));
@@ -477,8 +479,8 @@ fn injection_script_installs_upstream_branch_dropdown_adapter() {
     assert!(script.contains("qualifiedSourceRef"));
     assert!(script.contains("refs/remotes/${remote}/${baseBranch}"));
     assert!(script.contains("startingState: { ...request.startingState, branchName: sourceRef }"));
-    assert!(script.contains("data-codex-upstream-branch-check"));
-    assert!(script.contains("data-codex-upstream-branch-icon"));
+    assert!(script.contains("data-agentkey-upstream-branch-check"));
+    assert!(script.contains("data-agentkey-upstream-branch-icon"));
     assert!(script.contains("branchIconSvg"));
     assert!(script.contains("checkmarkSvg"));
     assert!(script.contains("aria-checked"));
