@@ -1976,6 +1976,7 @@ function ClaudeCodeScreen({
   actions: Actions;
 }) {
   const authEnv = form.claudeCodeAuthMode === "authToken" ? "ANTHROPIC_AUTH_TOKEN" : "ANTHROPIC_API_KEY";
+  const credentialLabel = claudeCodeCredentialLabel(form.claudeCodeAuthMode);
   const launchBlockedReason = claudeCodeLaunchBlockedReason(form);
   return (
     <>
@@ -2033,11 +2034,12 @@ function ClaudeCodeScreen({
               </select>
             </Field>
           </div>
-          <Field label={`API Key (${authEnv})`}>
+          <Field label={`${credentialLabel} (${authEnv})`}>
             <Input
               type="password"
               value={form.claudeCodeApiKey}
               onChange={(event) => onFormChange({ ...form, claudeCodeApiKey: event.currentTarget.value })}
+              placeholder={`输入 Claude Code ${credentialLabel}`}
             />
           </Field>
           <div className="form-row">
@@ -2096,8 +2098,12 @@ function ClaudeCodeScreen({
 function claudeCodeLaunchBlockedReason(form: BackendSettings): string {
   if (!form.claudeCodeEnabled) return "启用 Claude Code 配置后才能启动。";
   if (!form.claudeCodeCommand.trim()) return "Claude Code 启动命令不能为空。";
-  if (!form.claudeCodeApiKey.trim()) return "Claude Code API Key 不能为空。";
+  if (!form.claudeCodeApiKey.trim()) return `Claude Code ${claudeCodeCredentialLabel(form.claudeCodeAuthMode)} 不能为空。`;
   return "";
+}
+
+function claudeCodeCredentialLabel(mode: ClaudeCodeAuthMode): string {
+  return mode === "authToken" ? "Auth Token" : "API Key";
 }
 
 function EnhanceScreen({

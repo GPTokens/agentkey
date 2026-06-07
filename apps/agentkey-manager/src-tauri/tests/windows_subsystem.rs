@@ -142,6 +142,9 @@ fn claude_code_launch_requires_enabled_config_command_and_key() {
     assert!(app_tsx.contains("if (!form.claudeCodeEnabled)"));
     assert!(app_tsx.contains("if (!form.claudeCodeCommand.trim())"));
     assert!(app_tsx.contains("if (!form.claudeCodeApiKey.trim())"));
+    assert!(app_tsx.contains("const credentialLabel = claudeCodeCredentialLabel(form.claudeCodeAuthMode);"));
+    assert!(app_tsx.contains("function claudeCodeCredentialLabel"));
+    assert!(app_tsx.contains("mode === \"authToken\" ? \"Auth Token\" : \"API Key\""));
     assert!(app_tsx.contains("const blockedReason = claudeCodeLaunchBlockedReason(settingsForm);"));
     assert!(app_tsx.contains("disabled={!!launchBlockedReason}"));
 }
