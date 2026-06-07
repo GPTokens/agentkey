@@ -122,7 +122,19 @@ fn redact_diagnostic_string(value: &str) -> String {
     redacted = redact_url_query_params(&redacted);
     redacted = redact_key_value_markers(&redacted);
     for prefix in [
-        "sk-", "sk_", "gho_", "ghp_", "github_pat_", "xoxb-", "xoxp-", "AKIA",
+        "sk-",
+        "sk_",
+        "gsk_",
+        "xai-",
+        "hf_",
+        "AIza",
+        "ya29.",
+        "gho_",
+        "ghp_",
+        "github_pat_",
+        "xoxb-",
+        "xoxp-",
+        "AKIA",
     ] {
         redacted = redact_prefixed_token(&redacted, prefix);
     }
@@ -314,6 +326,21 @@ mod tests {
         assert!(!text.contains("abc123"));
         assert!(!text.contains("live-token"));
         assert!(!text.contains("gho_secret"));
+    }
+
+    #[test]
+    fn redacts_common_third_party_api_key_prefixes() {
+        let redacted = redact_diagnostic_value(json!({
+            "message": "gemini=AIzaSyExample groq=gsk_live_secret xai=xai-test-secret hf=hf_test_secret oauth=ya29.secret-token"
+        }));
+        let text = redacted["message"].as_str().unwrap();
+
+        assert!(text.matches("[REDACTED]").count() >= 5);
+        assert!(!text.contains("SyExample"));
+        assert!(!text.contains("live_secret"));
+        assert!(!text.contains("test-secret"));
+        assert!(!text.contains("test_secret"));
+        assert!(!text.contains("secret-token"));
     }
 
     #[test]

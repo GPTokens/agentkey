@@ -35,7 +35,7 @@ AgentKey currently requires a SHA-256 checksum for the selected release asset. T
 
 ## Diagnostics
 
-Diagnostics may include environment details, configuration paths, and provider settings. Diagnostics must redact secrets before sending or saving reports.
+Diagnostics may include environment details, configuration paths, and provider settings. Diagnostics must redact secrets before sending or saving reports, including common third-party API key prefixes.
 
 ## Claude Code Launch
 
