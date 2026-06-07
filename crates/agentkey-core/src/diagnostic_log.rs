@@ -4,7 +4,7 @@ use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 static TEST_LOG_PATH: OnceLock<Mutex<Option<PathBuf>>> = OnceLock::new();
 
@@ -172,7 +172,9 @@ fn redact_marker_value(value: &str, marker: &str) -> String {
         }
         output.push_str("[REDACTED]");
         let token_end = after_marker
-            .find(|ch: char| ch.is_whitespace() || matches!(ch, '"' | '\'' | ',' | ';' | '}'))
+            .find(|ch: char| {
+                ch.is_whitespace() || matches!(ch, '"' | '\'' | ',' | ';' | '}' | '&' | '#' | '?')
+            })
             .unwrap_or(after_marker.len());
         remaining = &after_marker[token_end..];
     }
@@ -285,9 +287,7 @@ fn redact_prefixed_token(value: &str, prefix: &str) -> String {
         output.push_str("[REDACTED]");
         let after_prefix = &after_before[prefix.len()..];
         let token_end = after_prefix
-            .find(|ch: char| {
-                !(ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-' | '.' | ':'))
-            })
+            .find(|ch: char| !(ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-' | '.' | ':')))
             .unwrap_or(after_prefix.len());
         remaining = &after_prefix[token_end..];
     }

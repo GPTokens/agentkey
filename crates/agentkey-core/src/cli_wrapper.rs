@@ -26,8 +26,9 @@ pub fn ensure_cli_wrapper(settings: &BackendSettings) -> anyhow::Result<Option<W
     if !should_refresh_cli_wrapper(settings, &wrapper_dir) {
         return Ok(None);
     }
-    let real_codex = resolve_real_codex_for_settings(settings)
-        .ok_or_else(|| anyhow::anyhow!("未找到桌面 CLI 运行时，可先启动一次桌面客户端或重新安装"))?;
+    let real_codex = resolve_real_codex_for_settings(settings).ok_or_else(|| {
+        anyhow::anyhow!("未找到桌面 CLI 运行时，可先启动一次桌面客户端或重新安装")
+    })?;
     let codex_home = cli_home_dir();
     let wrapper_settings = wrapper_settings_for_refresh(settings, &wrapper_dir);
     install_cli_wrapper_to(&wrapper_dir, &real_codex, &codex_home, &wrapper_settings).map(Some)
@@ -160,8 +161,12 @@ pub fn install_cli_wrapper_to(
     }
     std::fs::create_dir_all(wrapper_dir)
         .with_context(|| format!("failed to create wrapper dir {}", wrapper_dir.display()))?;
-    std::fs::create_dir_all(codex_home)
-        .with_context(|| format!("failed to create AgentKey CLI home {}", codex_home.display()))?;
+    std::fs::create_dir_all(codex_home).with_context(|| {
+        format!(
+            "failed to create AgentKey CLI home {}",
+            codex_home.display()
+        )
+    })?;
 
     let source_path = wrapper_dir.join(WRAPPER_SOURCE);
     let wrapper_path = wrapper_dir.join(WRAPPER_EXE);
@@ -260,7 +265,7 @@ pub fn build_wrapper_source(
     _settings: &BackendSettings,
 ) -> String {
     format!(
-        r#"using System;
+        r##"using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -378,7 +383,7 @@ class AgentKeyCliBridge
         public string ApiKey = "";
     }}
 }}
-"#,
+"##,
         real_codex = cs_string_literal(&real_codex.to_string_lossy()),
         codex_home = cs_string_literal(&codex_home.to_string_lossy()),
     )
@@ -458,11 +463,10 @@ fn parse_csharp_verbatim_string(rest: &str) -> Option<String> {
     None
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     use super::*;
 
-    #[cfg(unix)]
     #[test]
     fn wrapper_config_write_restricts_file_permissions() {
         use std::os::unix::fs::PermissionsExt;

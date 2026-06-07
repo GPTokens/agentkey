@@ -5,7 +5,7 @@ pub fn api_base_url_allowed(url: &str) -> bool {
     match parsed.scheme() {
         "https" => true,
         "http" => match parsed.host_str() {
-            Some(host) => matches!(host, "localhost" | "127.0.0.1" | "::1"),
+            Some(host) => matches!(host, "localhost" | "127.0.0.1" | "::1" | "[::1]"),
             None => false,
         },
         _ => false,
