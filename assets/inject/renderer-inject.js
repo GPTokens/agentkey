@@ -52,29 +52,30 @@
   const agentKeyArchiveDeleteAllVersion = "2";
   const agentKeyConversationTimelineVersion = "2";
   const agentKeyConversationViewVersion = "1";
-  const codexThreadScrollVersion = "1";
+  const agentKeyThreadScrollVersion = "1";
   const codexThreadServiceTierVersion = "1";
   const agentKeyServiceTierBadgeClass = "agentkey-service-tier-badge";
   const agentKeyServiceTierBadgeVersion = "3";
   let agentKeyVersion = window.__AGENTKEY_VERSION__ || "unknown";
   const agentKeyBuild = window.__AGENTKEY_BUILD__ || "unknown";
   const agentKeySettingsKey = "agentKeySettings";
-  const codexThreadScrollKey = "codexThreadScroll";
+  const agentKeyThreadScrollKey = "agentKeyThreadScroll";
+  const legacyAgentKeyThreadScrollKey = "codexThreadScroll";
   const codexThreadServiceTierKey = "codexThreadServiceTierOverrides";
   const codexThreadServiceTierMaxEntries = 120;
   const codexThreadServiceTierDraftBindWindowMs = 60 * 1000;
   const agentKeyServiceTierRequestOverrideVersion = "2";
   const codexAppServerModelRequestPatchVersion = "1";
   const codexPluginMarketplaceUnlockVersion = "10";
-  const codexThreadScrollMaxEntries = 120;
-  const codexThreadScrollSaveThrottleMs = 120;
-  const codexThreadScrollRestoreWindowMs = 3200;
-  const codexThreadScrollRestoreDelaysMs = [0, 80, 220, 500, 1000, 1800, 2800];
-  const codexThreadScrollUserIntentWindowMs = 1200;
-  const codexThreadScrollProgrammaticGuardVersion = "dispatcher:2";
-  const codexThreadScrollRouteHooksVersion = "dispatcher:2";
-  const codexThreadScrollListenerVersion = "4";
-  const codexThreadScrollUserIntentVersion = "dispatcher:2";
+  const agentKeyThreadScrollMaxEntries = 120;
+  const agentKeyThreadScrollSaveThrottleMs = 120;
+  const agentKeyThreadScrollRestoreWindowMs = 3200;
+  const agentKeyThreadScrollRestoreDelaysMs = [0, 80, 220, 500, 1000, 1800, 2800];
+  const agentKeyThreadScrollUserIntentWindowMs = 1200;
+  const agentKeyThreadScrollProgrammaticGuardVersion = "dispatcher:2";
+  const agentKeyThreadScrollRouteHooksVersion = "dispatcher:2";
+  const agentKeyThreadScrollListenerVersion = "4";
+  const agentKeyThreadScrollUserIntentVersion = "dispatcher:2";
   const codexForcePluginInstallRefreshIntervalMs = 1000;
   window.__agentKeyProjectMoveRuntimeId = (window.__agentKeyProjectMoveRuntimeId || 0) + 1;
   const agentKeyProjectMoveRuntimeId = window.__agentKeyProjectMoveRuntimeId;
@@ -82,14 +83,14 @@
   clearTimeout(window.__agentKeyProjectMoveChatsSortTimer);
   window.__agentKeyProjectMoveProjectionTimer = null;
   window.__agentKeyProjectMoveChatsSortTimer = null;
-  clearTimeout(window.__codexThreadScrollSaveTimer);
-  window.__codexThreadScrollSaveTimer = null;
-  (window.__codexThreadScrollRestoreTimers || []).forEach((timer) => clearTimeout(timer));
-  window.__codexThreadScrollRestoreTimers = [];
-  (window.__codexThreadScrollSyncTimers || []).forEach((timer) => clearTimeout(timer));
-  window.__codexThreadScrollSyncTimers = [];
-  window.__codexThreadScrollRestoreRevision = (window.__codexThreadScrollRestoreRevision || 0) + 1;
-  window.__codexThreadScrollSyncRevision = (window.__codexThreadScrollSyncRevision || 0) + 1;
+  clearTimeout(window.__agentKeyThreadScrollSaveTimer);
+  window.__agentKeyThreadScrollSaveTimer = null;
+  (window.__agentKeyThreadScrollRestoreTimers || []).forEach((timer) => clearTimeout(timer));
+  window.__agentKeyThreadScrollRestoreTimers = [];
+  (window.__agentKeyThreadScrollSyncTimers || []).forEach((timer) => clearTimeout(timer));
+  window.__agentKeyThreadScrollSyncTimers = [];
+  window.__agentKeyThreadScrollRestoreRevision = (window.__agentKeyThreadScrollRestoreRevision || 0) + 1;
+  window.__agentKeyThreadScrollSyncRevision = (window.__agentKeyThreadScrollSyncRevision || 0) + 1;
   window.__agentKeyConversationTimelineNodeCounter = window.__agentKeyConversationTimelineNodeCounter || 0;
   let upstreamBranchDefaultsCache = new Map();
   const upstreamBranchDefaultsCacheTtlMs = 5000;
@@ -972,15 +973,15 @@
     const next = { ...stored, [key]: value };
     localStorage.setItem(agentKeySettingsKey, JSON.stringify(next));
     if (key === "threadScrollRestore" && !value) {
-      clearTimeout(window.__codexThreadScrollSaveTimer);
-      window.__codexThreadScrollSaveTimer = null;
-      window.__codexThreadScrollRestoreRevision = (window.__codexThreadScrollRestoreRevision || 0) + 1;
-      window.__codexThreadScrollSyncRevision = (window.__codexThreadScrollSyncRevision || 0) + 1;
-      (window.__codexThreadScrollRestoreTimers || []).forEach((timer) => clearTimeout(timer));
-      window.__codexThreadScrollRestoreTimers = [];
-      (window.__codexThreadScrollSyncTimers || []).forEach((timer) => clearTimeout(timer));
-      window.__codexThreadScrollSyncTimers = [];
-      window.__codexThreadScrollRuntime = null;
+      clearTimeout(window.__agentKeyThreadScrollSaveTimer);
+      window.__agentKeyThreadScrollSaveTimer = null;
+      window.__agentKeyThreadScrollRestoreRevision = (window.__agentKeyThreadScrollRestoreRevision || 0) + 1;
+      window.__agentKeyThreadScrollSyncRevision = (window.__agentKeyThreadScrollSyncRevision || 0) + 1;
+      (window.__agentKeyThreadScrollRestoreTimers || []).forEach((timer) => clearTimeout(timer));
+      window.__agentKeyThreadScrollRestoreTimers = [];
+      (window.__agentKeyThreadScrollSyncTimers || []).forEach((timer) => clearTimeout(timer));
+      window.__agentKeyThreadScrollSyncTimers = [];
+      window.__agentKeyThreadScrollRuntime = null;
     }
     if (key === "serviceTierControls") {
       if (value) {
@@ -2978,12 +2979,13 @@
   }
 
   function readThreadScrollEntries() {
-    if (window.__codexThreadScrollEntries && typeof window.__codexThreadScrollEntries === "object") {
-      return { ...window.__codexThreadScrollEntries };
+    if (window.__agentKeyThreadScrollEntries && typeof window.__agentKeyThreadScrollEntries === "object") {
+      return { ...window.__agentKeyThreadScrollEntries };
     }
     try {
-      const parsed = JSON.parse(localStorage.getItem(codexThreadScrollKey) || "{}");
-      const rawEntries = parsed?.version === codexThreadScrollVersion && parsed?.entries && typeof parsed.entries === "object"
+      const stored = localStorage.getItem(agentKeyThreadScrollKey) || localStorage.getItem(legacyAgentKeyThreadScrollKey) || "{}";
+      const parsed = JSON.parse(stored);
+      const rawEntries = parsed?.version === agentKeyThreadScrollVersion && parsed?.entries && typeof parsed.entries === "object"
         ? parsed.entries
         : parsed && typeof parsed === "object"
           ? parsed
@@ -2999,10 +3001,10 @@
           at: finiteNonNegativeNumber(value.at),
         };
       });
-      window.__codexThreadScrollEntries = entries;
+      window.__agentKeyThreadScrollEntries = entries;
       return { ...entries };
     } catch {
-      window.__codexThreadScrollEntries = Object.create(null);
+      window.__agentKeyThreadScrollEntries = Object.create(null);
       return {};
     }
   }
@@ -3011,13 +3013,14 @@
     const pruned = Object.create(null);
     Object.entries(entries || {})
       .sort((left, right) => finiteNonNegativeNumber(right[1]?.at) - finiteNonNegativeNumber(left[1]?.at))
-      .slice(0, codexThreadScrollMaxEntries)
+      .slice(0, agentKeyThreadScrollMaxEntries)
       .forEach(([key, value]) => {
         const safeKey = validThreadScrollSessionKey(key);
         if (safeKey) pruned[safeKey] = value;
       });
-    window.__codexThreadScrollEntries = pruned;
-    localStorage.setItem(codexThreadScrollKey, JSON.stringify({ version: codexThreadScrollVersion, entries: pruned }));
+    window.__agentKeyThreadScrollEntries = pruned;
+    localStorage.setItem(agentKeyThreadScrollKey, JSON.stringify({ version: agentKeyThreadScrollVersion, entries: pruned }));
+    localStorage.removeItem(legacyAgentKeyThreadScrollKey);
   }
 
   function currentThreadScroller() {
@@ -3031,8 +3034,8 @@
   }
 
   function threadScrollRuntime() {
-    if (!window.__codexThreadScrollRuntime || typeof window.__codexThreadScrollRuntime !== "object") {
-      window.__codexThreadScrollRuntime = {
+    if (!window.__agentKeyThreadScrollRuntime || typeof window.__agentKeyThreadScrollRuntime !== "object") {
+      window.__agentKeyThreadScrollRuntime = {
         activeSessionId: "",
         activeScroller: null,
         scrollListener: null,
@@ -3047,17 +3050,17 @@
         userCancelledRestoreSessionId: "",
       };
     }
-    return window.__codexThreadScrollRuntime;
+    return window.__agentKeyThreadScrollRuntime;
   }
 
   function clearThreadScrollRestoreTimers() {
-    (window.__codexThreadScrollRestoreTimers || []).forEach((timer) => clearTimeout(timer));
-    window.__codexThreadScrollRestoreTimers = [];
+    (window.__agentKeyThreadScrollRestoreTimers || []).forEach((timer) => clearTimeout(timer));
+    window.__agentKeyThreadScrollRestoreTimers = [];
   }
 
   function clearThreadScrollSyncTimers() {
-    (window.__codexThreadScrollSyncTimers || []).forEach((timer) => clearTimeout(timer));
-    window.__codexThreadScrollSyncTimers = [];
+    (window.__agentKeyThreadScrollSyncTimers || []).forEach((timer) => clearTimeout(timer));
+    window.__agentKeyThreadScrollSyncTimers = [];
   }
 
   function clearThreadScrollRestoreLock() {
@@ -3069,10 +3072,10 @@
     const cancelledSessionId = validThreadScrollSessionKey(runtime.restoreLock?.sessionId)
       || validThreadScrollSessionKey(currentSessionRef().session_id)
       || validThreadScrollSessionKey(runtime.activeSessionId);
-    runtime.userScrollIntentUntil = Date.now() + codexThreadScrollUserIntentWindowMs;
+    runtime.userScrollIntentUntil = Date.now() + agentKeyThreadScrollUserIntentWindowMs;
     runtime.userCancelledRestoreSessionId = cancelledSessionId;
-    window.__codexThreadScrollRestoreRevision = (window.__codexThreadScrollRestoreRevision || 0) + 1;
-    window.__codexThreadScrollSyncRevision = (window.__codexThreadScrollSyncRevision || 0) + 1;
+    window.__agentKeyThreadScrollRestoreRevision = (window.__agentKeyThreadScrollRestoreRevision || 0) + 1;
+    window.__agentKeyThreadScrollSyncRevision = (window.__agentKeyThreadScrollSyncRevision || 0) + 1;
     clearThreadScrollRestoreTimers();
     clearThreadScrollSyncTimers();
     clearThreadScrollRestoreLock();
@@ -3125,7 +3128,7 @@
     runtime.restoreLock = {
       sessionId: key,
       targetTop: finiteScrollNumber(entry.top),
-      expiresAt: Date.now() + codexThreadScrollRestoreWindowMs,
+      expiresAt: Date.now() + agentKeyThreadScrollRestoreWindowMs,
     };
     return runtime.restoreLock;
   }
@@ -3201,65 +3204,65 @@
   }
 
   function installThreadScrollProgrammaticScrollGuard() {
-    if (window.__codexThreadScrollProgrammaticGuardInstalled === codexThreadScrollProgrammaticGuardVersion) return;
-    window.__codexThreadScrollProgrammaticGuardInstalled = codexThreadScrollProgrammaticGuardVersion;
-    window.__codexThreadScrollOriginals = window.__codexThreadScrollOriginals || {};
-    const originals = window.__codexThreadScrollOriginals;
+    if (window.__agentKeyThreadScrollProgrammaticGuardInstalled === agentKeyThreadScrollProgrammaticGuardVersion) return;
+    window.__agentKeyThreadScrollProgrammaticGuardInstalled = agentKeyThreadScrollProgrammaticGuardVersion;
+    window.__agentKeyThreadScrollOriginals = window.__agentKeyThreadScrollOriginals || {};
+    const originals = window.__agentKeyThreadScrollOriginals;
     originals.elementScrollTo = originals.elementScrollTo || Element.prototype.scrollTo;
     if (typeof originals.elementScrollTo === "function") {
-      Element.prototype.scrollTo = function codexThreadScrollGuardedScrollTo(...args) {
+      Element.prototype.scrollTo = function agentKeyThreadScrollGuardedScrollTo(...args) {
         const top = scrollToRequestedTop(args, this);
-        if (top != null && window.__codexThreadScrollHandlers?.shouldBlockAutobottom?.(this, top)) return;
+        if (top != null && window.__agentKeyThreadScrollHandlers?.shouldBlockAutobottom?.(this, top)) return;
         return originals.elementScrollTo.apply(this, args);
       };
     }
     originals.elementScroll = originals.elementScroll || Element.prototype.scroll;
     if (typeof originals.elementScroll === "function") {
-      Element.prototype.scroll = function codexThreadScrollGuardedScroll(...args) {
+      Element.prototype.scroll = function agentKeyThreadScrollGuardedScroll(...args) {
         const top = scrollToRequestedTop(args, this);
-        if (top != null && window.__codexThreadScrollHandlers?.shouldBlockAutobottom?.(this, top)) return;
+        if (top != null && window.__agentKeyThreadScrollHandlers?.shouldBlockAutobottom?.(this, top)) return;
         return originals.elementScroll.apply(this, args);
       };
     }
     originals.elementScrollBy = originals.elementScrollBy || Element.prototype.scrollBy;
     if (typeof originals.elementScrollBy === "function") {
-      Element.prototype.scrollBy = function codexThreadScrollGuardedScrollBy(...args) {
+      Element.prototype.scrollBy = function agentKeyThreadScrollGuardedScrollBy(...args) {
         const top = scrollByRequestedTop(args, this);
-        if (top != null && window.__codexThreadScrollHandlers?.shouldBlockAutobottom?.(this, top)) return;
+        if (top != null && window.__agentKeyThreadScrollHandlers?.shouldBlockAutobottom?.(this, top)) return;
         return originals.elementScrollBy.apply(this, args);
       };
     }
     originals.scrollIntoView = originals.scrollIntoView || Element.prototype.scrollIntoView;
     if (typeof originals.scrollIntoView === "function") {
-      Element.prototype.scrollIntoView = function codexThreadScrollGuardedScrollIntoView(...args) {
-        if (window.__codexThreadScrollHandlers?.shouldBlockIntoView?.(this)) return;
+      Element.prototype.scrollIntoView = function agentKeyThreadScrollGuardedScrollIntoView(...args) {
+        if (window.__agentKeyThreadScrollHandlers?.shouldBlockIntoView?.(this)) return;
         return originals.scrollIntoView.apply(this, args);
       };
     }
     originals.windowScrollTo = originals.windowScrollTo || window.scrollTo;
     if (typeof originals.windowScrollTo === "function") {
-      window.scrollTo = function codexThreadScrollGuardedWindowScrollTo(...args) {
+      window.scrollTo = function agentKeyThreadScrollGuardedWindowScrollTo(...args) {
         const scroller = document.scrollingElement || document.documentElement || document.body;
         const top = scrollToRequestedTop(args, scroller);
-        if (top != null && window.__codexThreadScrollHandlers?.shouldBlockAutobottom?.(scroller, top)) return;
+        if (top != null && window.__agentKeyThreadScrollHandlers?.shouldBlockAutobottom?.(scroller, top)) return;
         return originals.windowScrollTo.apply(this, args);
       };
     }
     originals.windowScroll = originals.windowScroll || window.scroll;
     if (typeof originals.windowScroll === "function") {
-      window.scroll = function codexThreadScrollGuardedWindowScroll(...args) {
+      window.scroll = function agentKeyThreadScrollGuardedWindowScroll(...args) {
         const scroller = document.scrollingElement || document.documentElement || document.body;
         const top = scrollToRequestedTop(args, scroller);
-        if (top != null && window.__codexThreadScrollHandlers?.shouldBlockAutobottom?.(scroller, top)) return;
+        if (top != null && window.__agentKeyThreadScrollHandlers?.shouldBlockAutobottom?.(scroller, top)) return;
         return originals.windowScroll.apply(this, args);
       };
     }
     originals.windowScrollBy = originals.windowScrollBy || window.scrollBy;
     if (typeof originals.windowScrollBy === "function") {
-      window.scrollBy = function codexThreadScrollGuardedWindowScrollBy(...args) {
+      window.scrollBy = function agentKeyThreadScrollGuardedWindowScrollBy(...args) {
         const scroller = document.scrollingElement || document.documentElement || document.body;
         const top = scrollByRequestedTop(args, scroller);
-        if (top != null && window.__codexThreadScrollHandlers?.shouldBlockAutobottom?.(scroller, top)) return;
+        if (top != null && window.__agentKeyThreadScrollHandlers?.shouldBlockAutobottom?.(scroller, top)) return;
         return originals.windowScrollBy.apply(this, args);
       };
     }
@@ -3270,7 +3273,7 @@
     const currentUsesWindow = !runtime.activeScroller || runtime.activeScroller === document.scrollingElement || runtime.activeScroller === document.documentElement || runtime.activeScroller === document.body;
     const nextUsesWindow = !scroller || scroller === document.scrollingElement || scroller === document.documentElement || scroller === document.body;
     let listenerReplaced = false;
-    if (runtime.scrollListener && runtime.scrollListenerVersion !== codexThreadScrollListenerVersion) {
+    if (runtime.scrollListener && runtime.scrollListenerVersion !== agentKeyThreadScrollListenerVersion) {
       const currentTarget = currentUsesWindow ? window : runtime.activeScroller;
       currentTarget?.removeEventListener?.("scroll", runtime.scrollListener, true);
       runtime.scrollListener = null;
@@ -3278,7 +3281,7 @@
       listenerReplaced = true;
     }
     runtime.scrollListener = runtime.scrollListener || (() => scheduleThreadScrollSave());
-    runtime.scrollListenerVersion = codexThreadScrollListenerVersion;
+    runtime.scrollListenerVersion = agentKeyThreadScrollListenerVersion;
     if (!listenerReplaced && runtime.activeScroller === scroller && runtime.scrollListenerUsesWindow === nextUsesWindow) return;
     if (runtime.activeScroller) {
       const target = currentUsesWindow ? window : runtime.activeScroller;
@@ -3313,11 +3316,11 @@
   }
 
   function scheduleThreadScrollSave() {
-    if (!agentKeySettings().threadScrollRestore || window.__codexThreadScrollSaveTimer) return;
-    window.__codexThreadScrollSaveTimer = setTimeout(() => {
-      window.__codexThreadScrollSaveTimer = null;
+    if (!agentKeySettings().threadScrollRestore || window.__agentKeyThreadScrollSaveTimer) return;
+    window.__agentKeyThreadScrollSaveTimer = setTimeout(() => {
+      window.__agentKeyThreadScrollSaveTimer = null;
       saveThreadScrollPositionNow();
-    }, codexThreadScrollSaveThrottleMs);
+    }, agentKeyThreadScrollSaveThrottleMs);
   }
 
   function restoreThreadScrollPosition(sessionId) {
@@ -3357,10 +3360,10 @@
       return;
     }
     startThreadScrollRestoreLock(key, entry);
-    const restoreRevision = (window.__codexThreadScrollRestoreRevision || 0) + 1;
-    window.__codexThreadScrollRestoreRevision = restoreRevision;
-    window.__codexThreadScrollRestoreTimers = codexThreadScrollRestoreDelaysMs.map((delay) => setTimeout(() => {
-      if (window.__codexThreadScrollRestoreRevision !== restoreRevision) return;
+    const restoreRevision = (window.__agentKeyThreadScrollRestoreRevision || 0) + 1;
+    window.__agentKeyThreadScrollRestoreRevision = restoreRevision;
+    window.__agentKeyThreadScrollRestoreTimers = agentKeyThreadScrollRestoreDelaysMs.map((delay) => setTimeout(() => {
+      if (window.__agentKeyThreadScrollRestoreRevision !== restoreRevision) return;
       restoreThreadScrollPosition(key);
     }, delay));
   }
@@ -3400,10 +3403,10 @@
     const currentKey = validThreadScrollSessionKey(currentSessionRef().session_id) || validThreadScrollSessionKey(threadScrollRuntime().activeSessionId);
     if (userScrollIntentActive() || threadScrollRestoreCancelledForSession(currentKey)) return;
     clearThreadScrollSyncTimers();
-    const syncRevision = (window.__codexThreadScrollSyncRevision || 0) + 1;
-    window.__codexThreadScrollSyncRevision = syncRevision;
-    window.__codexThreadScrollSyncTimers = codexThreadScrollRestoreDelaysMs.map((delay) => setTimeout(() => {
-      if (window.__codexThreadScrollSyncRevision !== syncRevision) return;
+    const syncRevision = (window.__agentKeyThreadScrollSyncRevision || 0) + 1;
+    window.__agentKeyThreadScrollSyncRevision = syncRevision;
+    window.__agentKeyThreadScrollSyncTimers = agentKeyThreadScrollRestoreDelaysMs.map((delay) => setTimeout(() => {
+      if (window.__agentKeyThreadScrollSyncRevision !== syncRevision) return;
       scheduleThreadScrollSync(forceRestore);
     }, delay));
   }
@@ -3457,7 +3460,7 @@
   }
 
   function updateThreadScrollHandlers() {
-    window.__codexThreadScrollHandlers = {
+    window.__agentKeyThreadScrollHandlers = {
       shouldBlockAutobottom: shouldBlockThreadScrollAutobottom,
       shouldBlockIntoView: shouldBlockThreadScrollIntoView,
       markUserIntent: markThreadScrollUserIntent,
@@ -3471,96 +3474,96 @@
   }
 
   function installThreadScrollUserIntentCapture() {
-    if (window.__codexThreadScrollUserIntentInstalled === codexThreadScrollUserIntentVersion) return;
-    document.removeEventListener("wheel", window.__codexThreadScrollWheelIntentHandler, true);
-    document.removeEventListener("touchmove", window.__codexThreadScrollTouchIntentHandler, true);
-    document.removeEventListener("keydown", window.__codexThreadScrollKeyIntentHandler, true);
-    document.removeEventListener("pointerdown", window.__codexThreadScrollPointerIntentHandler, true);
-    window.__codexThreadScrollWheelIntentHandler = (event) => window.__codexThreadScrollHandlers?.markUserIntent?.(event);
-    window.__codexThreadScrollTouchIntentHandler = (event) => window.__codexThreadScrollHandlers?.markUserIntent?.(event);
-    window.__codexThreadScrollKeyIntentHandler = (event) => window.__codexThreadScrollHandlers?.markKeyboardIntent?.(event);
-    window.__codexThreadScrollPointerIntentHandler = (event) => window.__codexThreadScrollHandlers?.markPointerIntent?.(event);
-    document.addEventListener("wheel", window.__codexThreadScrollWheelIntentHandler, { capture: true, passive: true });
-    document.addEventListener("touchmove", window.__codexThreadScrollTouchIntentHandler, { capture: true, passive: true });
-    document.addEventListener("keydown", window.__codexThreadScrollKeyIntentHandler, true);
-    document.addEventListener("pointerdown", window.__codexThreadScrollPointerIntentHandler, true);
-    window.__codexThreadScrollUserIntentInstalled = codexThreadScrollUserIntentVersion;
+    if (window.__agentKeyThreadScrollUserIntentInstalled === agentKeyThreadScrollUserIntentVersion) return;
+    document.removeEventListener("wheel", window.__agentKeyThreadScrollWheelIntentHandler, true);
+    document.removeEventListener("touchmove", window.__agentKeyThreadScrollTouchIntentHandler, true);
+    document.removeEventListener("keydown", window.__agentKeyThreadScrollKeyIntentHandler, true);
+    document.removeEventListener("pointerdown", window.__agentKeyThreadScrollPointerIntentHandler, true);
+    window.__agentKeyThreadScrollWheelIntentHandler = (event) => window.__agentKeyThreadScrollHandlers?.markUserIntent?.(event);
+    window.__agentKeyThreadScrollTouchIntentHandler = (event) => window.__agentKeyThreadScrollHandlers?.markUserIntent?.(event);
+    window.__agentKeyThreadScrollKeyIntentHandler = (event) => window.__agentKeyThreadScrollHandlers?.markKeyboardIntent?.(event);
+    window.__agentKeyThreadScrollPointerIntentHandler = (event) => window.__agentKeyThreadScrollHandlers?.markPointerIntent?.(event);
+    document.addEventListener("wheel", window.__agentKeyThreadScrollWheelIntentHandler, { capture: true, passive: true });
+    document.addEventListener("touchmove", window.__agentKeyThreadScrollTouchIntentHandler, { capture: true, passive: true });
+    document.addEventListener("keydown", window.__agentKeyThreadScrollKeyIntentHandler, true);
+    document.addEventListener("pointerdown", window.__agentKeyThreadScrollPointerIntentHandler, true);
+    window.__agentKeyThreadScrollUserIntentInstalled = agentKeyThreadScrollUserIntentVersion;
   }
 
   function installThreadScrollNavigationCapture() {
-    document.removeEventListener("pointerdown", window.__codexThreadScrollNavigationHandler, true);
-    document.removeEventListener("click", window.__codexThreadScrollClickNavigationHandler, true);
-    document.removeEventListener("keydown", window.__codexThreadScrollKeyboardHandler, true);
+    document.removeEventListener("pointerdown", window.__agentKeyThreadScrollNavigationHandler, true);
+    document.removeEventListener("click", window.__agentKeyThreadScrollClickNavigationHandler, true);
+    document.removeEventListener("keydown", window.__agentKeyThreadScrollKeyboardHandler, true);
     const navigationHandler = (event) => {
       if (!agentKeySettings().threadScrollRestore) return;
       const row = event.target?.closest?.(selectors.sidebarThread);
       if (!row) return;
-      window.__codexThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
+      window.__agentKeyThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
     };
     const clickHandler = (event) => {
       if (!agentKeySettings().threadScrollRestore) return;
       const row = event.target?.closest?.(selectors.sidebarThread);
       if (!row) return;
-      window.__codexThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
+      window.__agentKeyThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
     };
     const keyboardHandler = (event) => {
       if (!agentKeySettings().threadScrollRestore) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       const row = event.target?.closest?.(selectors.sidebarThread);
       if (!row) return;
-      window.__codexThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
+      window.__agentKeyThreadScrollHandlers?.captureNavigation?.(sessionRefFromRow(row).session_id);
     };
-    window.__codexThreadScrollNavigationHandler = navigationHandler;
-    window.__codexThreadScrollClickNavigationHandler = clickHandler;
-    window.__codexThreadScrollKeyboardHandler = keyboardHandler;
+    window.__agentKeyThreadScrollNavigationHandler = navigationHandler;
+    window.__agentKeyThreadScrollClickNavigationHandler = clickHandler;
+    window.__agentKeyThreadScrollKeyboardHandler = keyboardHandler;
     document.addEventListener("pointerdown", navigationHandler, true);
     document.addEventListener("click", clickHandler, true);
     document.addEventListener("keydown", keyboardHandler, true);
   }
 
   function scheduleThreadScrollSync(forceRestore = false) {
-    if (window.__codexThreadScrollSyncPending) return;
-    window.__codexThreadScrollSyncPending = true;
+    if (window.__agentKeyThreadScrollSyncPending) return;
+    window.__agentKeyThreadScrollSyncPending = true;
     setTimeout(() => {
-      window.__codexThreadScrollSyncPending = false;
+      window.__agentKeyThreadScrollSyncPending = false;
       syncThreadScrollState(forceRestore);
     }, 0);
   }
 
   function installThreadScrollRouteHooks() {
-    if (window.__codexThreadScrollRouteHooksInstalled === codexThreadScrollRouteHooksVersion) return;
-    window.__codexThreadScrollRouteHooksInstalled = codexThreadScrollRouteHooksVersion;
-    window.__codexThreadScrollOriginals = window.__codexThreadScrollOriginals || {};
-    const originals = window.__codexThreadScrollOriginals;
+    if (window.__agentKeyThreadScrollRouteHooksInstalled === agentKeyThreadScrollRouteHooksVersion) return;
+    window.__agentKeyThreadScrollRouteHooksInstalled = agentKeyThreadScrollRouteHooksVersion;
+    window.__agentKeyThreadScrollOriginals = window.__agentKeyThreadScrollOriginals || {};
+    const originals = window.__agentKeyThreadScrollOriginals;
     ["pushState", "replaceState"].forEach((method) => {
       const currentMethod = history[method];
       const original = originals[`history_${method}`] || currentMethod;
       originals[`history_${method}`] = original;
       if (typeof original !== "function") return;
-      history[method] = function codexThreadScrollPatchedHistory(...args) {
-        window.__codexThreadScrollHandlers?.saveNow?.();
+      history[method] = function agentKeyThreadScrollPatchedHistory(...args) {
+        window.__agentKeyThreadScrollHandlers?.saveNow?.();
         const result = original.apply(this, args);
-        window.__codexThreadScrollHandlers?.captureNavigation?.(locationThreadId());
+        window.__agentKeyThreadScrollHandlers?.captureNavigation?.(locationThreadId());
         return result;
       };
     });
-    window.removeEventListener("popstate", window.__codexThreadScrollPopStateHandler, true);
-    window.removeEventListener("hashchange", window.__codexThreadScrollHashChangeHandler, true);
-    document.removeEventListener("visibilitychange", window.__codexThreadScrollVisibilityHandler, true);
-    window.__codexThreadScrollPopStateHandler = () => {
-      window.__codexThreadScrollHandlers?.saveNow?.();
-      window.__codexThreadScrollHandlers?.captureNavigation?.(locationThreadId());
+    window.removeEventListener("popstate", window.__agentKeyThreadScrollPopStateHandler, true);
+    window.removeEventListener("hashchange", window.__agentKeyThreadScrollHashChangeHandler, true);
+    document.removeEventListener("visibilitychange", window.__agentKeyThreadScrollVisibilityHandler, true);
+    window.__agentKeyThreadScrollPopStateHandler = () => {
+      window.__agentKeyThreadScrollHandlers?.saveNow?.();
+      window.__agentKeyThreadScrollHandlers?.captureNavigation?.(locationThreadId());
     };
-    window.__codexThreadScrollHashChangeHandler = () => {
-      window.__codexThreadScrollHandlers?.saveNow?.();
-      window.__codexThreadScrollHandlers?.captureNavigation?.(locationThreadId());
+    window.__agentKeyThreadScrollHashChangeHandler = () => {
+      window.__agentKeyThreadScrollHandlers?.saveNow?.();
+      window.__agentKeyThreadScrollHandlers?.captureNavigation?.(locationThreadId());
     };
-    window.__codexThreadScrollVisibilityHandler = () => {
-      if (document.visibilityState === "hidden") window.__codexThreadScrollHandlers?.saveNow?.();
+    window.__agentKeyThreadScrollVisibilityHandler = () => {
+      if (document.visibilityState === "hidden") window.__agentKeyThreadScrollHandlers?.saveNow?.();
     };
-    window.addEventListener("popstate", window.__codexThreadScrollPopStateHandler, true);
-    window.addEventListener("hashchange", window.__codexThreadScrollHashChangeHandler, true);
-    document.addEventListener("visibilitychange", window.__codexThreadScrollVisibilityHandler, true);
+    window.addEventListener("popstate", window.__agentKeyThreadScrollPopStateHandler, true);
+    window.addEventListener("hashchange", window.__agentKeyThreadScrollHashChangeHandler, true);
+    document.addEventListener("visibilitychange", window.__agentKeyThreadScrollVisibilityHandler, true);
   }
 
   async function postJson(path, payload) {
