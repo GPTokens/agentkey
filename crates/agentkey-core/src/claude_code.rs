@@ -74,6 +74,10 @@ pub fn launch_claude_code(settings: &BackendSettings) -> anyhow::Result<ClaudeCo
     })
 }
 
+pub fn validate_claude_code_extra_env(contents: &str) -> anyhow::Result<()> {
+    parse_extra_env(contents).map(|_| ())
+}
+
 fn platform_command(command_line: &str) -> Command {
     #[cfg(windows)]
     {
@@ -167,10 +171,27 @@ fn parse_extra_env(contents: &str) -> anyhow::Result<Vec<(String, String)>> {
         if !is_valid_env_key(key) {
             anyhow::bail!("Claude Code 额外环境变量名无效：{key}");
         }
+        if is_managed_env_key(key) {
+            anyhow::bail!(
+                "Claude Code 额外环境变量不能覆盖 AgentKey 托管变量：{key}"
+            );
+        }
         validate_process_value(key, value)?;
         vars.push((key.to_string(), value.trim().to_string()));
     }
     Ok(vars)
+}
+
+fn is_managed_env_key(value: &str) -> bool {
+    matches!(
+        value,
+        "ANTHROPIC_API_KEY"
+            | "ANTHROPIC_AUTH_TOKEN"
+            | "ANTHROPIC_BASE_URL"
+            | "ANTHROPIC_MODEL"
+            | "ANTHROPIC_SMALL_FAST_MODEL"
+            | "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"
+    )
 }
 
 fn is_valid_env_key(value: &str) -> bool {
@@ -190,6 +211,12 @@ mod tests {
     fn extra_env_rejects_bad_lines() {
         let error = parse_extra_env("GOOD=value\nbad-name=value").unwrap_err();
         assert!(error.to_string().contains("bad-name"));
+    }
+
+    #[test]
+    fn extra_env_rejects_managed_keys() {
+        let error = parse_extra_env("ANTHROPIC_BASE_URL=http://example.test/v1").unwrap_err();
+        assert!(error.to_string().contains("ANTHROPIC_BASE_URL"));
     }
 
     #[test]

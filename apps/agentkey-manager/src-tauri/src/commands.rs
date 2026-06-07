@@ -746,6 +746,9 @@ fn validate_settings_before_save(settings: &BackendSettings) -> anyhow::Result<(
             &settings.claude_code_base_url,
         )?;
     }
+    agentkey_core::claude_code::validate_claude_code_extra_env(
+        &settings.claude_code_extra_env,
+    )?;
     Ok(())
 }
 
