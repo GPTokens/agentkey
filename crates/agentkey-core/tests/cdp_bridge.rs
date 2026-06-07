@@ -575,7 +575,7 @@ fn manager_ui_exposes_pure_api_relay_mode_button() {
     let commands =
         std::fs::read_to_string(repo.join("apps/agentkey-manager/src-tauri/src/lib.rs")).unwrap();
 
-    assert!(source.contains("账号兼容混入 API Key"));
+    assert!(source.contains("兼容模式混入 API Key"));
     assert!(source.contains("纯 API"));
     assert!(source.contains("apply_pure_api_injection"));
     assert!(commands.contains("commands::apply_pure_api_injection"));

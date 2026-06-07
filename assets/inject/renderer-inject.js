@@ -1975,11 +1975,11 @@
               <button type="button" class="agentkey-toggle" data-agentkey-backend-setting="enhancementsEnabled"><span></span></button>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">插件市场解锁</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；账号兼容凭据会保留内置插件市场。" : "API Key 模式下扩展插件市场请求，尽量显示完整插件列表。"}</div></div>
+              <div><div class="agentkey-row-title">插件市场解锁</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；兼容凭据会保留内置插件市场。" : "API Key 模式下扩展插件市场请求，尽量显示完整插件列表。"}</div></div>
               <button type="button" class="agentkey-toggle" data-agentkey-setting="pluginMarketplaceUnlock" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">强制解锁入口</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；账号兼容模式会保留插件入口。" : "使用兼容入口修复，强制显示并启用插件入口。"}</div></div>
+              <div><div class="agentkey-row-title">强制解锁入口</div><div class="agentkey-row-description">${agentKeyBackendSettings.launchMode === "relay" ? "兼容增强模式下无需开启；兼容模式会保留插件入口。" : "使用兼容入口修复，强制显示并启用插件入口。"}</div></div>
               <button type="button" class="agentkey-toggle" data-agentkey-setting="pluginEntryUnlock" ${agentKeyBackendSettings.launchMode === "relay" ? 'disabled data-relay-unneeded="true"' : ""}><span></span></button>
             </div>
             <div class="agentkey-row">
@@ -2051,7 +2051,7 @@
               </div>
             </div>
             <div class="agentkey-row">
-              <div><div class="agentkey-row-title">历史会话修复</div><div class="agentkey-row-description">切换账号兼容、混合 API 或纯 API 后，让旧对话重新显示在当前模式下。</div></div>
+              <div><div class="agentkey-row-title">历史会话修复</div><div class="agentkey-row-description">切换兼容、混合 API 或纯 API 后，让旧对话重新显示在当前模式下。</div></div>
               <button type="button" class="agentkey-toggle" data-agentkey-backend-setting="providerSyncEnabled"><span></span></button>
             </div>
             <div class="agentkey-row">

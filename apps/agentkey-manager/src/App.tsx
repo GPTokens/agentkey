@@ -699,7 +699,7 @@ export function App() {
     const result = await run(() => call<RelayResult>("relay_status"));
     if (result) {
       setRelay(result);
-      if (!silent) showResultNotice("登录状态", result, { silentSuccess: true });
+      if (!silent) showResultNotice("兼容状态", result, { silentSuccess: true });
     }
   };
 
@@ -1083,7 +1083,7 @@ export function App() {
     if (result) {
       setRelay(result);
       await refreshRelayFiles(true);
-      if (!silent || !isSuccessStatus(result.status)) showNotice("账号兼容混入 API Key", result.message, result.status);
+      if (!silent || !isSuccessStatus(result.status)) showNotice("兼容模式混入 API Key", result.message, result.status);
     }
     return !!result && isSuccessStatus(result.status) && result.configured;
   };
@@ -1126,7 +1126,7 @@ export function App() {
     if (result) {
       setRelay(result);
       await refreshRelayFiles(true);
-      if (!silent || !isSuccessStatus(result.status)) showNotice("账号兼容模式", result.message, result.status);
+      if (!silent || !isSuccessStatus(result.status)) showNotice("兼容模式", result.message, result.status);
     }
     return !!result && isSuccessStatus(result.status) && !result.configured;
   };
@@ -1203,7 +1203,7 @@ export function App() {
     const switched = await clearRelayInjection(true);
     if (!switched) return;
     const result = await saveLaunchMode("relay", true);
-    if (result) showNotice("账号兼容模式", "已切回账号兼容模式；页面增强已设为兼容增强。", result.status);
+    if (result) showNotice("兼容模式", "已切回兼容模式；页面增强已设为兼容增强。", result.status);
   };
 
   const switchPureApiMode = async () => {
@@ -2136,7 +2136,7 @@ function EnhanceScreen({
             </div>
           ) : null}
           <div className="feature-switch-grid">
-            <FeatureToggle title="插件市场解锁" detail="API Key 模式下扩展插件市场请求，尽量显示完整插件列表；账号兼容/混合模式通常不需要。" checked={form.desktopClientPluginMarketplaceUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginMarketplaceUnlock", value)} />
+            <FeatureToggle title="插件市场解锁" detail="API Key 模式下扩展插件市场请求，尽量显示完整插件列表；兼容/混合模式通常不需要。" checked={form.desktopClientPluginMarketplaceUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginMarketplaceUnlock", value)} />
             <FeatureToggle title="强制解锁入口" detail="使用兼容入口修复，强制显示并启用插件入口。" checked={form.desktopClientPluginEntryUnlock} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientPluginEntryUnlock", value)} />
             <FeatureToggle title="特殊插件强制安装" detail="解除 App unavailable / 应用不可用导致的前端安装禁用。" checked={form.desktopClientForcePluginInstall} disabled={!masterEnabled || !patchMode} onChange={(value) => setEnhanceFlag("desktopClientForcePluginInstall", value)} />
             <FeatureToggle title="模型白名单解锁" detail="从环境变量和 config.toml 的 /v1/models 拉取模型并补进模型列表。" checked={form.desktopClientModelWhitelistUnlock} disabled={!masterEnabled} onChange={(value) => setEnhanceFlag("desktopClientModelWhitelistUnlock", value)} />
@@ -2153,7 +2153,7 @@ function EnhanceScreen({
           </div>
           <div className="hint-line">
             <Info className="h-4 w-4" />
-            <span>如果使用账号兼容或账号兼容混入 API 模式，通常不需要开启插件市场解锁、强制解锁入口和特殊插件强制安装。</span>
+            <span>如果使用兼容模式或兼容混入 API 模式，通常不需要开启插件市场解锁、强制解锁入口和特殊插件强制安装。</span>
           </div>
           <Toolbar>
             <Button onClick={() => void actions.saveSettings()}>保存增强设置</Button>
@@ -3095,7 +3095,7 @@ function RelayProfileEditor({
               updateDraft(relayMode === "official" ? { relayMode, officialMixApiKey: false } : { relayMode });
             }}
           >
-            <option value="official">账号兼容</option>
+            <option value="official">兼容模式</option>
             <option value="pureApi">纯 API</option>
           </select>
         </Field>
@@ -3602,7 +3602,7 @@ function ModeSelector({ launchMode, actions }: { launchMode: LaunchMode; actions
         type="button"
       >
         <strong>兼容增强</strong>
-        <span>适合账号兼容或账号兼容混入 API Key；保留会话删除、导出、项目移动、Timeline 和用户脚本，关闭插件入口相关增强。</span>
+        <span>适合兼容模式或兼容混入 API Key；保留会话删除、导出、项目移动、Timeline 和用户脚本，关闭插件入口相关增强。</span>
       </button>
       <button
         className={`mode-option ${launchMode === "patch" ? "active" : ""}`}
@@ -4680,7 +4680,7 @@ function normalizeContextSelection(
 
 function relayModeLabel(mode: RelayMode): string {
   if (mode === "pureApi") return "纯 API";
-  return "账号兼容";
+  return "兼容模式";
 }
 
 function relayProfileConfigBrief(profile: RelayProfile): string {
@@ -4691,28 +4691,28 @@ function relayProfileConfigBrief(profile: RelayProfile): string {
 function relayProfileModeHelp(profile: RelayProfile): string {
   if (profile.relayMode === "official") {
     if (profile.officialMixApiKey) {
-      return "此供应商会保留账号兼容模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
+      return "此供应商会保留兼容模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
     }
-    return "此供应商会切回账号兼容模式，不写入 API Key。";
+    return "此供应商会切回兼容模式，不写入 API Key。";
   }
   if (profile.relayMode === "pureApi") {
     return "此供应商会同时写入 config.toml 和 auth.json；API Key 也会注入到 provider bearer token。";
   }
-  return "此供应商会保留账号兼容模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
+  return "此供应商会保留兼容模式，并把请求混入当前 API Key；页面增强仍使用兼容模式。";
 }
 
 function relayProfileReadinessText(profile: RelayProfile, relay: RelayResult | null): string {
   if (profile.relayMode === "official") {
     if (profile.officialMixApiKey) {
       const hasApiFields = profile.baseUrl.trim() && profile.apiKey.trim();
-      if (!relay?.authenticated && !hasApiFields) return "当前没有账号兼容凭据，也未配置混入 API 的 Base URL / Key。";
-      if (!relay?.authenticated) return "当前没有账号兼容凭据；账号兼容混入 API Key 需要先准备凭据。";
+      if (!relay?.authenticated && !hasApiFields) return "当前没有兼容凭据，也未配置混入 API 的 Base URL / Key。";
+      if (!relay?.authenticated) return "当前没有兼容凭据；兼容混入 API Key 需要先准备凭据。";
       if (!hasApiFields) return "当前还没有填写混入 API 的 Base URL / Key。";
-      return `账号兼容已就绪：${relay.accountLabel || "已检测"}，会混入当前 API Key。`;
+      return `兼容凭据已就绪：${relay.accountLabel || "已检测"}，会混入当前 API Key。`;
     }
     return relay?.authenticated
-      ? `账号兼容凭据已检测：${relay.accountLabel || relay.authSource || "已检测"}。`
-      : "当前没有账号兼容凭据；切到账号兼容模式后需要先准备凭据。";
+      ? `兼容凭据已检测：${relay.accountLabel || relay.authSource || "已检测"}。`
+      : "当前没有兼容凭据；切到兼容模式后需要先准备凭据。";
   }
   const hasFiles = profile.configContents.trim() && profile.authContents.trim();
   if (!hasFiles) return "当前供应商还没有完整 config.toml / API Key 存档。";
@@ -4730,8 +4730,8 @@ function relayProfileSwitchCommand(profile: RelayProfile): "clear_relay_injectio
 
 function relayProfileModeSwitchedText(profile: RelayProfile): string {
   if (profile.relayMode === "pureApi") return "已按此供应商切换到纯 API；页面增强已设为完整增强。";
-  if (profile.officialMixApiKey) return "已按此供应商使用账号兼容模式，并混入 API Key；页面增强已设为兼容增强。";
-  return "已按此供应商切回账号兼容模式；页面增强已设为兼容增强。";
+  if (profile.officialMixApiKey) return "已按此供应商使用兼容模式，并混入 API Key；页面增强已设为兼容增强。";
+  return "已按此供应商切回兼容模式；页面增强已设为兼容增强。";
 }
 
 function withGeneratedRelayFiles(profile: RelayProfile): RelayProfile {
@@ -5086,7 +5086,7 @@ function relayProfileSwitchValidation(profile: RelayProfile): string | null {
     return `供应商「${profile.name || profile.id}」缺少独立 config.toml，已停止切换，避免继续显示上一套配置文件。请先在该供应商详情里保存 config.toml。`;
   }
   if (profile.relayMode !== "official" || !authJsonHasOpenAiApiKey(profile.authContents)) return null;
-  return "账号兼容混合 API 不应在 auth.json 中保存 OPENAI_API_KEY。请清理此供应商的 auth.json 后再切换。";
+  return "兼容混合 API 不应在 auth.json 中保存 OPENAI_API_KEY。请清理此供应商的 auth.json 后再切换。";
 }
 
 function authJsonHasOpenAiApiKey(contents: string): boolean {
