@@ -738,7 +738,7 @@ fn validate_settings_before_save(settings: &BackendSettings) -> anyhow::Result<(
     }
     if !settings.cli_wrapper_base_url.trim().is_empty() {
         agentkey_core::url_policy::validate_api_base_url(
-            "Codex CLI Wrapper Base URL",
+            "Desktop CLI Bridge Base URL",
             &settings.cli_wrapper_base_url,
         )?;
     }
@@ -1210,10 +1210,10 @@ pub fn repair_backend() -> CommandResult<SettingsPayload> {
         settings_with_live_ccs_profiles(SettingsStore::default().load().unwrap_or_default());
     let message = match agentkey_core::cli_wrapper::ensure_cli_wrapper(&settings) {
         Ok(Some(install)) => format!(
-            "后端已修复，命令包装器已指向 {}。",
+            "后端已修复，桌面 CLI 桥接已指向 {}。",
             install.real_codex.to_string_lossy()
         ),
-        Ok(None) => "后端已修复，命令包装器当前未启用。".to_string(),
+        Ok(None) => "后端已修复，桌面 CLI 桥接当前未启用。".to_string(),
         Err(error) => format!("后端修复部分失败：{error}"),
     };
     settings_payload(&message, "修复后重新读取设置失败")
@@ -2096,11 +2096,11 @@ fn sanitize_manager_event(event: &str) -> String {
 fn refresh_cli_wrapper_after_settings_save(settings: &BackendSettings) -> String {
     match agentkey_core::cli_wrapper::ensure_cli_wrapper(settings) {
         Ok(Some(install)) => format!(
-            " 命令包装器已更新：{}。",
+            " 桌面 CLI 桥接已更新：{}。",
             install.real_codex.to_string_lossy()
         ),
         Ok(None) => String::new(),
-        Err(error) => format!(" 但命令包装器更新失败：{error}。"),
+        Err(error) => format!(" 但桌面 CLI 桥接更新失败：{error}。"),
     }
 }
 

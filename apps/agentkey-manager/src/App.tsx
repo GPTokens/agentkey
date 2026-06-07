@@ -2511,7 +2511,7 @@ function AboutScreen({
   return (
     <>
       <Panel>
-        <CardHead title="关于 AgentKey" detail="本地 Codex 增强、管理工具和安装包维护" />
+        <CardHead title="关于 AgentKey" detail="本地桌面客户端增强、管理工具和安装包维护" />
         <CardContent>
           <div className="metric-list">
             <Metric label="AgentKey 版本" value={overview?.current_version ?? update?.currentVersion ?? "-"} />
@@ -2599,7 +2599,7 @@ function SettingsScreen({
               onChange={(event) => onFormChange({ ...form, cliWrapperEnabled: event.currentTarget.checked })}
               type="checkbox"
             />
-            <span>启用 Codex 命令包装器</span>
+            <span>启用桌面 CLI 桥接</span>
           </label>
           <div className="form-row">
             <Field label="包装器 Base URL">
@@ -3014,7 +3014,7 @@ function ContextScreen({
 }) {
   return (
     <Panel fill>
-      <CardHead title="Codex 工具与插件" detail="独立管理 Codex 的 MCP、Skills、Plugins；切换任意供应商都会带上。" />
+      <CardHead title="桌面工具与插件" detail="独立管理 MCP、Skills、Plugins；切换任意供应商都会带上。" />
       <CardContent>
         <RelayContextManager
           form={normalizeSettings(form)}
@@ -3297,7 +3297,7 @@ function RelayContextManager({
     <div className="relay-context-panel">
       <div className="relay-context-head">
         <div>
-          <strong>Codex 工具与插件</strong>
+          <strong>桌面工具与插件</strong>
           <span>MCP、Skills、Plugins 作为全局配置独立管理，切换任意供应商都会合并。</span>
         </div>
         <div className="relay-context-head-actions">
@@ -3827,7 +3827,7 @@ function routeSubtitle(route: Route) {
     recommendations: "赞助商推荐与普通推荐",
     maintenance: "入口安装、修复、Watcher 与手动启动",
     about: "版本信息、项目链接、GitHub Release 更新、日志与诊断",
-    settings: "主题、命令包装器和启动参数",
+    settings: "主题、CLI 桥接和启动参数",
   };
   return subtitles[route];
 }

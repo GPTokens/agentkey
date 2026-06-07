@@ -26,9 +26,8 @@ pub fn ensure_cli_wrapper(settings: &BackendSettings) -> anyhow::Result<Option<W
     if !should_refresh_cli_wrapper(settings, &wrapper_dir) {
         return Ok(None);
     }
-    let real_codex = resolve_real_codex_for_settings(settings).ok_or_else(|| {
-        anyhow::anyhow!("未找到系统 Codex CLI，可先启动一次系统 Codex 或重新安装 Codex")
-    })?;
+    let real_codex = resolve_real_codex_for_settings(settings)
+        .ok_or_else(|| anyhow::anyhow!("未找到桌面 CLI 运行时，可先启动一次桌面客户端或重新安装"))?;
     let codex_home = cli_home_dir();
     let wrapper_settings = wrapper_settings_for_refresh(settings, &wrapper_dir);
     install_cli_wrapper_to(&wrapper_dir, &real_codex, &codex_home, &wrapper_settings).map(Some)
@@ -128,11 +127,11 @@ pub fn build_wrapper_config(settings: &BackendSettings) -> anyhow::Result<String
     } else {
         api_key_env.to_string()
     };
-    validate_wrapper_config_value("Codex CLI Wrapper API Key Env", &api_key_env)?;
+    validate_wrapper_config_value("Desktop CLI Bridge API Key Env", &api_key_env)?;
     let api_key = settings.cli_wrapper_api_key.trim();
-    validate_wrapper_config_value("Codex CLI Wrapper API Key", api_key)?;
+    validate_wrapper_config_value("Desktop CLI Bridge API Key", api_key)?;
     let base_url = crate::url_policy::validate_optional_api_base_url(
-        "Codex CLI Wrapper Base URL",
+        "Desktop CLI Bridge Base URL",
         &settings.cli_wrapper_base_url,
     )?
     .unwrap_or_default();
@@ -176,7 +175,7 @@ pub fn install_cli_wrapper_to(
 ) -> anyhow::Result<WrapperInstall> {
     if !settings.cli_wrapper_base_url.trim().is_empty() {
         crate::url_policy::validate_api_base_url(
-            "Codex CLI Wrapper Base URL",
+            "Desktop CLI Bridge Base URL",
             &settings.cli_wrapper_base_url,
         )?;
     }

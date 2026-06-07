@@ -41,11 +41,11 @@ Diagnostics may include environment details, configuration paths, and provider s
 
 Claude Code is started with API credentials in the child process environment. API keys must not be written to command-line arguments or diagnostic events. AgentKey rejects Claude Code launch commands that contain secret-like argument markers such as API keys, bearer tokens, passwords, or authorization values. Extra environment variables are accepted only as `KEY=value` lines with validated variable names.
 
-Relay providers, Claude Code, model-catalog fetches, Chat Completions proxy upstreams, and Codex CLI wrapper provider base URLs must use HTTPS. HTTP is accepted only for loopback development endpoints such as `localhost`, `127.0.0.1`, or `::1`.
+Relay providers, Claude Code, model-catalog fetches, Chat Completions proxy upstreams, and desktop CLI bridge provider base URLs must use HTTPS. HTTP is accepted only for loopback development endpoints such as `localhost`, `127.0.0.1`, or `::1`.
 
-The Codex CLI wrapper must not write raw command arguments that look like keys, tokens, secrets, passwords, or authorization values to its log file.
+The desktop CLI bridge must not write raw command arguments that look like keys, tokens, secrets, passwords, or authorization values to its log file.
 
-The Codex CLI wrapper source and compiled executable must not embed provider API keys. Runtime API settings are loaded from the wrapper sidecar config file so wrapper rebuilds do not bake secrets into generated C# source or the compiled binary. The sidecar config is hidden on Windows and restricted to owner read/write permissions on Unix-like systems.
+The desktop CLI bridge source and compiled executable must not embed provider API keys. Runtime API settings are loaded from the bridge sidecar config file so bridge rebuilds do not bake secrets into generated C# source or the compiled binary. The sidecar config is hidden on Windows and restricted to owner read/write permissions on Unix-like systems.
 
 ## Script Market
 
