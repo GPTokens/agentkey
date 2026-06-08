@@ -127,7 +127,11 @@ fn app_paths_find_macos_codex_app_prefers_first_search_root_and_known_names() {
 
 #[test]
 fn launcher_requires_manager_for_incomplete_default_pure_api_profile() {
-    let settings = BackendSettings::default();
+    let mut settings = BackendSettings::default();
+    settings.relay_profiles = vec![RelayProfile {
+        relay_mode: RelayMode::PureApi,
+        ..RelayProfile::default()
+    }];
 
     assert!(requires_manager_setup(&settings));
 }
@@ -164,6 +168,7 @@ fn launcher_does_not_require_manager_for_official_or_disabled_profiles() {
 fn launcher_requires_manager_when_pure_api_files_have_empty_values() {
     let mut settings = BackendSettings::default();
     settings.relay_profiles = vec![RelayProfile {
+        relay_mode: RelayMode::PureApi,
         base_url: String::new(),
         upstream_base_url: String::new(),
         config_contents: "model_provider = \"custom\"\n\n[model_providers.custom]\nbase_url = \"\"\nexperimental_bearer_token = \"\"\n".to_string(),

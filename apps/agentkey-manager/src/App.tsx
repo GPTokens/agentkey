@@ -486,30 +486,14 @@ type StartupResult = CommandResult<{
 }>;
 
 type Route =
-  | "overview"
-  | "relay"
-  | "claude"
-  | "sessions"
+  | "home"
   | "context"
-  | "enhance"
-  | "userScripts"
-  | "recommendations"
-  | "maintenance"
-  | "about"
   | "settings";
 type Theme = "dark" | "light";
 
 const routes: Array<{ id: Route; label: string; icon: LucideIcon }> = [
-  { id: "overview", label: "概览", icon: LayoutDashboard },
-  { id: "relay", label: "供应商配置", icon: KeyRound },
-  { id: "claude", label: "Claude Code", icon: Rocket },
-  { id: "sessions", label: "会话管理", icon: MessageCircle },
+  { id: "home", label: "主界面", icon: LayoutDashboard },
   { id: "context", label: "工具与插件", icon: Network },
-  { id: "enhance", label: "页面增强", icon: Hammer },
-  { id: "userScripts", label: "脚本市场", icon: FileCode2 },
-  { id: "recommendations", label: "推荐内容", icon: ExternalLink },
-  { id: "maintenance", label: "安装维护", icon: Wrench },
-  { id: "about", label: "关于", icon: Info },
   { id: "settings", label: "设置", icon: Settings },
 ];
 
@@ -545,13 +529,13 @@ const defaultSettings: BackendSettings = {
     {
       id: "default",
       linkedProviderSourceId: "",
-      name: "默认 API 供应商",
+      name: "官方账号",
       model: "",
       baseUrl: "",
       upstreamBaseUrl: "",
       apiKey: "",
       protocol: "responses",
-      relayMode: "pureApi",
+      relayMode: "official",
       officialMixApiKey: false,
       testModel: "",
       configContents: "",
@@ -779,15 +763,11 @@ export function App() {
 
   const navigate = async (next: Route) => {
     setRoute(next);
-    if (next === "overview") await refreshOverview(true);
-    if (next === "relay") {
+    if (next === "home") {
+      await refreshOverview(true);
       await refreshSettings(true);
       await refreshRelay(true);
       await refreshRelayFiles(true);
-    }
-    if (next === "sessions") {
-      await refreshSettings(true);
-      await refreshLocalSessions(true);
       await refreshProviderSyncTargets(true);
     }
     if (next === "context") {
@@ -795,19 +775,11 @@ export function App() {
       await refreshRelayFiles(true);
       await refreshLiveContextEntries(true);
     }
-    if (next === "settings") await refreshSettings(true);
-    if (next === "userScripts") {
-      await refreshSettings(true);
-      await refreshScriptMarket(true);
-    }
-    if (next === "recommendations") await refreshAds(true);
-    if (next === "about") {
+    if (next === "settings") {
       await refreshOverview(true);
+      await refreshSettings(true);
       await refreshLogs(true);
       await refreshDiagnostics(true);
-    }
-    if (next === "maintenance") {
-      await refreshOverview(true);
       await refreshWatcher(true);
     }
   };
@@ -1404,7 +1376,7 @@ export function App() {
     void (async () => {
       const startup = await run(() => call<StartupResult>("startup_options"));
       if (startup?.showUpdate) {
-        setRoute("about");
+        setRoute("settings");
         void checkUpdate(false);
       } else {
         void checkUpdate(true);
@@ -1539,7 +1511,7 @@ export function App() {
       showMessage: async (title: string, message: string, status?: Status) => showNotice(title, message, status),
       copyLogs: () => copyText(logs?.text ?? "", "日志已复制。"),
       copyDiagnostics: () => copyText(diagnostics?.report ?? "", "诊断报告已复制。"),
-      goLogs: () => navigate("about"),
+      goLogs: () => navigate("settings"),
       checkHealth: async () => {
         await refreshOverview(true);
         await refreshRelay(true);
@@ -1568,7 +1540,7 @@ export function App() {
                 <button
                   className="update-dot"
                   onClick={() => {
-                    setRoute("about");
+                    setRoute("settings");
                     void checkUpdate(false);
                   }}
                   title={`发现新版本 ${update?.latestVersion ?? ""}`}
@@ -1626,36 +1598,18 @@ export function App() {
           </div>
         </header>
         <section className="screen" key={route}>
-          {route === "overview" ? (
-            <OverviewScreen
+          {route === "home" ? (
+            <HomeScreen
               overview={overview}
-              actions={actions}
-            />
-          ) : null}
-          {route === "relay" ? (
-            <RelayScreen
               settings={settings}
+              relay={relay}
               relayFiles={relayFiles}
               form={settingsForm}
-              onFormChange={setSettingsForm}
-              actions={actions}
-            />
-          ) : null}
-          {route === "claude" ? (
-            <ClaudeCodeScreen
-              form={settingsForm}
-              onFormChange={setSettingsForm}
-              actions={actions}
-            />
-          ) : null}
-          {route === "sessions" ? (
-            <SessionsScreen
-              settings={settings}
-              form={settingsForm}
-              sessions={localSessions}
               providerSyncProgress={providerSyncProgress}
               providerSyncTargets={providerSyncTargets}
               selectedProviderSyncTarget={selectedProviderSyncTarget}
+              launchForm={launchForm}
+              onLaunchFormChange={setLaunchForm}
               onFormChange={setSettingsForm}
               actions={actions}
             />
@@ -1669,26 +1623,23 @@ export function App() {
               actions={actions}
             />
           ) : null}
-          {route === "enhance" ? (
-            <EnhanceScreen form={settingsForm} onFormChange={setSettingsForm} actions={actions} />
-          ) : null}
-          {route === "userScripts" ? <UserScriptsScreen settings={settings} market={scriptMarket} actions={actions} /> : null}
-          {route === "recommendations" ? <RecommendationsScreen ads={ads} actions={actions} /> : null}
-          {route === "maintenance" ? (
-            <MaintenanceScreen
-              overview={overview}
-              watcher={watcher}
+          {route === "settings" ? (
+            <SettingsScreen
               settings={settings}
+              theme={theme}
+              form={settingsForm}
+              onFormChange={setSettingsForm}
+              overview={overview}
+              update={update}
+              logs={logs}
+              diagnostics={diagnostics}
+              watcher={watcher}
               launchForm={launchForm}
               onLaunchFormChange={setLaunchForm}
               removeOwnedData={removeOwnedData}
               onRemoveOwnedDataChange={setRemoveOwnedData}
               actions={actions}
             />
-          ) : null}
-          {route === "about" ? <AboutScreen overview={overview} update={update} logs={logs} diagnostics={diagnostics} actions={actions} /> : null}
-          {route === "settings" ? (
-            <SettingsScreen settings={settings} theme={theme} form={settingsForm} onFormChange={setSettingsForm} actions={actions} />
           ) : null}
         </section>
       </main>
@@ -1768,6 +1719,158 @@ type Actions = {
   toggleTheme: () => void;
   checkHealth: () => Promise<void>;
 };
+
+function HomeScreen({
+  overview,
+  settings,
+  relay,
+  relayFiles,
+  form,
+  providerSyncProgress,
+  providerSyncTargets,
+  selectedProviderSyncTarget,
+  launchForm,
+  onLaunchFormChange,
+  onFormChange,
+  actions,
+}: {
+  overview: OverviewResult | null;
+  settings: SettingsResult | null;
+  relay: RelayResult | null;
+  relayFiles: RelayFilesResult | null;
+  form: BackendSettings;
+  providerSyncProgress: ProviderSyncProgress;
+  providerSyncTargets: ProviderSyncTargetsResult | null;
+  selectedProviderSyncTarget: string;
+  launchForm: { appPath: string; debugPort: string; helperPort: string };
+  onLaunchFormChange: (next: { appPath: string; debugPort: string; helperPort: string }) => void;
+  onFormChange: (value: BackendSettings) => void;
+  actions: Actions;
+}) {
+  const normalized = normalizeSettings(form);
+  const activeProfile = activeRelayProfile(normalized);
+  const relayModeText =
+    !normalized.relayProfilesEnabled
+      ? "CC-SWITCH 模式"
+      : activeProfile.relayMode === "official"
+        ? "官方账号登录"
+        : "第三方 API Key";
+  const savedDesktopClientPath = normalizeSettings(settings?.settings ?? defaultSettings).desktopClientPath;
+  return (
+    <>
+      <Panel>
+        <CardHead title="开始使用" detail="填好供应商配置，打开总开关，再从 AgentKey 启动桌面客户端。" />
+        <CardContent>
+          <GuideList
+            items={[
+              "选择官方账号时，桌面客户端按官方登录账号工作。",
+              "选择第三方 API 供应商时，填写 Base URL 和 API Key 后设为当前。",
+              "打开“启用供应商配置切换”后，AgentKey 会让当前供应商配置生效；关闭后只保留工具与插件配置管理。",
+            ]}
+          />
+          <div className="metric-list">
+            <Metric label="当前模式" value={relayModeText} />
+            <Metric label="当前供应商" value={activeProfile.name || "未命名供应商"} />
+            <Metric label="桌面客户端" value={overview?.desktop_client_version ?? "未检测"} />
+            <Metric label="配置状态" value={relayProfileReadinessText(activeProfile, relay)} />
+          </div>
+          <Toolbar>
+            <Button onClick={() => void actions.launch()}>
+              <Rocket className="h-4 w-4" />
+              启动 AgentKey
+            </Button>
+            <Button onClick={() => void actions.saveSettings()} variant="secondary">
+              <Save className="h-4 w-4" />
+              保存配置
+            </Button>
+            <Button onClick={() => void actions.checkHealth()} variant="secondary">
+              <RefreshCw className="h-4 w-4" />
+              检查
+            </Button>
+          </Toolbar>
+        </CardContent>
+      </Panel>
+
+      <RelayScreen
+        settings={settings}
+        relayFiles={relayFiles}
+        form={normalized}
+        onFormChange={onFormChange}
+        actions={actions}
+      />
+
+      <Panel>
+        <CardHead title="Claude Code" detail="需要 Claude Code 时填这里；不用可以保持关闭。" />
+        <CardContent>
+          <ClaudeCodeBasicSettings form={normalized} onFormChange={onFormChange} actions={actions} />
+        </CardContent>
+      </Panel>
+
+      <Panel>
+        <CardHead title="启动选项" detail="通常保持默认；只有自动识别不到桌面客户端时才需要设置路径。" />
+        <CardContent>
+          <div className="status-table">
+            <StatusRow title="保存路径" status={savedDesktopClientPath ? "ok" : "not_checked"} path={savedDesktopClientPath || null} />
+            <StatusRow title="当前识别" status={overview?.desktop_client.status} path={overview?.desktop_client.path} />
+          </div>
+          <Field label="应用路径覆盖">
+            <Input
+              value={launchForm.appPath}
+              onChange={(event) => onLaunchFormChange({ ...launchForm, appPath: event.currentTarget.value })}
+              placeholder={savedDesktopClientPath || "自动探测失败时再填写"}
+            />
+          </Field>
+          <Toolbar>
+            <Button onClick={() => void actions.chooseCodexAppPath("folder")} variant="secondary">选择应用目录</Button>
+            <Button onClick={() => void actions.chooseCodexAppPath("file")} variant="secondary">选择客户端程序</Button>
+            <Button onClick={() => void actions.saveManualCodexAppPath()} variant="secondary">保存路径</Button>
+          </Toolbar>
+        </CardContent>
+      </Panel>
+
+      <Panel>
+        <CardHead title="历史会话供应商修复" detail="切换供应商后旧会话显示不正确时使用。" />
+        <CardContent>
+          <div className="form-row">
+            <Field label="同步目标">
+              <select
+                className="select-input"
+                disabled={providerSyncProgress.active || !(providerSyncTargets?.targets ?? []).length}
+                value={selectedProviderSyncTarget}
+                onChange={(event) => actions.setProviderSyncTarget(event.currentTarget.value)}
+              >
+                {(providerSyncTargets?.targets ?? []).map((target) => (
+                  <option key={target.id} value={target.id}>
+                    {target.id}（{providerSyncTargetLabel(target)}）
+                  </option>
+                ))}
+                {!(providerSyncTargets?.targets ?? []).length ? <option value="">当前配置 provider</option> : null}
+              </select>
+            </Field>
+          </div>
+          <label className="switch-row">
+            <input
+              checked={normalized.providerSyncEnabled}
+              onChange={(event) => onFormChange({ ...normalized, providerSyncEnabled: event.currentTarget.checked })}
+              type="checkbox"
+            />
+            <span>
+              <strong>启动前自动修复历史会话</strong>
+              <small>开启后通过 AgentKey 启动桌面客户端前自动整理旧对话的供应商标记。</small>
+            </span>
+          </label>
+          <Toolbar>
+            <Button disabled={providerSyncProgress.active} onClick={() => void actions.syncProvidersNow()} variant="secondary">
+              <RefreshCw className="h-4 w-4" />
+              {providerSyncProgress.active ? "修复中" : "立刻修复"}
+            </Button>
+            <Button onClick={() => void actions.saveSettings()} variant="secondary">保存</Button>
+          </Toolbar>
+        </CardContent>
+      </Panel>
+    </>
+  );
+}
 
 function OverviewScreen({
   overview,
@@ -2091,6 +2194,101 @@ function ClaudeCodeScreen({
           </Toolbar>
         </CardContent>
       </Panel>
+    </>
+  );
+}
+
+function ClaudeCodeBasicSettings({
+  form,
+  onFormChange,
+  actions,
+}: {
+  form: BackendSettings;
+  onFormChange: (value: BackendSettings) => void;
+  actions: Actions;
+}) {
+  const authEnv = form.claudeCodeAuthMode === "authToken" ? "ANTHROPIC_AUTH_TOKEN" : "ANTHROPIC_API_KEY";
+  const credentialLabel = claudeCodeCredentialLabel(form.claudeCodeAuthMode);
+  const launchBlockedReason = claudeCodeLaunchBlockedReason(form);
+  return (
+    <>
+      <label className="switch-row">
+        <input
+          checked={form.claudeCodeEnabled}
+          onChange={(event) => onFormChange({ ...form, claudeCodeEnabled: event.currentTarget.checked })}
+          type="checkbox"
+        />
+        <span>
+          <strong>启用 Claude Code 配置</strong>
+          <small>保存后启动 Claude Code 时注入 Base URL、认证变量和模型。</small>
+        </span>
+      </label>
+      <div className="form-row">
+        <Field label="启动命令">
+          <Input
+            value={form.claudeCodeCommand}
+            onChange={(event) => onFormChange({ ...form, claudeCodeCommand: event.currentTarget.value })}
+            placeholder="claude"
+          />
+        </Field>
+        <Field label="Base URL">
+          <Input
+            value={form.claudeCodeBaseUrl}
+            onChange={(event) => onFormChange({ ...form, claudeCodeBaseUrl: event.currentTarget.value })}
+            placeholder="https://api.anthropic.com 或第三方网关"
+          />
+        </Field>
+      </div>
+      <div className="form-row">
+        <Field label="认证变量">
+          <select
+            className="select-input"
+            value={form.claudeCodeAuthMode}
+            onChange={(event) =>
+              onFormChange({
+                ...form,
+                claudeCodeAuthMode: event.currentTarget.value as ClaudeCodeAuthMode,
+              })
+            }
+          >
+            <option value="apiKey">ANTHROPIC_API_KEY</option>
+            <option value="authToken">ANTHROPIC_AUTH_TOKEN</option>
+          </select>
+        </Field>
+        <Field label={`${credentialLabel} (${authEnv})`}>
+          <Input
+            type="password"
+            value={form.claudeCodeApiKey}
+            onChange={(event) => onFormChange({ ...form, claudeCodeApiKey: event.currentTarget.value })}
+            placeholder={`输入 Claude Code ${credentialLabel}`}
+          />
+        </Field>
+      </div>
+      <div className="form-row">
+        <Field label="主模型">
+          <Input
+            value={form.claudeCodeModel}
+            onChange={(event) => onFormChange({ ...form, claudeCodeModel: event.currentTarget.value })}
+            placeholder="例如 claude-sonnet-4-5"
+          />
+        </Field>
+        <Field label="工作目录">
+          <Input
+            value={form.claudeCodeWorkingDirectory}
+            onChange={(event) => onFormChange({ ...form, claudeCodeWorkingDirectory: event.currentTarget.value })}
+            placeholder="留空使用当前目录"
+          />
+        </Field>
+      </div>
+      <Toolbar>
+        <Button disabled={!!launchBlockedReason} title={launchBlockedReason || undefined} onClick={() => void actions.launchClaudeCode()}>
+          <Rocket className="h-4 w-4" />
+          保存并启动 Claude Code
+        </Button>
+        <Button variant="secondary" onClick={() => void actions.saveSettings()}>
+          保存
+        </Button>
+      </Toolbar>
     </>
   );
 }
@@ -2585,14 +2783,33 @@ function SettingsScreen({
   theme,
   form,
   onFormChange,
+  overview,
+  update,
+  logs,
+  diagnostics,
+  watcher,
+  launchForm,
+  onLaunchFormChange,
+  removeOwnedData,
+  onRemoveOwnedDataChange,
   actions,
 }: {
   settings: SettingsResult | null;
   theme: Theme;
   form: BackendSettings;
   onFormChange: (value: BackendSettings) => void;
+  overview: OverviewResult | null;
+  update: UpdateResult | null;
+  logs: LogsResult | null;
+  diagnostics: DiagnosticsResult | null;
+  watcher: WatcherResult | null;
+  launchForm: { appPath: string; debugPort: string; helperPort: string };
+  onLaunchFormChange: (next: { appPath: string; debugPort: string; helperPort: string }) => void;
+  removeOwnedData: boolean;
+  onRemoveOwnedDataChange: (value: boolean) => void;
   actions: Actions;
 }) {
+  const savedDesktopClientPath = normalizeSettings(settings?.settings ?? defaultSettings).desktopClientPath;
   return (
     <>
       <Panel>
@@ -2650,6 +2867,43 @@ function SettingsScreen({
         </CardContent>
       </Panel>
       <Panel>
+        <CardHead title="路径与入口" detail="桌面客户端路径、快捷方式和 Watcher 维护。" />
+        <CardContent>
+          <div className="status-table">
+            <StatusRow title="桌面客户端" status={overview?.desktop_client.status} path={overview?.desktop_client.path} />
+            <StatusRow title="静默启动入口" status={overview?.silent_shortcut.status} path={overview?.silent_shortcut.path} />
+            <StatusRow title="管理工具入口" status={overview?.management_shortcut.status} path={overview?.management_shortcut.path} />
+            <StatusRow title="Watcher" status={watcher?.enabled ? "ok" : "disabled"} path={watcher?.disabled_flag} />
+          </div>
+          <Field label="保存的应用路径">
+            <Input value={savedDesktopClientPath} placeholder="留空时自动探测" readOnly />
+          </Field>
+          <Field label="手动启动路径覆盖">
+            <Input
+              value={launchForm.appPath}
+              onChange={(event) => onLaunchFormChange({ ...launchForm, appPath: event.currentTarget.value })}
+              placeholder={savedDesktopClientPath || "自动探测失败时再填写"}
+            />
+          </Field>
+          <label className="check-row">
+            <input checked={removeOwnedData} onChange={(event) => onRemoveOwnedDataChange(event.currentTarget.checked)} type="checkbox" />
+            <span>卸载入口时移除 AgentKey 托管数据</span>
+          </label>
+          <Toolbar>
+            <Button onClick={() => void actions.checkHealth()}>检查</Button>
+            <Button onClick={() => void actions.repairShortcuts()} variant="secondary">修复快捷方式</Button>
+            <Button onClick={() => void actions.chooseCodexAppPath("folder")} variant="secondary">选择应用目录</Button>
+            <Button onClick={() => void actions.clearCodexAppPath()} variant="secondary">清除路径</Button>
+          </Toolbar>
+          <Toolbar>
+            <Button onClick={() => void actions.installEntrypoints()} variant="secondary">安装入口</Button>
+            <Button onClick={() => void actions.uninstallEntrypoints()} variant="secondary">卸载入口</Button>
+            <Button onClick={() => void actions.enableWatcher()} variant="secondary">启用 Watcher</Button>
+            <Button onClick={() => void actions.disableWatcher()} variant="secondary">禁用 Watcher</Button>
+          </Toolbar>
+        </CardContent>
+      </Panel>
+      <Panel>
         <CardHead title="桌面客户端启动参数" detail="启动桌面客户端时追加到默认 CDP 参数后。留空则保持默认启动行为。" />
         <CardContent>
           <Field label="额外参数">
@@ -2672,6 +2926,31 @@ function SettingsScreen({
           </Toolbar>
         </CardContent>
       </Panel>
+      <Panel>
+        <CardHead title="关于与更新" detail="版本信息、项目链接和 GitHub Release 更新。" />
+        <CardContent>
+          <div className="metric-list">
+            <Metric label="AgentKey 版本" value={overview?.current_version ?? update?.currentVersion ?? "-"} />
+            <Metric label="客户端版本" value={overview?.desktop_client_version ?? "未检测到"} />
+            <Metric label="最新版本" value={update?.latestVersion ?? "未检查"} />
+            <Metric label="更新状态" value={update?.status ?? "not_checked"} />
+          </div>
+          <Toolbar>
+            <Button onClick={() => void actions.checkUpdate()}>检查更新</Button>
+            <Button onClick={() => void actions.performUpdate()} variant="secondary">下载并运行安装包</Button>
+            <Button onClick={() => void actions.openExternalUrl("https://github.com/GPTokens/agentkey")} variant="secondary">
+              <ExternalLink className="h-4 w-4" />
+              项目主页
+            </Button>
+            <Button onClick={() => void actions.openExternalUrl("https://github.com/GPTokens/agentkey/issues")} variant="secondary">
+              <ExternalLink className="h-4 w-4" />
+              反馈问题
+            </Button>
+          </Toolbar>
+        </CardContent>
+      </Panel>
+      <LogsPanel logs={logs} actions={actions} />
+      <DiagnosticsPanel diagnostics={diagnostics} actions={actions} />
     </>
   );
 }
@@ -3831,22 +4110,14 @@ function isExpiredAd(ad: AdItem) {
 }
 
 function routeTitle(route: Route) {
-  return routes.find((item) => item.id === route)?.label ?? "概览";
+  return routes.find((item) => item.id === route)?.label ?? "主界面";
 }
 
 function routeSubtitle(route: Route) {
   const subtitles: Record<Route, string> = {
-    overview: "检查问题、启动与快速修复",
-    relay: "管理 API 供应商、协议、Key 与配置文件",
-    claude: "用 API Key 启动 Claude Code",
-    sessions: "查看、删除和修复桌面客户端本地会话",
+    home: "配置供应商并启动桌面客户端",
     context: "独立管理 MCP、Skills、Plugins",
-    enhance: "会话删除、导出、项目移动和脚本能力",
-    userScripts: "内置和用户自定义脚本清单",
-    recommendations: "赞助商推荐与普通推荐",
-    maintenance: "入口安装、修复、Watcher 与手动启动",
-    about: "版本信息、项目链接、GitHub Release 更新、日志与诊断",
-    settings: "主题、CLI 桥接和启动参数",
+    settings: "基础设置、入口维护、关于与诊断",
   };
   return subtitles[route];
 }
@@ -4562,13 +4833,13 @@ function normalizeSettings(settings: BackendSettings): BackendSettings {
           {
             id: settings.activeRelayId || "default",
             linkedProviderSourceId: "",
-            name: "默认 API 供应商",
+            name: settings.relayApiKey || settings.relayBaseUrl ? "第三方 API 供应商" : "官方账号",
             model: "",
             baseUrl: settings.relayBaseUrl || defaultSettings.relayBaseUrl,
             upstreamBaseUrl: settings.relayBaseUrl || defaultSettings.relayBaseUrl,
             apiKey: settings.relayApiKey || "",
             protocol: "responses" as RelayProtocol,
-            relayMode: "pureApi" as RelayMode,
+            relayMode: settings.relayApiKey || settings.relayBaseUrl ? ("pureApi" as RelayMode) : ("official" as RelayMode),
             officialMixApiKey: false,
             testModel: "",
             configContents: "",
@@ -5269,10 +5540,10 @@ function loadInitialTheme(): Theme {
 }
 
 function loadInitialRoute(): Route {
-  if (typeof window === "undefined") return "overview";
+  if (typeof window === "undefined") return "home";
   const params = new URLSearchParams(window.location.search);
   if (params.get("showUpdate") === "1" || window.location.hash === "#about") {
-    return "about";
+    return "settings";
   }
-  return "overview";
+  return "home";
 }

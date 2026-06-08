@@ -98,13 +98,13 @@ impl Default for RelayProfile {
         Self {
             id: "default".to_string(),
             linked_provider_source_id: String::new(),
-            name: "默认 API 供应商".to_string(),
+            name: "官方账号".to_string(),
             model: String::new(),
             base_url: default_relay_base_url(),
             upstream_base_url: String::new(),
             api_key: String::new(),
             protocol: RelayProtocol::Responses,
-            relay_mode: RelayMode::PureApi,
+            relay_mode: RelayMode::Official,
             official_mix_api_key: false,
             test_model: String::new(),
             config_contents: default_pure_api_config_contents(),
@@ -380,7 +380,7 @@ impl BackendSettings {
             return RelayProfile {
                 id: default_active_relay_id(),
                 linked_provider_source_id: String::new(),
-                name: "默认 API 供应商".to_string(),
+                name: "第三方 API 供应商".to_string(),
                 model: String::new(),
                 base_url: if self.relay_base_url.is_empty() {
                     default_relay_base_url()
@@ -425,7 +425,11 @@ impl BackendSettings {
                 self.active_relay_id.clone()
             },
             linked_provider_source_id: String::new(),
-            name: "默认 API 供应商".to_string(),
+            name: if self.relay_api_key.is_empty() && self.relay_base_url.is_empty() {
+                "官方账号".to_string()
+            } else {
+                "第三方 API 供应商".to_string()
+            },
             model: String::new(),
             base_url: if self.relay_base_url.is_empty() {
                 default_relay_base_url()
@@ -439,7 +443,11 @@ impl BackendSettings {
             },
             api_key: self.relay_api_key.clone(),
             protocol: RelayProtocol::Responses,
-            relay_mode: RelayMode::PureApi,
+            relay_mode: if self.relay_api_key.is_empty() && self.relay_base_url.is_empty() {
+                RelayMode::Official
+            } else {
+                RelayMode::PureApi
+            },
             official_mix_api_key: false,
             test_model: String::new(),
             config_contents: default_pure_api_config_contents(),
@@ -1159,7 +1167,8 @@ mod tests {
         assert_eq!(settings.launch_mode, LaunchMode::Patch);
         assert_eq!(settings.relay_base_url, default_relay_base_url());
         assert!(settings.relay_api_key.is_empty());
-        assert_eq!(settings.relay_profiles[0].relay_mode, RelayMode::PureApi);
+        assert_eq!(settings.relay_profiles[0].name, "官方账号");
+        assert_eq!(settings.relay_profiles[0].relay_mode, RelayMode::Official);
         assert!(settings.relay_common_config_contents.is_empty());
         assert_eq!(settings.relay_test_model, default_relay_test_model());
         assert!(!settings.cli_wrapper_enabled);
@@ -2076,7 +2085,7 @@ experimental_bearer_token = "sk-existing""#
         let active = settings.active_relay_profile();
 
         assert_eq!(active.id, "default");
-        assert_eq!(active.name, "默认 API 供应商");
+        assert_eq!(active.name, "第三方 API 供应商");
         assert_eq!(active.base_url, "https://legacy.example/v1");
         assert_eq!(active.api_key, "sk-legacy");
         assert_eq!(active.relay_mode, RelayMode::MixedApi);
