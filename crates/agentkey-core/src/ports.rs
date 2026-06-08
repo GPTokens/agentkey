@@ -128,17 +128,45 @@ fn acquire_resilient_loopback_port_guard_with(
         return bind(port).map(LoopbackPortGuard::listener);
     }
 
-    let (file, path) = acquire_lock_guard(port, state_dir)?;
+    let (file, path) = acquire_resilient_lock_guard(port, state_dir)?;
     match bind(port) {
         Ok(listener) => Ok(LoopbackPortGuard::locked_listener(file, path, listener)),
         Err(error) if error.kind() == std::io::ErrorKind::AddrInUse && can_connect(port) => {
             Err(error)
         }
-        Err(error) if error.kind() == std::io::ErrorKind::AddrInUse => {
+        Err(error) if guard_bind_error_can_use_lock_fallback(error.kind()) => {
             Ok(LoopbackPortGuard::fallback_lock(file, path))
         }
         Err(error) => Err(error),
     }
+}
+
+fn acquire_resilient_lock_guard(port: u16, state_dir: &Path) -> std::io::Result<(File, PathBuf)> {
+    match acquire_lock_guard(port, state_dir) {
+        Ok(guard) => Ok(guard),
+        Err(error) if lock_error_can_use_temp_fallback(error.kind()) => {
+            acquire_lock_guard(port, &temp_app_state_dir())
+        }
+        Err(error) => Err(error),
+    }
+}
+
+fn guard_bind_error_can_use_lock_fallback(kind: std::io::ErrorKind) -> bool {
+    matches!(
+        kind,
+        std::io::ErrorKind::AddrInUse | std::io::ErrorKind::PermissionDenied
+    )
+}
+
+fn lock_error_can_use_temp_fallback(kind: std::io::ErrorKind) -> bool {
+    matches!(
+        kind,
+        std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::NotFound
+    )
+}
+
+fn temp_app_state_dir() -> PathBuf {
+    std::env::temp_dir().join("AgentKey")
 }
 
 fn acquire_lock_guard(port: u16, state_dir: &Path) -> std::io::Result<(File, PathBuf)> {
@@ -243,5 +271,30 @@ mod tests {
         )
         .unwrap_err();
         assert_eq!(second.kind(), std::io::ErrorKind::WouldBlock);
+    }
+
+    #[test]
+    fn resilient_guard_uses_lock_fallback_when_bind_is_denied() {
+        let temp = tempfile::tempdir().unwrap();
+        let guard = acquire_resilient_loopback_port_guard_with(
+            57320,
+            temp.path(),
+            |_| {
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "bind denied",
+                ))
+            },
+            |_| false,
+        )
+        .unwrap();
+
+        assert!(guard._listener.is_none());
+        assert!(guard.fallback_path().is_some());
+    }
+
+    #[test]
+    fn temp_app_state_dir_uses_agentkey_subdirectory() {
+        assert!(temp_app_state_dir().ends_with("AgentKey"));
     }
 }

@@ -12,7 +12,9 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::process::{Child, Command};
 use tokio::sync::Mutex;
 
-use crate::settings::{BackendSettings, SettingsStore, normalize_codex_extra_args};
+use crate::settings::{
+    BackendSettings, RelayMode, RelayProfile, SettingsStore, normalize_codex_extra_args,
+};
 use crate::status::{LaunchStatus, StatusStore};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -70,6 +72,62 @@ pub struct LaunchOptions {
 
 pub fn new_helper_session_token() -> String {
     uuid::Uuid::new_v4().simple().to_string()
+}
+
+pub fn requires_manager_setup(settings: &BackendSettings) -> bool {
+    if !settings.relay_profiles_enabled {
+        return false;
+    }
+    let profile = settings.active_relay_profile();
+    profile.relay_mode == RelayMode::PureApi
+        && (!pure_api_profile_has_base_url(&profile) || !pure_api_profile_has_api_key(&profile))
+}
+
+fn pure_api_profile_has_base_url(profile: &RelayProfile) -> bool {
+    !profile.base_url.trim().is_empty()
+        || !profile.upstream_base_url.trim().is_empty()
+        || config_has_base_url(&profile.config_contents)
+}
+
+fn pure_api_profile_has_api_key(profile: &RelayProfile) -> bool {
+    !profile.api_key.trim().is_empty()
+        || auth_has_openai_api_key(&profile.auth_contents)
+        || config_experimental_bearer_token(&profile.config_contents).is_some()
+}
+
+fn config_has_base_url(config_contents: &str) -> bool {
+    let Ok(doc) = config_contents.parse::<toml::Value>() else {
+        return false;
+    };
+    if doc
+        .get("base_url")
+        .and_then(toml::Value::as_str)
+        .map(str::trim)
+        .is_some_and(|value| !value.is_empty())
+    {
+        return true;
+    }
+    doc.get("model_providers")
+        .and_then(toml::Value::as_table)
+        .is_some_and(|providers| {
+            providers.values().any(|provider| {
+                provider
+                    .get("base_url")
+                    .and_then(toml::Value::as_str)
+                    .map(str::trim)
+                    .is_some_and(|value| !value.is_empty())
+            })
+        })
+}
+
+fn auth_has_openai_api_key(auth_contents: &str) -> bool {
+    let Ok(auth) = serde_json::from_str::<Value>(auth_contents) else {
+        return false;
+    };
+    auth.get("OPENAI_API_KEY")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .is_some_and(|value| !value.is_empty())
 }
 
 impl Default for LaunchOptions {
@@ -1255,11 +1313,7 @@ fn http_header_value(request: &str, header_name: &str) -> Option<String> {
 }
 
 fn helper_request_path(raw_path: &str) -> &str {
-    raw_path
-        .split(['?', '#'])
-        .next()
-        .unwrap_or_default()
-        .trim()
+    raw_path.split(['?', '#']).next().unwrap_or_default().trim()
 }
 
 fn helper_request_authorized(request: &str, helper_token: &str, allow_relay_token: bool) -> bool {
@@ -1473,7 +1527,10 @@ mod helper_security_tests {
             helper_request_path("/backend/status?api_key=secret#access_token=secret"),
             "/backend/status"
         );
-        assert_eq!(helper_request_path("  /diagnostics/log  "), "/diagnostics/log");
+        assert_eq!(
+            helper_request_path("  /diagnostics/log  "),
+            "/diagnostics/log"
+        );
     }
 
     #[test]

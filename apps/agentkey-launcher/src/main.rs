@@ -1,12 +1,12 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
-use anyhow::{Context, Result};
 use agentkey_core::launcher::{
     DefaultLaunchHooks, LaunchHooks, LaunchOptions, launch_and_inject_with_hooks,
 };
 use agentkey_core::models::{DeleteResult, ExportResult, SessionRef};
 use agentkey_core::routes::{BridgeContext, BridgeDataService, BridgeRuntimeService};
 use agentkey_core::user_scripts::UserScriptManager;
+use anyhow::{Context, Result};
 use serde_json::{Value, json};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -34,16 +34,40 @@ impl Default for LauncherHooks {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
+    if let Err(error) = run().await {
+        let _ = agentkey_core::diagnostic_log::append_diagnostic_log(
+            "launcher.failed",
+            json!({
+                "error": error.to_string()
+            }),
+        );
+        std::process::exit(1);
+    }
+}
+
+async fn run() -> Result<()> {
     let options = parse_launch_options(std::env::args().skip(1));
     let Some(_guard) = acquire_single_instance_guard(options.debug_port)? else {
         activate_existing_desktop_client(&options).await?;
         return Ok(());
     };
+    let hooks = LauncherHooks::default();
+    let settings = hooks.load_settings().await?;
+    if agentkey_core::launcher::requires_manager_setup(&settings) {
+        let _ = agentkey_core::diagnostic_log::append_diagnostic_log(
+            "launcher.manager_setup_required",
+            json!({
+                "relay_profiles_enabled": settings.relay_profiles_enabled,
+                "active_relay_id": settings.active_relay_id
+            }),
+        );
+        open_manager()?;
+        return Ok(());
+    }
     tokio::spawn(async {
         let _ = notify_manager_when_update_available().await;
     });
-    let hooks = LauncherHooks::default();
     let handle = launch_and_inject_with_hooks(options, &hooks).await?;
     handle.wait_for_codex_exit().await?;
     Ok(())
@@ -90,8 +114,7 @@ fn acquire_single_instance_guard_with_retry(
     }
 }
 
-fn try_acquire_single_instance_guard() -> std::io::Result<agentkey_core::ports::LoopbackPortGuard>
-{
+fn try_acquire_single_instance_guard() -> std::io::Result<agentkey_core::ports::LoopbackPortGuard> {
     agentkey_core::ports::acquire_resilient_loopback_port_guard(
         agentkey_core::ports::LAUNCHER_GUARD_PORT,
     )
@@ -195,8 +218,7 @@ fn log_launcher_already_running(debug_port: u16) {
 }
 
 async fn notify_manager_when_update_available() -> anyhow::Result<bool> {
-    let update =
-        agentkey_core::update::check_for_update(agentkey_core::version::VERSION).await?;
+    let update = agentkey_core::update::check_for_update(agentkey_core::version::VERSION).await?;
     if !update.update_available {
         return Ok(false);
     }
@@ -205,9 +227,17 @@ async fn notify_manager_when_update_available() -> anyhow::Result<bool> {
 }
 
 fn open_manager_with_update_prompt() -> anyhow::Result<()> {
+    open_manager_with_args(&["--show-update"])
+}
+
+fn open_manager() -> anyhow::Result<()> {
+    open_manager_with_args(&[])
+}
+
+fn open_manager_with_args(args: &[&str]) -> anyhow::Result<()> {
     let manager_path = manager_exe_path();
     let mut command = std::process::Command::new(&manager_path);
-    command.arg("--show-update");
+    command.args(args);
     #[cfg(windows)]
     {
         command.creation_flags(agentkey_core::windows_create_no_window());
@@ -342,7 +372,9 @@ impl LaunchHooks for LauncherHooks {
         helper_port: u16,
         helper_token: &str,
     ) -> anyhow::Result<()> {
-        self.core.inject(debug_port, helper_port, helper_token).await
+        self.core
+            .inject(debug_port, helper_port, helper_token)
+            .await
     }
 
     async fn write_status(&self, status: &str) {
@@ -397,8 +429,7 @@ impl BridgeDataService for LauncherDataService {
     }
 
     async fn export_markdown(&self, session: SessionRef) -> anyhow::Result<ExportResult> {
-        let export_service =
-            agentkey_data::MarkdownExportService::new(Some(self.db_path.clone()));
+        let export_service = agentkey_data::MarkdownExportService::new(Some(self.db_path.clone()));
         tokio::task::spawn_blocking(move || export_service.export(&session))
             .await
             .map_err(|error| anyhow::anyhow!("export markdown task failed: {error}"))
@@ -595,15 +626,11 @@ impl BridgeRuntimeService for LauncherRuntimeService {
     }
 
     async fn upstream_worktree_prepare(&self, payload: Value) -> anyhow::Result<Value> {
-        Ok(agentkey_core::upstream_worktree::prepare_response(
-            &payload,
-        ))
+        Ok(agentkey_core::upstream_worktree::prepare_response(&payload))
     }
 
     async fn upstream_worktree_create(&self, payload: Value) -> anyhow::Result<Value> {
-        Ok(agentkey_core::upstream_worktree::create_response(
-            &payload,
-        ))
+        Ok(agentkey_core::upstream_worktree::create_response(&payload))
     }
 }
 

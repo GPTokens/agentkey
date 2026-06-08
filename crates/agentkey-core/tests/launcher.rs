@@ -10,11 +10,12 @@ use agentkey_core::launcher::{
     CodexLaunch, DefaultLaunchHooks, LaunchHooks, LaunchOptions, MacosCleanupPolicy,
     build_codex_arguments, build_codex_command, build_macos_cleanup_command,
     build_macos_open_command, build_packaged_activation, launch_and_inject_with_hooks,
+    requires_manager_setup,
 };
 #[cfg(windows)]
 use agentkey_core::launcher::{WindowsProcessControlStrategy, windows_process_control_strategy};
 use agentkey_core::ports::select_platform_loopback_port_with;
-use agentkey_core::settings::{BackendSettings, RelayProfile, RelayProtocol};
+use agentkey_core::settings::{BackendSettings, RelayMode, RelayProfile, RelayProtocol};
 use agentkey_core::status::StatusStore;
 
 #[test]
@@ -122,6 +123,55 @@ fn app_paths_find_macos_codex_app_prefers_first_search_root_and_known_names() {
         find_macos_codex_app(&[system_root, user_root]).unwrap(),
         system_app
     );
+}
+
+#[test]
+fn launcher_requires_manager_for_incomplete_default_pure_api_profile() {
+    let settings = BackendSettings::default();
+
+    assert!(requires_manager_setup(&settings));
+}
+
+#[test]
+fn launcher_runs_when_pure_api_profile_has_base_url_and_key_files() {
+    let mut settings = BackendSettings::default();
+    settings.relay_profiles = vec![RelayProfile {
+        base_url: "https://relay.example/v1".to_string(),
+        upstream_base_url: "https://relay.example/v1".to_string(),
+        config_contents: "model_provider = \"custom\"\n\n[model_providers.custom]\nbase_url = \"https://relay.example/v1\"\n".to_string(),
+        auth_contents: r#"{"OPENAI_API_KEY":"sk-test"}"#.to_string(),
+        ..RelayProfile::default()
+    }];
+
+    assert!(!requires_manager_setup(&settings));
+}
+
+#[test]
+fn launcher_does_not_require_manager_for_official_or_disabled_profiles() {
+    let mut disabled = BackendSettings::default();
+    disabled.relay_profiles_enabled = false;
+    assert!(!requires_manager_setup(&disabled));
+
+    let mut official = BackendSettings::default();
+    official.relay_profiles = vec![RelayProfile {
+        relay_mode: RelayMode::Official,
+        ..RelayProfile::default()
+    }];
+    assert!(!requires_manager_setup(&official));
+}
+
+#[test]
+fn launcher_requires_manager_when_pure_api_files_have_empty_values() {
+    let mut settings = BackendSettings::default();
+    settings.relay_profiles = vec![RelayProfile {
+        base_url: String::new(),
+        upstream_base_url: String::new(),
+        config_contents: "model_provider = \"custom\"\n\n[model_providers.custom]\nbase_url = \"\"\nexperimental_bearer_token = \"\"\n".to_string(),
+        auth_contents: r#"{"OPENAI_API_KEY":""}"#.to_string(),
+        ..RelayProfile::default()
+    }];
+
+    assert!(requires_manager_setup(&settings));
 }
 
 #[test]
@@ -424,7 +474,12 @@ async fn default_helper_rejects_untrusted_origin_even_with_token() {
         .unwrap();
 
     assert_eq!(response.status(), reqwest::StatusCode::FORBIDDEN);
-    assert!(response.headers().get("Access-Control-Allow-Origin").is_none());
+    assert!(
+        response
+            .headers()
+            .get("Access-Control-Allow-Origin")
+            .is_none()
+    );
 
     hooks.shutdown_helper(port).await;
 }
